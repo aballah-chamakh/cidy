@@ -1,0 +1,72 @@
+in the student detail screen : 
+    -  we should add a group select input and the option list of this select must be the list of
+       groups that the student belongs to
+    -  the list of class sessions batch must be one of the selected group
+
+- the student shouldn't have a level or a section since the group he is in wil refer to that
+- the teacher can edit the name of the student only if the student didn't create his account in the app 
+
+
+the new actions of the student  : 
+    - remove the student from the group
+    - add the student to a group
+
+i did stop on this problems : 
+    - should i allow the parent to send many parent request to handle the case of requesting the parenting for two student studying with the same teacher 
+    - how to deal with the case of a son is no longer part of any teacher group 
+    - the student got removed from group 
+    - who is the teacher who owns  the profile of the student 
+
+the student can send to the teacher student invite
+the parent can send to the teacher student invite 
+- when the teacher want to add a student into a group he can create a student
+- when a student makes an enrollment request, the teacher can replace the created student by the requesting student 
+- when a parent makes a parenting request the teacher can assign to him either a student created by the teache or a student created by student himself 
+
+- if a parent sends a parenting request to two teachers for the same student and this student was created in both teachers account, here is how to handle 
+  duplicate sons  : 
+    - the parent should create his sons 
+    - when the parent requests parenting, in the parenting request form he should specify the son 
+- to do : 
+    - add the ability to create a son in the sons screen 
+    - in the parenting request form specify only the son 
+
+the notification list for the student  :
+    - due payment (done)
+    - the teacher marked your attendance for a class session (done)
+    - the teacher marked a number of your class session as paid (done)
+    - the teacher accepeted your enrollement requests for the subjects your are asking for (done)
+    - the tearcher accepted you enrollement request for part of the subjects you asked for (done)
+    - the teacher declined your enrollement request (done)
+    - the teacher added you to the {subject name}'s classes 
+    - the teacher removed you from the  {subject name}'s classes 
+    - the  schedule for your {subject name}'s class changed permanently or only this week
+
+to do :
+    for the student  : 
+        - when the student request an enrollement allows him to choose many subjects (done)
+        - review all of the screens of the student 
+    for the parent 
+        - when the parent request parenting allow to choose many sons (done)
+        - update the notifications of the parent (done)
+    for the teacher 
+        - start reviewing all of the screens (done) 
+
+
+the notification list of the parent : 
+    - due payment (done)
+    - the teacher marked the attendance of {x} {subject name}'s classes for your son {son fullname} (done)     
+    - the teacher marked {x} {subject name}'s classes as paid for your son {son fullname} (done)
+    - the teacher accepeted your parenting requests for the sons your are asked for (done)
+    - the tearcher accepted your parenting request for the son(s) {son(s) name(s)} only (done)
+    - the teacher declined your parenting request for the son(s) : {son(s) name(s)} (done)
+    - the teacher changed for your son {son name} the schedule of {subject name}'s class to {new schedule} {only this week or permanetly} (done)
+    - the teacher removed your son {son name} from the {subject name}'s classes (done)
+    - the teacher added your son {son name} to the {subject name}'s classes (done)
+
+to do : 
+    - review the student profile (done)
+    - review the teacher profile 
+    - review the sign'in an the the sign'up for all of the profile 
+    - add the general guidelines to the prompt 
+    - review every thing again

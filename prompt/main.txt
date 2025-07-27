@@ -1,0 +1,805 @@
+I want to build a mobile app which allow the government teachers of Tunisia to track the attendance of their students into their 
+private classes, which will allow them to : 
+    - a clear idea on their 
+        - revenue 
+        - unpaid student 
+        - the total unpaid amount 
+    - save the contacts of their students which will allow them to contact next school season and ask them to enroll into 
+      their private classes 
+- in all of the screens of app must have a an app bar which contains 
+    - in the most left a the tree line icons which toggle the sidebar 
+    - in the middle the title of the screen 
+    - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
+      is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
+      to the notifications screen
+- the app must have the following screens 
+    - a login screen which contains : 
+        - the email and the password fields
+        - the forgot password link
+        - the "you don't have an accounct ? register" link 
+    - a register link which contains : 
+        - full name,email,phone number,password, two checkboxes one for register as a student and the other for register as teacher and only one of 
+          them can be selected ,after the user submit the form ask them to confirm his email address by 
+          entering the verfication code which was sent to their email
+        - the "you already have and account ? login" link 
+    - once he logins or registers the app should have a sidebar that is based on the logged or registered profile :
+        - for teachers : 
+            - dashboard 
+            - groups 
+            - students 
+            - settings
+                - the price of each subject 
+                - student payment alert : On or Off
+            - week schedule 
+            - enrollments requests 
+
+    - For the teacher profile : 
+
+        - the sidebar : 
+            - dashboard 
+            - groups 
+            - students 
+            - subjects 
+            - week schedule 
+            - enrollments requests 
+            - notifications
+            
+        - the screens binded to each navigation item in the sidebar : 
+            - the dashboard screen must contains (confirmed)
+                - the following kpis in cards : 
+                    - the total paid amount accross all of the students 
+                    - the total unpaid amount accross all of the students 
+                    - for each level section (only the level sections that have groups) : 
+                        - a kpi card for the total paid amount accross the students of the level section
+                        - a kpi card for the total unpaid amount accross the students of the level section 
+                - in the top a daterange selector which the kpi cards values must change according to
+
+            - the groups screen must contains : (confirmed)
+                - the following kpis in cards next to each other in the same row : 
+                    - the total paid amount accross all of the students 
+                    - the total unpaid amount accross all of the students 
+                - the list of groups and each group item card from the list must be clickable and he must contains : 
+                    - a checkbox
+                    - the name of the group
+                    - the level 
+                    - the section (if the level of the group has sections)
+                    - the subject of the group 
+                    - the total paid amount of the students of the group
+                    - the total unpaid amount of the students of the group
+                - a filter for the list which contains : 
+                    - a text input which search the name of the group, 
+                    - a select input which filter by the level of the group, the option list must correspond to the list of levels in the prices screen
+                    - a select input which filter by the section of the group , the option list must correspond to the list of sections of the selected level
+                      (in the previous select) in the prices screen, if accorrding to the prices screen the selected level doesn't have sections disable 
+                      the select until it does 
+                    - a select input which filter by the subject of the group, the option list must correspond to the list of subject of the selected level 
+                      and section (if the selected level has sections otherwise just of the selected level) in the prices screen 
+                    - an order by select input which contains the following options : 
+                        - paid amount descendant 
+                        - paid amount ascendant 
+                        - unpaid amount descendant
+                        - unpaid amount ascendant
+                - the ability to create a new group through a button, that shows up a popup form which contains 
+                    - a text input for the name 
+                    - a select input for the level (the option list mus be as described in the filter)
+                    - a select input for the section (the option list mus be as described in the filter)
+                    - a select input for the subject (the option list mus be as described in the filter)
+                    - a week day select input for the week day of the class (Monday,tuesday ..) 
+                    - a time range selector for the specific hours of the class (ex : 18h to 21h) 
+                    - a create button
+                - the ablility to delete the selected groups in bulk , show to user the"are you sure" popup before deleteing the selected groups 
+                - on click on a group item card, the group detail screen will show up, which i will describe next 
+
+                the group detail screen must contains : (confirmed)
+                    - the group name,level,section (if the level has sections),subject (make them all editable through a form and edit button 
+                      and make the options list of the select inputs of the level,section and subject the same as described in the filer of the groups screen)
+                    - the following kpis in cards : 
+                        - the total paid amount accross all of the students of this group
+                        - the total unpaid amount accross all of the students of this group
+                    - the list of students that belong to this group 
+                    - a filter for the student list which contains  :
+                        - a text input which search the fullname of the student
+                        - an order by select input which contains the following options : 
+                            - paid amount descendant 
+                            - paid amount ascendant 
+                            - unpaid amount descendant
+                            - unpaid amount ascendant
+                    - each student item card from the student list, must be clickable and must contain
+                        - a checkbox 
+                        - the profile image of the student (use default ones, one for male student and another for female students)
+                        - the name of the student
+                        - the total paid amount of student
+                        - the total unpaid amount of the student
+                    - the ability to add a new student through a button, that shows up a popup form which contains 
+                        - text input for the full name of the student
+                        - text input phone number of the student
+                        - a select input for the sex of the student male of female
+                    - the ability to mark the attendance of the selected students through button that show a popup form which contain
+                        - a datetime selector 
+                        - a mark attendance button 
+                    - the ablility to delete the selected students in bulk , show to user the an "are you sure" popup before deleteing the selected students 
+                    - on click on the student item card from the list, the student detail screen will show up which i will describe next 
+
+                    the student detail screen must contains : (confirmed)
+                        - an identity card for the student which contains his : 
+                            - fullname (make this value editable if the student didn't create his profile)
+                            - email (if the student did create his profile)
+                            - phone number (make this value editable if the student didn't create his profile)
+                            - level and section (get this value from any group he belongs to, set the section value if his level has sections)
+                        - the following kpis in cards next to each other in the same row : 
+                            - the total paid amount of this student across all of his group
+                            - the total unpaid amount of this student across all of his group
+                        - a select input for the group , the option list of this group is the list of groups the student belongs too , the teacher uses this select
+                          to switch between the list of class sessions of each group, and each text value of an option must follows the following format  : 
+                          "{Subject of the group} - {the name of the group}"  
+                        - the following kpis in cards next to each other in the same row : 
+                            - the total paid amount of this student in the selected group 
+                            - the total unpaid amount of this student in the selected group 
+                        - a list of class session batches of the selected group : 
+                            - each class session batch must be in a card , and each card contains 4 class sessions which are represented in 4 circles
+                            next to each other in the same row
+                            - the stoke color of the batch cards and the circle colors represent the status of the payment and attendance of the student 
+                            following the following color code below  : 
+                                - for the circle (class session)
+                                    - red circle : the student attended this class session, he still didn't pay for it and the payment is due 
+                                    - orange circle : the student attended this class session, he still didn't pay for it and the payment isn't due 
+                                    - green circle : the student attended this class session and he paid for it 
+                                    - gray circle : the class session still in the future 
+                                - for the cards (batch of class sessions)
+                                    - red stroke : the batch contains 4 class sessions that the student attended, didn't pay for them and their payment is due 
+                                    - green stroke : the batch contains 4 class session that the student attended and he did pay for them 
+                                    - orange stroke : the batch contains at least one session paid and the rest for the sessions are due and not paid 
+                                    - gray stroke : the rest of the situation
+                        - the abiliy to mark the attendance of student through a button that will show up a popup form which contains : 
+                            - a datetime selector 
+                            - a mark attendance button 
+                        - the ability to mark class sessions as paid for the student through a button that will show up a popup form which contains : 
+                            - a number input which represent the number of class sessions to mark as paid 
+                            - a mark as paid button 
+                        - the ability to remove the teacher from the group through a button , after the removal update the detail screen of the student 
+            - the students screen which contains : (confirmed)
+                - the list of students from all of the groups and the student card item must be clickable and must contain : 
+                    - checkbox
+                    - the default profile photo (one for males and one for females)
+                    - fullname 
+                    - level (you get this value from the group he is in) 
+                    - section (you get this value from the group he is in, of this group has a section) 
+                    - the total paid amount of the student
+                    - the total unpaid amount of the student
+                - a filter for the student list which contains :
+                    - text input for the full name of the student
+                    - select input for the level 
+                    - select input for the section (update the options of this field based on the selected level and if the selected level doesn't have any section make this disabled)
+                    - an order by select input which contains the following options : 
+                        - paid amount descendant 
+                        - paid amount ascendant 
+                        - unpaid amount descendant
+                        - unpaid amount ascendant
+                - a grouped action select options with a button (which trigger the group action), the opions of this select are the following 
+                    - delete : which deletes the selected students, but before deleting you should show the "are you sure" popup 
+                    - mark presence : which mark the seleted students as present, through opening a popup form which contains the datetime of the 
+                                    class session and mark presence button 
+                - the ability to create a new student through a button which opens a popup form which contains :
+                    - text input for the fullname 
+                    - text input phone number of the student
+                    - select input for the sex of the options : male and female
+                    - select input for the group (the option list must consist of groups of the selected level and section)
+            
+            - the week schedule screen must contains (confirmed) : 
+                - a calender for the current week, plotted by the schedule of all of the groups of the teacher 
+                - the teacher can move the schedule of group in the calendar, but not in top of another group schedule, this movement 
+                should trigger a popup which ask the teacher if this new schedule will be permenant or only for this week 
+        
+            - enrollment requests screen must contain : (confirmed)
+                - list of enrollment requests and each one of them must a clickable card which contains :
+                    - a checkbox (allow only one checkbox to be selected at the time)
+                    - the profile image of the student
+                    - the level and the section of the student 
+                    - the subject he is enrolling for 
+                - a filter for the list of enrollment requests which contains 
+                    - a text input to search on the fullname of the student 
+                    - a select input to filter by the level
+                    - a select input to filter by the section 
+                    - a select input to filter by subject 
+                - an accept button which opens a popup form which contains :
+                    - a select input for group to add the selected student to, the option list of this select must 
+                      be of the groups that have the same level,section and subject as the requesting student 
+                    - a select input to attach the requesting student with an existing one, the option list of this list must 
+                      contain the following options : 
+                      - new student options which mean that student doesn't correspond to any existing student 
+                      - the students of the select group from the previous select field
+                      note : if the user choose the new student option, add the student profile record to this group (many to one relationship) 
+                             and if the user choose an existing student profile, replace the student profile of the requesting student user by the choosen student profile
+                             since there will be a user model and profile model which have a one to one relationship between them 
+
+            - prices screen which contains : (confirmed)
+                - a header row  for the levels list with the text "Levels" in the left and the button "add" in the right , clicking on this button 
+                  will open up a popup form which contains  : 
+                    - a text input for the name of the level 
+                    - an add button 
+                - the list of the levels and each level must be in a card which contain : 
+                    - a checkbox 
+                    - the name of the level  
+                    - an edit icon in a rounded button and the click on this button will open up a popup form 
+                        which contains : 
+                        - a text input for the name of the level  
+                        - an edit button 
+                    - an arrow down icon in a rounded button and the click on this button toggle the appearence of a block below the card which contains  : 
+                        - a header row for this block with the text "Sections" in the left and  an "add" button in the right , clicking on this button 
+                          will open up a popup form which contains  : 
+                            - a text input for the name of the section 
+                            - an add button 
+                        - the list of sections of this level and each section must be in a card which contains : 
+                            - a checkbox 
+                            - the name of a section 
+                            - an edit icon in a rounded button and the click on this button will open up a popup form 
+                              which contains : 
+                                - a text input for the name of the section 
+                                - an edit button 
+                            - an arrow down icon in a rouded button and the click on this button toggle the appearence of a block below the card which contains :
+                                - a header row for this block with the text "Subjects" in the left and an "add" button in the right , clicking on this button 
+                                  will open a popup form which contains  : 
+                                    - a text input for the name of the subject 
+                                    - a float input for the price of the subject 
+                                    - an add button 
+                                - the list of subjects and each subject must be a card which contains 
+                                    - the name of the subject 
+                                    - the price of the subject 
+                                    - an edit icon in a rounded button and the click on this button will open up a popup form 
+                                      which contains : 
+                                        - a text input for the name of the subject 
+                                        - a float input for the price of the suject 
+                                        - an edit button 
+                                    
+                - the ability to delete any selected item (level,section,list) in bulk through a button, but show the "are you sure" popup to the user
+                  before deleting
+
+            - notifications screen must contains : (confirmed)
+                - the number of notifications, which is the number of notifications that were added after the last time the user did open the notification screen
+                - the notifications list for the students due payments and each notification must be in a clickable card which contains 
+                    - student default profile image 
+                    - the following dynamic message : "{student name} studying {Subject} from the group {Level} {Section} {Group name} has to pay {non paid amount} DT"
+                - if the user did click on a notification item card, he must be routed to the student detail screen
+                some rules : 
+                    - the notification item card must be highlighted until the user clicks on it 
+                    - the notification number must be set to 0 when the user opens the notifications screen 
+                    
+    - For student profile :  
+
+        - the sidebar : 
+            - teachers 
+            - subjects 
+            - parents 
+            - notifications
+            
+        - the screens binded to each navigation item in the sidebar : 
+            - the teachers screen : 
+                - the title of the App Bar is : "Teachers"
+                - the content of the screen : 
+                    - UI : 
+                        - col : 
+                            - row 1 : a filter for the teacher list which contains
+                                - col : 
+                                    - row 1 : 
+                                        - a text input to search on the fullname of the teacher
+                                    - row 2 : 
+                                        - a select input for the subjects, make this select in a way that allows the student to select many subjects, the options list must be the list of all of the possible subjects that the student can study in his level and section
+                                    - row 3 : 
+                                        - a "Filter" button 
+                            - row 2 : list of teachers that only teaches the the level and the section of the currently logged student, each teacher must be in a clickable card which contains : 
+                                - row : 
+                                    - col 1 : 
+                                        - the profile image of the teacher
+                                    - col 2 : 
+                                        - row 1 : the full name of the teachers 
+                                        - row 2 : the levels with their sections that he teaches in badges, examples : (3 xiéme Math , 4 iéme Science)
+                                        - row 3 : the subjects that he teaches in badges, example (Math,Physique)
+                                    - col 3 : 
+                                        - an "enroll" button 
+                            - row 3 : a pagingation for the teacher list which contains the following : 
+                                - row : 
+                                    - col 1 : 
+                                        - "{the rank of the first teacher showed in the teacher list out of the full filtered and the non paginated list} to {the rank of the last teacher showed in the teacher list out of the full filtered and the non paginated list} / {the length of the full filtered and non paginated list}"
+                                    - col 2 : 
+                                        - a select input for selecting the page number , the list of options must be the length of the full filtered and non paginated list / batch size
+                                    - col 3 :
+                                        - a select input for selecting the batch size of the teacher list, with the options : 20,50,100
+                    Dynamics : 
+                        - clicking on the "filter" button update the teacher list and it's pagination in the screen based on the text and select input values
+                        - clicking on the "reenroll" button of a teacher card item  opens up a popup form which contains : 
+                            - UI : 
+                                - row 1 : 
+                                    - col : 
+                                        - the profile image of the teacher (this is not editable)
+                                        - the full name of the teacher (this is not editable)
+                                - row 2 :
+                                    - col : 
+                                        - row 1 : 
+                                            - a select input for the subjects the student wants to enroll in, make this select in a way that allows the student to select many subjects, the options must be only the subjects that the teacher teaches in the level and the section of the logged student
+                                        - row 2 : 
+                                            - an "enroll" button 
+                            - Dynamics : 
+                                - clicking on the "enroll" button of the popup form, sends an enroll request to the teacher
+                                  of the card and closes the popup form
+                                        
+            - the subjects screen : 
+                - the title of the App Bar is : "Subjects"
+                - the content of the screen :                 
+                    - UI : 
+                        - row 1 : 
+                            - col 1 : 
+                                - in a kpi card the total paid amount in DT across all of the subjects of the student 
+                            - col 2 : 
+                                - in a kpi card the total non paid amount in DT across all of the subjects of the the student 
+                        - row 4 :  
+                            - col : the list of the subjects that the student is studying in his groups with his teachers and each subjects must be in a clickable card which contains 
+                                - row 1
+                                    - col 1 : 
+                                        - the default image of the subject rounded
+                                    - col 2 : 
+                                        - row 1 :
+                                            - the name of subject
+                                        - row 2 :
+                                            - the week day and the time range of it's class in the following fomat  : "{week day} - {start time} to {end time}"
+                                    - col 3 : 
+                                        - the total paid amount on this subject 
+                                    - col 4 : 
+                                        - the total unpaid amount for this subject
+                                - row 2 (the footer of the card) : 
+                                    - in the right of the row  : the text format : "by {name of the teacher}"                            
+                    - Dynamics : 
+                        - clicking on a subject item card routes us to the subject detail screen : 
+                            - the title of the App Bar is : Subject name
+                            - the content of the screen : 
+                                - UI : 
+                                    - col :
+                                        - row 1 : 
+                                            - the subject card which must be the same as the subject card item of the Subjects screen 
+                                        - row 2 : 
+                                            - col 1 : 
+                                                - in a kpi card the total paid amount in DT on this subject 
+                                            - col 2 : 
+                                                - in a kpi card the total non paid amount in DT for this subject 
+                                        - row 3 : 
+                                            - the header for the class session batches list which contains the text "Class Session Batches"
+                                        - row 4 : 
+                                            - the list of class session batch of this subject which must be similar to the one in the student detail screen of the teacher 
+                                                profile with no ability to mark attendance nor payment 
+            - parents screen : 
+                - the title of the App Bar is : "Parent(s)"
+                - the content of the screen :  
+                    - col : the list of the parents of the student that were accepted by the teacher
+                        - row :
+                            - col 1 : 
+                                - the profile image of the parent rounded
+                            - col 2 : 
+                                - row 1 : the fullname of the parent
+                                - row 2 : the list of subjects he has access to in badges
+
+            - the notifications screen must contains : 
+                - the title of the App Bar is : "Notifications ({number of notifications})"
+                - the content of the screen : 
+                    - UI :
+                        - col : a notification list , each notification item must be in a clickable card which contains depend to the type of notfication the following : 
+
+                            - for the due payment notification 
+                                - UI : 
+                                    - col : 
+                                        - row 1 : 
+                                            - col 1 : 
+                                                - a rounded red filled dollar icon
+                                            - col 2 : 
+                                                - the following dynamic text : "you have to pay the teacher {Teacher fullname} {Non paid amount} DT for attending the last 4 {Subject name}'s classes"
+                                        - row 2 (the footer of the card) : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the detail screen of the subject
+
+                            - for the teacher marking the attendance of a student notification  :
+                                - UI : 
+                                    - col : 
+                                        - row 1 :
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher {Teacher fullname} marked your attendance for {the number of classes marked as attended} {Subject}'s class(es)."
+                                        - row 2 : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the detail screen of the subject
+
+                            - for the teacher marking classes as paid notificaton
+                                - UI : 
+                                    - col : 
+                                        - row 1 :
+                                            - col 1 :
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : the teacher {Teacher fullname} marked your payment for {The number classes marked as paid} {Subject name}'s classe(s)."
+                                        - row 2 : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes the detail screen of the subject
+
+                            - for the teacher accepting your enrollment request for the subject(s) you asked for notification 
+                                - UI : 
+                                    - col : 
+                                        - row 1 : 
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : the teacher {Teacher fullname} accepted your enrollment request for the subject(s) : {Subject name(s)} 
+                                        - row 2 (the footer of the card) : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the Subjects screen 
+
+                            - for the teacher accepting your enrollment request for part of the subjects you asked for
+                                - UI : 
+                                    - col : 
+                                        - row 1 : 
+                                            - col 1 : 
+                                                - the profile image of the teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher {Teacher fullname} accepted your enrollment request for the subject(s) : {Subject name(s)}  only."
+                                        - row 2 (the footer of the card) : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the to the Subjects screen 
+
+                            - for the teacher rejecting your enrollment request for the subject(s) you asked for :
+                                - UI : 
+                                    - col : 
+                                        - row 1 : 
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher {Teacher fullname} rejected your enrollment request for the subject(s) : {Subject name(s)}."
+                                        - row 2 (the footer of the card) : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the Subjects screen  
+
+                            - for the teacher added you to the classes of a new subject notification
+                                - UI : 
+                                    - col :
+                                        - row 1 :
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher {Teacher fullname} added you to the {Subject name}'s classes."
+                                        - row 2 : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes the detail screen of the subject  
+
+                            - for the teacher removed you from the classes of a subject notification
+                                - UI : 
+                                    - col :
+                                        - row 1 :
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher {Teacher fullname} removed you from the {Subject name}'s classes."
+                                        - row 2 : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the Subjects screen
+
+                            - for the schedule of the class of a subject changed permanently or only for this week notification
+                                - UI : 
+                                    - col :
+                                        - row 1 :
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher changed the schedule of the {Subject name}'s class to : {week day} from {start time of the class} to {end time of the class} {only this week or permanently}."
+                                        - row 2 : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the detail screen of the subject 
+
+                        - Dynamics : 
+                            some rules : 
+                                - the notification item card must be highlighted until the user clicks on it 
+                                - the notification number must be set to 0 after the user leaves the Notifications screen
+
+
+    - For the parent profile (THE WHOLE PROFILE IS CONFIRMED) : 
+
+        - the sidebar : 
+            - teachers 
+            - sons 
+            - notifications 
+
+        - the screens binded to each navigation item in the sidebar : 
+
+            - the teachers screen : 
+                - the title of the App Bar is : "Teachers"
+                - the content of the screen : 
+                    - UI : 
+                        - col : 
+                            - row 1 : a filter for the teacher list which contains
+                                col (represents the majority of the width of the row) : 
+                                    - a text input to search on name of the teacher (the filtering of the list must be on changing the value of this input)
+                                col : 
+                                    - a square button which contains a filter icon , clicking on it opens up a popup form for advanced filtering which contains :
+                                        - col : 
+                                            - a select input for the level 
+                                            - a select input for the section 
+                                            - a select input for the subject
+                                            - a filter button which closes the this popup and update the list of teachers based on the value of the selects and the 
+                                                text input 
+                            - row 2 : 
+                                - list of teachers and each teacher must be in a card which contains 
+                                    - row : 
+                                        - col 1 : 
+                                            - the profile image of the teacher
+                                        - col 2 : 
+                                            - row 1 : 
+                                                - the full name of the teachers 
+                                            - row 2 : 
+                                                - the the level and sections he teaches in badges, examples : (3 xiéme Math , 4 iéme Science)
+                                            - row 3 : 
+                                                - the subjects he teaches in badges, example (Math,Physique)
+                                        - col 3 :
+                                            - a "request parenting" button
+                            - row 3 : 
+                                - a pagingation for the teacher list which contains the following : 
+                                    - row : 
+                                        - col 1 : 
+                                            - "{the rank of the first teacher showed in the teacher list out of the full filtered and the non paginated list} to {the rank of the last teacher showed in the teacher list out of the full filtered and the non paginated list} / {the length of the full filtered and non paginated list}"
+                                        - col 2 : 
+                                            - a select input for selecting the page number , the list of options must be the length of the full filtered and non paginated list / batch size
+                                        - col 3 :
+                                            - a select input for selecting the batch size of the teacher list 
+                    - Dynamics : 
+                        - clicking on the "request parenting" button of any teacher card opens up a popup form : 
+                            UI : 
+                                - col 
+                                    - row 1 : 
+                                        - a select input that contains as an option list, the list of the sons of the parent that the requested teacher didn't give a parent access for them before (allow the parent to select multiple sons)
+                                    - row 
+                                        - the button "request parenting" which sends a parent request for the student that his details mentionned in form to the teacher
+                                        of the card 
+                            Dynamics : 
+                                - clicking on the "request parenting" button of the popup form sends a parenting request for the selected son/student to the teacher of the card,
+                                  if the parent already requested parenting for the selected son/student and the teacher still didn't respond, close the popup form and open a 
+                                  popup that inform the parent about that, otherwise just close the popup form 
+            - the sons screen :
+                - the title of the App Bar is : "Sons"
+                - the content of the screen : 
+                    - UI : 
+                        - col : 
+                            - row 1 :  
+                                - list of the sons of the parent and each son must be a clickable card which contains :
+                                    - row :
+                                        - col 1 : 
+                                            - the profile image of the son 
+                                        - col 2 : 
+                                            - the fullname of the son 
+                                            - the level and section of the son 
+                            - a sticky button at the bottom with the name "add a son" that doesn't hide the last card of the son list
+                    - Dynamics : 
+                        - clicking on a son card routes to the son detail screen which contains : 
+                            - the title of the App Bar is : "Son : {fullname of the son}"
+                            - the content of the screen : 
+                                - UI : 
+                                    - col :
+                                        - row 1 : 
+                                            - the student profile identity which contains : 
+                                                - col (align-items : center)
+                                                    - the student profile image rounded 
+                                                    - the the student's fullname 
+                                                    - the the level and the section of the student
+                                        - row 2 : 
+                                            - the subjects header which contains the text "Subjects" in the left 
+                                        - row 3 : 
+                                            - col 1 : 
+                                                - in a kpi card the total paid amount in DT across all of the subjects of the son 
+                                            - col 2 : 
+                                                - in a kpi card the total non paid amount in DT across all of the subjects of the son  
+                                        - row 4 :  
+                                            - col : 
+                                                - the list of the subjects that the son study in his groups with his teachers and each subjects must be in a clickable card which contains 
+                                                    - row 1
+                                                        - col 1 : 
+                                                            - the default image of the subject rounded
+                                                        - col 2 : 
+                                                            - the name of subject
+                                                            - the week day and the time range of it's class session in the following fomat  : "{week day} - {start time} to {end time}"
+                                                        - col 3 : 
+                                                            - the total paid amount on this subject 
+                                                        - col 4 : 
+                                                            - the total unpaid amount for this subject
+                                                    - row 2 (the footer of the card) : 
+                                                        - in the right of the row  : the text format : "by {name of the teacher}"
+                                - Dynamics : 
+                                    - clicking on a subject item card routes us to the subject detail screen which contains  : 
+                                        - the title of the App Bar is : Subject name
+                                        - the content of the screen : 
+                                            - UI : 
+                                                - col :
+                                                    - row 1 : 
+                                                        - the subject card which must be the same as the subject card of the subject list of the son detail screen 
+                                                    - row 2 : 
+                                                        - col 1 : 
+                                                            - in a kpi card the total paid amount in DT in this subject 
+                                                        - col 2 : 
+                                                            - in a kpi card the total non paid amount in DT in this subject 
+                                                    - row 3 : 
+                                                        - the header for the class session batches list which contains the text "Class Session Batches"
+                                                    - row 4 : 
+                                                        - the list of class session batch of this subject which must be similar to the one in the student detail screen of the teacher 
+                                                          profile with no ability to mark attendance nor payment 
+                        - clicking on the "Add a son" button opens up a popup form : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : 
+                                        - a text input for the fullname of the son
+                                    - row 2 : 
+                                        - a select input for the level of the son 
+                                    - row 3 : 
+                                        - a select input for the section of the som 
+                                    - row 4 : 
+                                        - an "add a son" button
+                            - Dynamics : 
+                                - clicking the "Add a son" button of the popup form creates a new son for the parent and it refreshes the son list 
+
+            - the notifications screen : 
+                - the title of the App Bar is : "Notifications ({number of notifications})"
+                - the content of the screen : 
+                    - UI : 
+                        - col : 
+                            - a notification list , each notification item must be in a clickable card which contains depend to the type of notfication the following : 
+                                - for the due payment notification : 
+                                    - UI : 
+                                        - col : 
+                                            - row 1 :
+                                                - col 1 : 
+                                                    - a rounded red filled dollar icon
+                                                - col2 : 
+                                                    - the following dynamic text : you have to pay the teacher {Teacher fullname} {The non paid amount} since your son {Son name} reached 4 unpaid {Subject} class sessions 
+                                            - row 2 (the footer of the card) : 
+                                                - in the most right of the row : the datetime that notification was created at
+                                    - Dynamics : 
+                                        - the click on this item card routes to the Subject detail screen of the mentionned Son and Subject 
+                                - for the teacher marking the attendance of a student notification : 
+                                    - UI : 
+                                        - col : 
+                                            - row 1 : 
+                                                - col 1 : 
+                                                    - the profile image of teacher rounded
+                                                - col 2 : 
+                                                    - the following dynamic text : the teacher {Teacher fullname} marked for your son {son fullname} the attendance of {nb of classes marked as attended for the son} {Subject}'s class(es)
+                                            - row 2 (the footer of the card) : 
+                                                - in the most right of the row : the datetime that notification was created at
+                                    - Dynamics : 
+                                        - the click on this item card routes to the Subject detail screen of the mentionned Son and Subject 
+
+                                - for the teacher marking class session(s) as paid notificaton
+                                    - UI 
+                                        - col : 
+                                            - row 1 : 
+                                                - col 1 : 
+                                                    - the profile image of teacher rounded
+                                                - col 2 : 
+                                                    - the following dynamic text : the teacher {Teacher fullname} marked for you son {Son's fullname} the payment for {The number of classes marked as paid} {Subject}'s class(es)
+                                            - row 2 (the footer of the card) : 
+                                                - in the most right of the row : the datetime that notification was created at
+                                    - Dynamics : 
+                                        - the click on this item card routes to the Subject detail screen of the mentionned Son and Subject 
+
+                                - for the teacher accepting the parenting request for the son(s) you asked for notification : 
+                                    - UI : 
+                                        - col : 
+                                            - row 1 : 
+                                                - col 1 : 
+                                                    - the profile image of teacher rounded
+                                                - col 2 : 
+                                                    - the following dynamic text : "the teacher {Teacher fullname} accepted your parenting request for the son(s) : {son(s) fullname(s)}."
+                                            - row 2 (the footer of the card) : 
+                                                - in the most right of the row : the datetime that notification was created at
+                                    - Dynamics : 
+                                        - the click on this item card routes to the sons screen 
+
+                                - for the teacher accepting the parenting request for some of the sons you asked for notification : 
+                                    - UI : 
+                                        - col : 
+                                            - row 1 : 
+                                                - col 1 : 
+                                                    - the profile image of teacher rounded
+                                                - col 2 : 
+                                                    - the following dynamic text : "the teacher {Teacher fullname} accepted your parenting request for the son(s) : {son(s) fullname(s)} only."
+                                            - row 2 (the footer of the card) : 
+                                                - in the most right of the row : the datetime that notification was created at
+                                    - Dynamics : 
+                                        - the click on this item card routes to the sons screen                                 
+
+                                - for the teacher rejecting the parenting request notification : 
+                                    - UI : 
+                                        - col : 
+                                            - row 1 : 
+                                                - col 1 : 
+                                                    - the profile image of teacher rounded
+                                                - col 2 : 
+                                                    - the following dynamic text : "the teacher {Teacher fullname} rejected your parenting request for the sons(s) : {son(s) fullnames}."
+                                            - row 2 (the footer of the card) : 
+                                                - in the most right of the row : the datetime that notification was created at
+                                    - Dynamics : 
+                                        - the click on this item card routes to the sons screen
+
+                            - for the teacher added your son to the classes of a new subject notification
+                                - UI : 
+                                    - col :
+                                        - row 1 :
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher {Teacher fullname} added your son {Son fullname} to the {Subject name}'s classes."
+                                        - row 2 : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes the detail screen of the subject  
+
+                            - for the teacher removed your son from the classes of a subject notification
+                                - UI : 
+                                    - col :
+                                        - row 1 :
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher {Teacher fullname} removed your son {Son fullname} from the {Subject name}'s classes."
+                                        - row 2 : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the Subjects screen
+
+                            - for the schedule of the class of a subject of your son changed permanently or only for this week notification
+                                - UI : 
+                                    - col :
+                                        - row 1 :
+                                            - col 1 : 
+                                                - the profile image of teacher rounded
+                                            - col 2 : 
+                                                - the following dynamic text : "the teacher changed for your don  the schedule of the {Subject name}'s class to : {week day} from {start time of the class} to {end time of the class} {only this week or permanently}."
+                                        - row 2 : 
+                                            - in the most right of the row : the datetime that notification was created at
+                                - Dynamics : 
+                                    - the click on this item card routes to the detail screen of the subject 
+
+                    - Dynamics : 
+                        - the notification item card must be highlighted until the user clicks on it 
+                        - the notification number must be set to 0 after the user leaves the Notification screen
+
+
+
+        
+          
+
+ideas i shouldn't forget in my prompt :
+    - student space in which he can follow his payments with all of his teachers 
+    - the ability to edit the info of  : 
+        - the student 
+        - the group
+        - the subject (done)
+
+
+
+
+
+###
+
+    - the level list screen which contains : 
+        - the list of levels, each level item must contain the level name and he must she clickable
+        - the ability to create a new level through a button that shows up a popup form which contains : a select input with level options 
+        - on click on a level item :
+            - if a level has sections ,the section list screen must shows up whic contains : 
+                - the list of sections, each section item must contains the section name and she must be clickable
+                - the ability to create a new level through a button that shows up a popup form which contains : a select input with section options 
+                - on click on a section item, the group list screen must shows up which contains  : 
+                    - the list of groups, each group item must contains the group name and he must be clickable
+                    - 
+
+###
+ 
