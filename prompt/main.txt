@@ -385,12 +385,12 @@ private classes, which will allow them to :
                                                         - row 2 : 
                                                             - a select input with the following two options : 
                                                                 - select an existing student 
-                                                                - add a new student 
+                                                                - create new student 
                                                 - row 3 : the footer of the popup form  
                                                     - a button with the name "Next" 
                                         - Dynamics : 
                                             - clicking on the button "Next" , replaces the  UI of the popup form based on the selected value : 
-                                                - for the value : "select an existing student" : 
+                                                - for the selecting : "select an existing student" : 
                                                     - UI : 
                                                         - col : 
                                                             - row 1 : the header of the popup form
@@ -419,12 +419,158 @@ private classes, which will allow them to :
                                                         - checking the checbox of a selected student item card , changes the name of the button "Add" to this format "Add ({the number of the checked students})"  
                                                         - clicking on the "Back" button returns the UI of popup form to the previous one 
                                                         - clicking on the "Add" button , adds the selected students to the group, closes the popup form and updates the group detail screen
-                                                            
+                                                - for selecting "create new student" :    
+                                                    - UI : 
+                                                        - col : 
+                                                            - row 1 : the header of the popup form
+                                                                - col 1 : 
+                                                                    - in the most right, the title : "Create a new student"
+                                                                - col 2 : 
+                                                                    - in the most left, the close icon 
+
+                                                            - row 2 : the content area of the popup form 
+                                                                - col : 
+                                                                    - row 1 : in the middle of the row
+                                                                        - the default profile image of a student rounded and on tof it in the bottom right a small circle that contains the "+" icons which conveys that you can upload your profile image (not required)
+                                                                    - row 2 :  
+                                                                        - a text input for the full name of the student  ( required)
+                                                                    - row 3 : 
+                                                                        - a button which contains the text "Create"
+
+                                                            - row 3 : the footer the popup form 
+                                                                - col : 
+                                                                    - a button with the name "Back"
+                                                                - col : 
+                                                                    - a button with the name "Add"
+                                                    - Dynamics : 
+                                                        - clicking on the "Back" button returns the UI of popup form to the previous one 
+                                                        - clicking on the "Add" button , creates the student with the specified profile image , fullname and the group's section and level then adds it to to the group 
 
 
                                             
-                                    - clicking on the checkbox of a student card item :
-                                        pass
+                                    - checking the checkbox of at least one student card item, slides up from the bottom of the screena sticy block at the bottom which contains : 
+                                        - UI  : 
+                                            - row : 
+                                                - col 1 : which takes the double with of the next col 
+                                                    - a select input for the grouped action with the following options : 
+                                                        - remove from the group 
+                                                        - mark attendance 
+                                                        - unmark attendance 
+                                                        - mark payment 
+                                                        - unmark payment 
+                                                - col 2 : which takes the half of the with of the first column
+                                                    - a button with the name start 
+                                        - Dynamics : 
+                                            - clicking on the "start" button opens up a different popup type depending to the selected grouped action
+                                                - for the grouped action : "remove from the group", the popup contains 
+                                                    - UI : 
+                                                        - col : 
+                                                            - row 1 : the header of the popup
+                                                                - the center of the row, the title of the popup : "Confirm removal"
+                                                            - row 2 : the content area of the group 
+                                                                - col : 
+                                                                    - row 1 : 
+                                                                        - at the center of the row,a trash icon 
+                                                                    - row 2 : 
+                                                                        - at the center of the row, the text format : "Are you sure you want to remove the selected {number of selected/checked students} student(s) from the group"
+                                                            - row 3 : the footer of the popup
+                                                                - col 1 : 
+                                                                    - a button with the name "No"
+                                                                - col 2 : 
+                                                                    - a highlighted button with the name "Yes"
+                                                    - Dynamics : 
+                                                        - clicking on the "No" button, closes the the popup 
+                                                        - clicking on the "Yes" button, removes the selected students from the group then it closes the popup  
+                                                - for the grouped action : "mark attendance", the popup contains 
+                                                    - UI : 
+                                                        - col : 
+                                                            - row 1 : the header of the popup
+                                                                - the center of the row, the title of the popup : "Mark attendance ({the number of selected students})"
+                                                            - row 2 : the content area of the group 
+                                                                - col : 
+                                                                    - row 1 : 
+                                                                        - at the center of the row, a user attendance icon 
+                                                                    - row 2 : 
+                                                                        - col :
+                                                                            - row 1 :  
+                                                                                - the label : "Number of class(es)"
+                                                                            - row 2 : 
+                                                                                - a number input (min : 1 ,required)
+                                                                    - row 3 :
+                                                                        - col : 
+                                                                            - row 1 :
+                                                                                - the label : "Datetime"
+                                                                            - row 2 : 
+                                                                                - a datetime selector (default value : current datetime, allow past datetimes, min : 1 ,required)
+                                                            - row 3 : the footer of the popup
+                                                                - col 1 : 
+                                                                    - a button with the name "Cancel"
+                                                                - col 2 : 
+                                                                    - a highlighted button with the name "Mark"
+                                                    - Dynamics : 
+                                                        - clicking on the "Cancel" button, closes the the popup 
+                                                        - clicking on the "Yes" button : 
+                                                            - mark the attendance for {x} classes for each selected student , if a student doesn't have enough classes to mark their attendance, create new classes bath, until he has enough
+                                                            - then closes the popup  
+
+                                                - for the grouped action : "unmarkmark attendance", the popup contains 
+                                                    - UI : 
+                                                        - col : 
+                                                            - row 1 : the header of the popup
+                                                                - the center of the row, the title of the popup : "Unmark attendance ({the number of selected students})"
+                                                            - row 2 : the content area of the group 
+                                                                - col : 
+                                                                    - row 1 : 
+                                                                        - at the center of the row, a user attendance icon with an "x" icon
+                                                                    - row 2 : 
+                                                                        - col :
+                                                                            - row 1 :  
+                                                                                - the label : "Number of class(es)"
+                                                                            - row 2 : 
+                                                                                - a number input (min : 1 ,required)
+                                                            - row 3 : the footer of the popup
+                                                                - col 1 : 
+                                                                    - a button with the name "Cancel"
+                                                                - col 2 : 
+                                                                    - a highlighted button with the name "Mark"
+                                                    - Dynamics : 
+                                                        - clicking on the "Cancel" button, closes the the popup 
+                                                        - clicking on the "Yes" button : 
+                                                            - mark the unattendance for {x} classes for each selected student, if a student has an overflow of unnecessary classes batch, delete them
+                                                            - then closes the popup 
+
+                                                - for the grouped action : "mark payment", the popup contains 
+                                                    - UI : 
+                                                        - col : 
+                                                            - row 1 : the header of the popup
+                                                                - the center of the row, the title of the popup : "Mark payment ({the number of selected students})"
+                                                            - row 2 : the content area of the group 
+                                                                - col : 
+                                                                    - row 1 : 
+                                                                        - at the center of the row, a payment icon 
+                                                                    - row 2 : 
+                                                                        - col :
+                                                                            - row 1 :  
+                                                                                - the label : "Number of class(es)"
+                                                                            - row 2 : 
+                                                                                - a number input (min : 1 ,required)
+                                                                    - row 3 :
+                                                                        - col : 
+                                                                            - row 1 :
+                                                                                - the label : "Datetime"
+                                                                            - row 2 : 
+                                                                                - a datetime selector (default value : current datetime, allow past datetimes, min : 1 ,required)
+                                                            - row 3 : the footer of the popup
+                                                                - col 1 : 
+                                                                    - a button with the name "Cancel"
+                                                                - col 2 : 
+                                                                    - a highlighted button with the name "Mark"
+                                                    - Dynamics : 
+                                                        - clicking on the "Cancel" button, closes the the popup 
+                                                        - clicking on the "Yes" button : 
+                                                            - mark the payment for {x} classes for each selected student , if a student doesn't have enough attendet classes to mark their payment, create new classes batches until he has enough and mark them as attented and paid at the specified datetime
+                                                            - then closes the popup  
+
                                     - clicking anywhere on the a student card item aside from the checkbox : 
                                         pass
 
