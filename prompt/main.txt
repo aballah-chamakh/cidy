@@ -117,12 +117,12 @@ private classes, which will allow them to :
                                                 - row 1 : 
                                                     - the total paid amount in dinars accross the students of the selected level of the selected subject or a paticular subject (in the case of the all) in the selected date range, in the green color and a big size
                                                 - row 2 : 
-                                                    - the text format : "{subject} paid amount", in a small size
+                                                    - the text format : "{subject} - paid amount", in a small size
                                             - col 2 : a kpi card that contains
                                                 - row 1 : 
                                                     - the total unpaid amount in dinars accross the students of the selected level of the selected subject or a paticular subject (in the case of the all) in the selected date range, in the red color and a big size
                                                 - row 2 : 
-                                                    - the text format : "{subject} unpaid amount", in a small size
+                                                    - the text format : "{subject} - unpaid amount", in a small size
 
 
             - the groups screen : 
@@ -466,7 +466,7 @@ private classes, which will allow them to :
                                                     - UI : 
                                                         - col : 
                                                             - row 1 : the header of the popup
-                                                                - the center of the row, the title of the popup : "Confirm removal"
+                                                                - at center of the row, the title of the popup : "Confirm removal"
                                                             - row 2 : the content area of the group 
                                                                 - col : 
                                                                     - row 1 : 
@@ -485,7 +485,7 @@ private classes, which will allow them to :
                                                     - UI : 
                                                         - col : 
                                                             - row 1 : the header of the popup
-                                                                - the center of the row, the title of the popup : "Mark attendance ({the number of selected students})"
+                                                                - at center of the row, the title of the popup : "Mark attendance ({the number of selected students})"
                                                             - row 2 : the content area of the group 
                                                                 - col : 
                                                                     - row 1 : 
@@ -493,7 +493,7 @@ private classes, which will allow them to :
                                                                     - row 2 : 
                                                                         - col :
                                                                             - row 1 :  
-                                                                                - the label : "Number of class(es)"
+                                                                                - the label : "Number of classes"
                                                                             - row 2 : 
                                                                                 - a number input (min : 1 ,required)
                                                                     - row 3 :
@@ -501,7 +501,7 @@ private classes, which will allow them to :
                                                                             - row 1 :
                                                                                 - the label : "Datetime"
                                                                             - row 2 : 
-                                                                                - a datetime selector (default value : current datetime, allow past datetimes, min : 1 ,required)
+                                                                                - a datetime selector (default value : current datetime, allow past datetimes,required)
                                                             - row 3 : the footer of the popup
                                                                 - col 1 : 
                                                                     - a button with the name "Cancel"
@@ -510,14 +510,14 @@ private classes, which will allow them to :
                                                     - Dynamics : 
                                                         - clicking on the "Cancel" button, closes the the popup 
                                                         - clicking on the "Yes" button : 
-                                                            - mark the attendance for {x} classes for each selected student , if a student doesn't have enough classes to mark their attendance, create new classes bath, until he has enough
+                                                            - mark the attendance for {the specified number of classes} classes for each selected student , if a student doesn't have enough classes to mark their attendance, create new class batches, until he has enough
                                                             - then closes the popup  
 
-                                                - for the grouped action : "unmarkmark attendance", the popup contains 
+                                                - for the grouped action : "unmark attendance", the popup contains 
                                                     - UI : 
                                                         - col : 
                                                             - row 1 : the header of the popup
-                                                                - the center of the row, the title of the popup : "Unmark attendance ({the number of selected students})"
+                                                                - at the center of the row, the title of the popup : "Unmark attendance ({the number of selected students})"
                                                             - row 2 : the content area of the group 
                                                                 - col : 
                                                                     - row 1 : 
@@ -525,7 +525,7 @@ private classes, which will allow them to :
                                                                     - row 2 : 
                                                                         - col :
                                                                             - row 1 :  
-                                                                                - the label : "Number of class(es)"
+                                                                                - the label : "Number of classes"
                                                                             - row 2 : 
                                                                                 - a number input (min : 1 ,required)
                                                             - row 3 : the footer of the popup
@@ -536,14 +536,14 @@ private classes, which will allow them to :
                                                     - Dynamics : 
                                                         - clicking on the "Cancel" button, closes the the popup 
                                                         - clicking on the "Yes" button : 
-                                                            - mark the unattendance for {x} classes for each selected student, if a student has an overflow of unnecessary classes batch, delete them
+                                                            - mark the unattendance for {the specified number of classes} classes for each selected student, if a student has an overflow of unnecessary class batches, delete them
                                                             - then closes the popup 
 
                                                 - for the grouped action : "mark payment", the popup contains 
                                                     - UI : 
                                                         - col : 
                                                             - row 1 : the header of the popup
-                                                                - the center of the row, the title of the popup : "Mark payment ({the number of selected students})"
+                                                                - at the center of the row, the title of the popup : "Mark payment ({the number of selected students})"
                                                             - row 2 : the content area of the group 
                                                                 - col : 
                                                                     - row 1 : 
@@ -551,7 +551,7 @@ private classes, which will allow them to :
                                                                     - row 2 : 
                                                                         - col :
                                                                             - row 1 :  
-                                                                                - the label : "Number of class(es)"
+                                                                                - the label : "Number of classes"
                                                                             - row 2 : 
                                                                                 - a number input (min : 1 ,required)
                                                                     - row 3 :
@@ -559,7 +559,7 @@ private classes, which will allow them to :
                                                                             - row 1 :
                                                                                 - the label : "Datetime"
                                                                             - row 2 : 
-                                                                                - a datetime selector (default value : current datetime, allow past datetimes, min : 1 ,required)
+                                                                                - a datetime selector (default value : current datetime, allow past datetimes,required)
                                                             - row 3 : the footer of the popup
                                                                 - col 1 : 
                                                                     - a button with the name "Cancel"
@@ -567,52 +567,353 @@ private classes, which will allow them to :
                                                                     - a highlighted button with the name "Mark"
                                                     - Dynamics : 
                                                         - clicking on the "Cancel" button, closes the the popup 
-                                                        - clicking on the "Yes" button : 
-                                                            - mark the payment for {x} classes for each selected student , if a student doesn't have enough attendet classes to mark their payment, create new classes batches until he has enough and mark them as attented and paid at the specified datetime
+                                                        - clicking on the "Mark" button : 
+                                                            - mark the payment for {the specified number of classes} classes for each selected student 
+                                                            - then closes the popup 
+
+                                                - for the grouped action : "unmark payment", the popup contains 
+                                                    - UI : 
+                                                        - col : 
+                                                            - row 1 : the header of the popup
+                                                                - at the center of the row, the title of the popup : "Unmark payment ({the number of selected students})"
+                                                            - row 2 : the content area of the group 
+                                                                - col : 
+                                                                    - row 1 : 
+                                                                        - at the center of the row, a payment icon 
+                                                                    - row 2 : 
+                                                                        - col :
+                                                                            - row 1 :  
+                                                                                - the label : "Number of classes"
+                                                                            - row 2 : 
+                                                                                - a number input (min : 1 ,required)
+                                                            - row 3 : the footer of the popup
+                                                                - col 1 : 
+                                                                    - a button with the name "Cancel"
+                                                                - col 2 : 
+                                                                    - a highlighted button with the name "Unmark"
+                                                    - Dynamics : 
+                                                        - clicking on the "Cancel" button, closes the the popup 
+                                                        - clicking on the "Mark" button : 
+                                                            - unmark the payment for {the specified number of classes} classes for each selected student
                                                             - then closes the popup  
 
-                                    - clicking anywhere on the a student card item aside from the checkbox : 
-                                        pass
+                                    - clicking anywhere on the a student card item aside from the checkbox routes to the Student detail screen, which i will describe next 
+
+            - the students screen : 
+                - the title of the App Bar is : "Students"
+                - the content of the screen : 
+                    - UI :
+                        - col : 
+                            - row 1 :
+                                - col 1 : this takes the majority of the with 
+                                        - a text input to search by the name of the student 
+                                - col 2 : 
+                                    - a square button that contains the filter icon 
+                            - row 2 : 
+                                - col : the list of all the students of the teacher , the ones that belongs to the groups and the ones that don't, and each student must be in a clickable card wich contains : 
+                                    - row 1 : 
+                                        - col 1 : 
+                                            - the profile of the student rounded 
+                                        - col 2 : 
+                                            - row 1 : 
+                                                - the fullname of the student 
+                                            - row 2 :
+                                                - the level and the section of the student 
+                                            - row 3 : 
+                                                - the subjects of the groups that the student belong to, each subject must in a badge
+                                        - col 3 :
+                                            - the paid amount by this student in the green color and abbreviated, example : turn 1125 to 1.125k
+                                        - col 4 :
+                                            - the unpaid amount by this student in the red color and abbreviated
+                                        - col 5 : 
+                                            - a checkbock 
+                    - Dynamics : 
+                        - clicking on the filter square button opens up a popup form which contains : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : the header of the popup
+                                        - col 1 : 
+                                            - in the most right the title : "Filter"
+                                        - col 2 : 
+                                            - in the most left the close icon
+                                    - row 2 : the content area of the popup 
+                                        - row 1 : 
+                                            - col : 
+                                                - row 1 
+                                                    - the label: Level
+                                                - row 2 
+                                                    - a select input which contains as options, all the levels that the teachers teaches (the ones includes in the prices screen)
+
+                                        - row 2 : 
+                                            - col : 
+                                                - row 1
+                                                    - the label : Section 
+                                                - row 2 
+                                                    - a select input which contains as options, all of the sections of the selected level
+                                                    notes :
+                                                        - if the user didn't select a level, keep section select disabled 
+                                                        - if the selected level doesn't have sections according to the prices screen , make the select section disabled otherwise re-enable it
+                                        
+                                        - row 2 : 
+                                            - col : 
+                                                - row 1
+                                                    - the label : Subject 
+                                                - row 2 
+                                                    - a select input which contains as options, all the subjects of the selected section or of the selected level if the selected level doesn't have sections 
+                                                        notes :
+                                                            - make the subject select disabled, if the selected level has sections and the user still didn't select a section 
+                                    - row 3 : the footer of the popup 
+                                        - row  : 
+                                            - col 1 : 
+                                                - a button with the name : "Reset ({the number of selected options})"     
+                                            - col 2 : 
+                                                - a button with the name : "Filter"
+                            - Dynamics : 
+                                - clicking on the close icon of the header of the popup closes the popup  
+                                - clicking on the "Reset" button of the footer of the popup : 
+                                    - resets all of the selects of the popup 
+                                    - filters the student list only by the value fullname if specified 
+                                    - doesn't close the popup 
+                        - checking the checkbox of at least one student card, slides up from the bottom a sticky block at bottom which contains : 
+                            - UI : 
+                                - row : 
+                                    - a button with the name : "Delete ({the number of checked students})"
+                            - Dynamics : 
+                                - clicking on the the delete button, deletes these student even if they are part of groups 
+                        - clicking on any part of a student card aside from the checkbox routes to the student detail screen : 
+                            - the title of the App Bar is : "Student"
+                            - the content of the screen : 
+                                - UI : 
+                                    - col : 
+                                        - row 1 : 
+                                            - col : 
+                                                - row 1 : 
+                                                    - at the center of the row,the profile image of the student rounded 
+                                                - row 2 :
+                                                    - at the center of the row,the fullname of the student
+                                                - row 3 :
+                                                    - at the center of the row,the level & the section of the student 
+                                                - row 4 :
+                                                    - at the center of the row,the phone number of the student
+                                        - row 2 : 
+                                            - col 1 : a kpi card 
+                                                - row 1 : 
+                                                    - the paid amount by the students accross all of his groups, in the green color and in a big size 
+                                                - row 2 : 
+                                                    - the text  : "paid", in a small size 
+
+                                            - col 1 : a kpi card 
+                                                - row 1 : 
+                                                    - the unpaid amount by the students accross all of his groups, in the red color and in a big size 
+                                                - row 2 : 
+                                                    - the text  : "unpaid", in a small size 
+                                        
+                                        - row 3 : 
+                                            -col : 
+                                                - row 1 : 
+                                                    - the label : "Group"
+                                                - row 2 : 
+                                                    - a select input which contains as options, all the groups that the student belongs to, for each option the label must follow the following format :
+                                                      "{Subject of the group} - {the name of the group}" while the value must be the id of the group
+                                        - row 4 : 
+                                            - col 1 : a kpi card 
+                                                - row 1 : 
+                                                    - the paid amount by the students in the selected group, in the green color and in a big size 
+                                                - row 2 : 
+                                                    - the text  : "{group name} - paid", in a small size 
+
+                                            - col 1 : a kpi card 
+                                                - row 1 : 
+                                                    - the unpaid amount by the students in the selected group, in the red color and in a big size 
+                                                - row 2 : 
+                                                    - the text  : "{group name} - unpaid", in a small size
+
+                                        - row 5 : 
+                                            - col : 
+                                                - row 1 : 
+                                                    - a header with the text : "Class Batches"
+                                                - row 2 : the list of class batches of the selected group and each class batch must be in a card which contains : 
+                                                    - row : justify content : space around
+                                                        col 1 : 
+                                                            -  a circle, which represent a class 
+                                                        col 2 : 
+                                                            -  a circle, which represent a class  
+                                                        col 3 : 
+                                                            -  a circle, which represent a class
+                                                        col 4 : 
+                                                            -  a circle, which represent a class
+                                                    notes : 
+                                                        - the stoke color of the batch card and the circle color represents the status of the payment and attendance of the student,
+                                                          following the following color code below  : 
+                                                            - for the circle (class session)
+                                                                - red circle : the student attended this class , he still didn't pay for it and the payment is due (status : not_paid)
+                                                                - orange circle : the student attended this class , he still didn't pay for it and the payment isn't due (status : not_due)
+                                                                - green circle : the student attended this class and he paid for it (status : paid)
+                                                                - gray circle : the class still in the future (status : future)
+                                                            - for the cards (batch of classes)
+                                                                - red stroke : the batch contains 4 classes that the student attended, didn't pay for them and their payment is due (status : not_paid)
+                                                                - green stroke : the batch contains 4 classes that the student attended and he did pay for them (status : paid)
+                                                                - orange stroke : the batch contains at least one class paid and the rest for the classes are due and not paid (status : not_due)
+                                                                - gray stroke : the rest of the situation (status : new)
+                                        - row 6 : a sticky block at the bottom of the screen that doesn't hide the last element in the screen, which contains  : 
+                                            - row : 
+                                                - col 1 : which takes the double with of the next col 
+                                                    - a select input for the grouped action with the following options : 
+                                                        - mark attendance 
+                                                        - unmark attendance 
+                                                        - mark payment 
+                                                        - unmark payment 
+                                                        - edit 
+                                                        - delete 
+                                                - col 2 : which takes the half of the with of the first column
+                                                    - a button with the name start 
+                                - Dynamics : 
+                                    - clicking on any batch card, open a popup which contains  : 
+                                        - UI : 
+                                            - col : 
+                                                - row 1 : the header of the popup
+                                                    - col 1 : 
+                                                        - at the most right, the title of the popup : "Class batch details"
+                                                    - col 2 : 
+                                                            - at the most left, the close icon 
+                                                - row 2 : the content area of the popup 
+                                                    - col : 
+                                                        - row 1 : 
+                                                            - a batch which contains the status of the batch (status : new, paid, not_due, not_paid)
+                                                        - row 2 : 
+                                                            a vertical line that contains the 4 circles of the batch, each circle : 
+                                                                - represents a class
+                                                                - colored according to the status of the class (status : future, paid, not_due, not_paid) 
+                                                            next to each circle there is the details of the class which contains : 
+                                                                - the datetime of the class stopped heeeeeeeeeeeeeeeeeere
+
+                                    - clicking on the "start" button opens up a different popup type depending to the selected grouped action
+                                        - for the grouped action : "mark attendance", the popup contains 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - at center of the row, the title of the popup : "Mark attendance"
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row, a user attendance icon 
+                                                            - row 2 : 
+                                                                - col :
+                                                                    - row 1 :  
+                                                                        - the label : "Number of classes"
+                                                                    - row 2 : 
+                                                                        - a number input (min : 1 ,required)
+                                                            - row 3 :
+                                                                - col : 
+                                                                    - row 1 :
+                                                                        - the label : "Datetime"
+                                                                    - row 2 : 
+                                                                        - a datetime selector (default value : current datetime, allow past datetimes,required)
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "Cancel"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Mark"
+                                            - Dynamics : 
+                                                - clicking on the "Cancel" button, closes the the popup 
+                                                - clicking on the "Mark" button : 
+                                                    - marks the attendance for the last {the specified number of classes} classes in the selected group for the student , if the student doesn't have enough classes to mark their attendance, create new class batches, until he has enough
+                                                    - then closes the popup  
+
+                                        - for the grouped action : "unmark attendance", the popup contains 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - at the center of the row, the title of the popup : "Unmark attendance"
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row, a user attendance icon with an "x" icon
+                                                            - row 2 : 
+                                                                - col :
+                                                                    - row 1 :  
+                                                                        - the label : "Number of classes"
+                                                                    - row 2 : 
+                                                                        - a number input (min : 1 ,required)
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "Cancel"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Unmark"
+                                            - Dynamics : 
+                                                - clicking on the "Cancel" button, closes the the popup 
+                                                - clicking on the "Unmark" button : 
+                                                    - unmarks the attendance for the last {the specified number of classes} classes of the selected group for the student, if the student in the selected group has an overflow of unnecessary class batches, delete them
+                                                    - then closes the popup 
+
+                                        - for the grouped action : "mark payment", the popup contains 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - at the center of the row, the title of the popup : "Mark payment"
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row, a payment icon 
+                                                            - row 2 : 
+                                                                - col :
+                                                                    - row 1 :  
+                                                                        - the label : "Number of classes"
+                                                                    - row 2 : 
+                                                                        - a number input (min : 1 ,required)
+                                                            - row 3 :
+                                                                - col : 
+                                                                    - row 1 :
+                                                                        - the label : "Datetime"
+                                                                    - row 2 : 
+                                                                        - a datetime selector (default value : current datetime, allow past datetimes,required)
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "Cancel"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Mark"
+                                            - Dynamics : 
+                                                - clicking on the "Cancel" button, closes the  popup 
+                                                - clicking on the "Mark" button : 
+                                                    - mark the payment for last {the specified number of classes} classes of the selected group for the the student , if 
+                                                        the student doesn't have enough classes to mark their payment, create new class batches, until he has enough and mark 
+                                                        the missing classes as attended and paid
+                                                    - then closes the popup 
+
+                                        - for the grouped action : "unmark payment", the popup contains 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - at the center of the row, the title of the popup : "Unmark payment"
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row, a payment icon 
+                                                            - row 2 : 
+                                                                - col :
+                                                                    - row 1 :  
+                                                                        - the label : "Number of classes"
+                                                                    - row 2 : 
+                                                                        - a number input (min : 1 ,required)
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "Cancel"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Unmark"
+                                            - Dynamics : 
+                                                - clicking on the "Cancel" button, closes the the popup 
+                                                - clicking on the "Unmark" button : 
+                                                    - unmark the payment for the last {the specified number of classes} classes in the selected group for the selected student
+                                                    - then closes the popup  
+
+
+                                                
+                            
+                                        
 
 
 
-                                                        
 
-
-
-
-
- 
-
-                the group detail screen must contains : 
-                    - the group name,level,section (if the level has sections),subject (make them all editable through a form and edit button 
-                      and make the options list of the select inputs of the level,section and subject the same as described in the filer of the groups screen)
-                    - the following kpis in cards : 
-                        - the total paid amount accross all of the students of this group
-                        - the total unpaid amount accross all of the students of this group
-                    - the list of students that belong to this group 
-                    - a filter for the student list which contains  :
-                        - a text input which search the fullname of the student
-                        - an order by select input which contains the following options : 
-                            - paid amount descendant 
-                            - paid amount ascendant 
-                            - unpaid amount descendant
-                            - unpaid amount ascendant
-                    - each student item card from the student list, must be clickable and must contain
-                        - a checkbox 
-                        - the profile image of the student (use default ones, one for male student and another for female students)
-                        - the name of the student
-                        - the total paid amount of student
-                        - the total unpaid amount of the student
-                    - the ability to add a new student through a button, that shows up a popup form which contains 
-                        - text input for the full name of the student
-                        - text input phone number of the student
-                        - a select input for the sex of the student male of female
-                    - the ability to mark the attendance of the selected students through button that show a popup form which contain
-                        - a datetime selector 
-                        - a mark attendance button 
-                    - the ablility to delete the selected students in bulk , show to user the an "are you sure" popup before deleteing the selected students 
-                    - on click on the student item card from the list, the student detail screen will show up which i will describe next 
 
                     the student detail screen must contains : 
                         - an identity card for the student which contains his : 
