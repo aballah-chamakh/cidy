@@ -229,7 +229,7 @@ private classes, which will allow them to :
                                 - row : 
                                     - a button with the name format:  "Detele {the number of the checked checkboxes}"
                             Dynamics :
-                                - clicking on the "Detele {the number of the checked checkboxes}" button, opens up the "Are you sure" popup which contains : 
+                                - clicking on the "Delete {the number of the checked checkboxes}" button, opens up the "Are you sure" popup which contains : 
                                     UI : 
                                         - col : 
                                             - row 1 : in the header of the popup 
@@ -768,24 +768,33 @@ private classes, which will allow them to :
                                                 - col 2 : which takes the half of the with of the first column
                                                     - a button with the name start 
                                 - Dynamics : 
-                                    - clicking on any batch card, open a popup which contains  : 
+                                    - clicking on any batch card, opens up a popup which contains  : 
                                         - UI : 
                                             - col : 
                                                 - row 1 : the header of the popup
                                                     - col 1 : 
-                                                        - at the most right, the title of the popup : "Class batch details"
+                                                        - at the most left, the title of the popup : "Class batch details"
                                                     - col 2 : 
-                                                            - at the most left, the close icon 
+                                                            - at the most right, the close icon 
                                                 - row 2 : the content area of the popup 
                                                     - col : 
                                                         - row 1 : 
-                                                            - a batch which contains the status of the batch (status : new, paid, not_due, not_paid)
+                                                            - a badge which contains the status of the batch (status : new, paid, not_due, not_paid. replace the underscore with a space) 
+                                                              and his background color colored according to the status of the batch
                                                         - row 2 : 
-                                                            a vertical line that contains the 4 circles of the batch, each circle : 
-                                                                - represents a class
+                                                            - a vertical line with 4 circles in top of it and spaced, each circle : 
+                                                                - represents a class of the batch 
                                                                 - colored according to the status of the class (status : future, paid, not_due, not_paid) 
                                                             next to each circle there is the details of the class which contains : 
-                                                                - the datetime of the class stopped heeeeeeeeeeeeeeeeeere
+                                                                - if the status of the class is attended then the datetime of attendance , if it's paid the datetime of the payment, otherwise skip this part 
+                                                                - the status of the class (status : future, paid, not_due, not_paid) , replacing the underscore with a space
+                                                - row 3 : the footer of the popup 
+                                                    - col 1 : 
+                                                        - a button with the name "Close"
+                                        - Dynamics : 
+                                            - clicking on the close icon of the header, closes the popup form 
+                                            - clicking on the close button of the footer, closes the popup form 
+
 
                                     - clicking on the "start" button opens up a different popup type depending to the selected grouped action
                                         - for the grouped action : "mark attendance", the popup contains 
@@ -906,79 +915,222 @@ private classes, which will allow them to :
                                                     - unmark the payment for the last {the specified number of classes} classes in the selected group for the selected student
                                                     - then closes the popup  
 
+                                        - for the grouped action : "edit", the popup contains 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - col 1 : 
+                                                            - at the most left, the title of the popup : "Edit the group"
+                                                        - col 2 : 
+                                                            - at the most right, the close icon
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row, the profile image of the student rounded, at the bottom right corner of it a a circle that contains the edit icon 
+                                                            - row 2 : 
+                                                                - col :
+                                                                    - row 1 :  
+                                                                        - the label : "Full name" 
+                                                                    - row 2 : 
+                                                                        - a text input pre-filled with the current value (required)
+                                                            - row 2 : 
+                                                                - col :
+                                                                    - row 1 :  
+                                                                        - the label : "Phone number" 
+                                                                    - row 2 : 
+                                                                        - a text input pre-filled with the current value (required,accepts only integer characters,min length : 8, max length : 8)
+                                                            - row 3 : 
+                                                                - col :
+                                                                    - row 1 :  
+                                                                        - the label : "Level" 
+                                                                    - row 2 : 
+                                                                        - a select input input pre-filled with the current value, the option list of this select is the list of the levels that the teacher teaches, the ones included 
+                                                                          in the prices screen (required)
 
+                                                            - row 3 : 
+                                                                - col :
+                                                                    - row 1 :  
+                                                                        - the label : "Section" 
+                                                                    - row 2 : 
+                                                                        - a select input input pre-filled with the current value (required if the selected level has sections)
+                                                                            notes : 
+                                                                                - if the selected level doesn't have sections, disable the section select and re-enable it later 
+                                                                                - the option list here is dynamic and must be updated based on the selected level 
+
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "Cancel"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Edit"
+                                            - Dynamics : 
+                                                - clicking on the close icon, closes the popup form
+                                                - clicking on the "Cancel" button of the footer, closes the popup 
+                                                - clicking on the "Edit" button of the footer : 
+                                                    - edits the student 
+                                                    - then closes the popup 
                                                 
-                            
+                                        - for the grouped action : "delete" the popup contains 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - at center of the row, the title of the popup : "Confirm Delete"
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row,a trash icon 
+                                                            - row 2 : 
+                                                                - at the center of the row, the text format : "Are you sure you want to delete the student {the student's full name} ?"
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "No"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Yes"
+                                            - Dynamics : 
+                                                - clicking on the "No" button, closes the the popup 
+                                                - clicking on the "Yes" button, deletes the student then closes the popup 
                                         
+            - the price screen : 
+                - the title of the App Bar is : "Prices"
+                - the content of the screen :
+                    - UI :
+                        - col :
+                            - row 1 : the header row for the levels list
+                                - col 1 : 
+                                    - the text "Levels"
+                                - col 2 : 
+                                    - a button with the name "Add"
+                            - row 2 : the list of levels
+                                - col : each level must be in a card which contains :
+                                    - row :
+                                        - col 1 :
+                                            - a checkbox
+                                        - col 2 :
+                                            - the name of the level
+                                        - col 3 :
+                                            - an arrow down icon in a rounded button
+                                    - row (hidden by default, toggled by the arrow down icon button) :
+                                        - col :
+                                            - if the level has sections:
+                                                - row 1 : the header row for the sections list
+                                                    - col 1 :
+                                                        - the text "Sections"
+                                                    - col 2 :
+                                                        - a button with the name "Add"
+                                                - row 2 : the list of sections
+                                                    - col : each section must be in a card which contains :
+                                                        - row :
+                                                            - col 1 :
+                                                                - a checkbox
+                                                            - col 2 :
+                                                                - the name of the section
+                                                            - col 3 :
+                                                                - an arrow down icon in a rounded button
+                                                        - row (hidden by default, toggled by the arrow down icon button) :
+                                                            - col :
+                                                                - row 1 : the header row for the subjects list
+                                                                    - col 1 :
+                                                                        - the text "Subjects"
+                                                                    - col 2 :
+                                                                        - a button with the name "Add"
+                                                                - row 2 : the list of subjects
+                                                                    - col : each subject must be in a card which contains :
+                                                                        - row :
+                                                                            - col 1 :
+                                                                                - a checkbox
+                                                                            - col 2 :
+                                                                                - the name of the subject
+                                                                            - col 3 :
+                                                                                - the price of the subject
+                                            - if the level does not have sections:
+                                                - row 1 : the header row for the subjects list
+                                                    - col 1 :
+                                                        - the text "Subjects"
+                                                    - col 2 :
+                                                        - a button with the name "Add"
+                                                - row 2 : the list of subjects
+                                                    - col : each subject must be in a card which contains :
+                                                        - row :
+                                                            - col 1 :
+                                                                - a checkbox
+                                                            - col 2 :
+                                                                - the name of the subject
+                                                            - col 3 :
+                                                                - the price of the subject
+
+                    - Dynamics :
+                        - clicking on the "Add" button in the levels header row opens a popup form which contains :
+                            - a select input for the level with predefined options
+                            - an "Add" button
+                        - clicking on the arrow down icon of a level card toggles the visibility of its sections block or subjects block (if the level has no sections).
+                        - clicking on the "Add" button in the sections header row opens a popup form which contains :
+                            - a select input for the name of the section with predefined options based on the level this sections block is in
+                            - an "Add" button
+                        - clicking on the arrow down icon of a section card toggles the visibility of its subjects block
+                        - clicking on the "Add" button in the subjects header row opens a popup form which contains :
+                            - a select input for the name of the subject with predefined options based on the section or level this subjects block is in 
+                            - a float input for the price of the subject
+                            - an "Add" button
+                        - checking the checkbox of any card (level or section or subject) , slides up a from the bottom of the screen a sticky block a the bottom which contains  : 
+                            - UI : 
+                                - row : 
+                                    - a button with the name "Delete ({number of selected items})"
+                            - Dynamics : 
+                                - clicking on the "Delete" button in the sticky block opens a confirmation popup which contains :
+                                    - UI : 
+                                        - col : 
+                                            - row 1 : the header of the popup
+                                                - at center of the row, the title of the popup : "Confirm Delete"
+                                            - row 2 : the content area of the group 
+                                                - col : 
+                                                    - row 1 : 
+                                                        - at the center of the row,a trash icon 
+                                                    - row 2 : 
+                                                        - at the center of the row, the text format : "Are you sure you want to delete the selected items {the number of selected items}, since this will delete all of the groups related to them ?"
+                                            - row 3 : the footer of the popup
+                                                - col 1 : 
+                                                    - a button with the name "No"
+                                                - col 2 : 
+                                                    - a highlighted button with the name "Yes"
+                                    - Dynamics : 
+                                        - clicking on the "No" button, closes the the popup 
+                                        - clicking on the "Yes" button, deletes the selected items with their related groups then closes the popup 
 
 
+            - the student requests screen :  
+                - the title of the App Bar is : "Student Requests ({the number of the new requests before the last time the user opened this screen})"
+                - the content of the screen : 
+                    - UI : 
+                        - col : 
+                            - row 1 : a filter for the student requests list which contains
+                                - col 1  (this takes the majority of the with of the row) : 
+                                    - a text input to search by the fullname of the student
+                                - col 2 : 
+                                    - a square button which contains a filter icon 
+                                
+                            - row 2 : list of student requests and each request must be in a card which contains :
+                                - row :
+                                    - col 1
+                                        - the profile image of the student rounded
+                                    - col 2  :
+                                        - row 1 : 
+                                            - the full name of the student
+                                        - row 2 :
+                                            - level and section badges
+                                    - col 3 :
+                                        - row 1 : 
+                                            - an "accept" button highlighted
+                                        - row 2 : 
+                                            - a "decline" button
+                            - row 3 : a pagingation for the student requests list which contains the following : 
+                                - row : 
+                                    - col 1 : 
+                                        - "{the rank of the first request showed in the request list out of the full filtered and non paginated list} to {the rank of the last request showed in the request list out of the full filtered and non paginated list} / {the length of the full filtered and non paginated list}"
+                                    - col 2 : 
+                                        - a select input for selecting page number , with options length of full filtered and non paginated list / batch size
+                                    - col 3 :
+                                        - a select input for selecting batch size with options: 20,50,100
+                    Dynamics :
 
-
-
-                    the student detail screen must contains : 
-                        - an identity card for the student which contains his : 
-                            - fullname (make this value editable if the student didn't create his profile)
-                            - email (if the student did create his profile)
-                            - phone number (make this value editable if the student didn't create his profile)
-                            - level and section (get this value from any group he belongs to, set the section value if his level has sections)
-                        - the following kpis in cards next to each other in the same row : 
-                            - the total paid amount of this student across all of his group
-                            - the total unpaid amount of this student across all of his group
-                        - a select input for the group , the option list of this group is the list of groups the student belongs too , the teacher uses this select
-                          to switch between the list of class sessions of each group, and each text value of an option must follows the following format  : 
-                          "{Subject of the group} - {the name of the group}"  
-                        - the following kpis in cards next to each other in the same row : 
-                            - the total paid amount of this student in the selected group 
-                            - the total unpaid amount of this student in the selected group 
-                        - a list of class session batches of the selected group : 
-                            - each class session batch must be in a card , and each card contains 4 class sessions which are represented in 4 circles
-                            next to each other in the same row
-                            - the stoke color of the batch cards and the circle colors represent the status of the payment and attendance of the student 
-                            following the following color code below  : 
-                                - for the circle (class session)
-                                    - red circle : the student attended this class session, he still didn't pay for it and the payment is due 
-                                    - orange circle : the student attended this class session, he still didn't pay for it and the payment isn't due 
-                                    - green circle : the student attended this class session and he paid for it 
-                                    - gray circle : the class session still in the future 
-                                - for the cards (batch of class sessions)
-                                    - red stroke : the batch contains 4 class sessions that the student attended, didn't pay for them and their payment is due 
-                                    - green stroke : the batch contains 4 class session that the student attended and he did pay for them 
-                                    - orange stroke : the batch contains at least one session paid and the rest for the sessions are due and not paid 
-                                    - gray stroke : the rest of the situation
-                        - the abiliy to mark the attendance of student through a button that will show up a popup form which contains : 
-                            - a datetime selector 
-                            - a mark attendance button 
-                        - the ability to mark class sessions as paid for the student through a button that will show up a popup form which contains : 
-                            - a number input which represent the number of class sessions to mark as paid 
-                            - a mark as paid button 
-                        - the ability to remove the teacher from the group through a button , after the removal update the detail screen of the student 
-            - the students screen which contains :
-                - the list of students from all of the groups and the student card item must be clickable and must contain : 
-                    - checkbox
-                    - the default profile photo (one for males and one for females)
-                    - fullname 
-                    - level (you get this value from the group he is in) 
-                    - section (you get this value from the group he is in, of this group has a section) 
-                    - the total paid amount of the student
-                    - the total unpaid amount of the student
-                - a filter for the student list which contains :
-                    - text input for the full name of the student
-                    - select input for the level 
-                    - select input for the section (update the options of this field based on the selected level and if the selected level doesn't have any section make this disabled)
-                    - an order by select input which contains the following options : 
-                        - paid amount descendant 
-                        - paid amount ascendant 
-                        - unpaid amount descendant
-                        - unpaid amount ascendant
-                - a grouped action select options with a button (which trigger the group action), the opions of this select are the following 
-                    - delete : which deletes the selected students, but before deleting you should show the "are you sure" popup 
-                    - mark presence : which mark the seleted students as present, through opening a popup form which contains the datetime of the 
-                                    class session and mark presence button 
-                - the ability to create a new student through a button which opens a popup form which contains :
-                    - text input for the fullname 
-                    - text input phone number of the student
-                    - select input for the sex of the options : male and female
-                    - select input for the group (the option list must consist of groups of the selected level and section)
             
             - the week schedule screen must contains  : 
                 - a calender for the current week, plotted by the schedule of all of the groups of the teacher 
@@ -1007,47 +1159,7 @@ private classes, which will allow them to :
                              and if the user choose an existing student profile, replace the student profile of the requesting student user by the choosen student profile
                              since there will be a user model and profile model which have a one to one relationship between them 
 
-            - prices screen which contains : 
-                - a header row  for the levels list with the text "Levels" in the left and the button "add" in the right , clicking on this button 
-                  will open up a popup form which contains  : 
-                    - a text input for the name of the level 
-                    - an add button 
-                - the list of the levels and each level must be in a card which contain : 
-                    - a checkbox 
-                    - the name of the level  
-                    - an edit icon in a rounded button and the click on this button will open up a popup form 
-                        which contains : 
-                        - a text input for the name of the level  
-                        - an edit button 
-                    - an arrow down icon in a rounded button and the click on this button toggle the appearence of a block below the card which contains  : 
-                        - a header row for this block with the text "Sections" in the left and  an "add" button in the right , clicking on this button 
-                          will open up a popup form which contains  : 
-                            - a text input for the name of the section 
-                            - an add button 
-                        - the list of sections of this level and each section must be in a card which contains : 
-                            - a checkbox 
-                            - the name of a section 
-                            - an edit icon in a rounded button and the click on this button will open up a popup form 
-                              which contains : 
-                                - a text input for the name of the section 
-                                - an edit button 
-                            - an arrow down icon in a rouded button and the click on this button toggle the appearence of a block below the card which contains :
-                                - a header row for this block with the text "Subjects" in the left and an "add" button in the right , clicking on this button 
-                                  will open a popup form which contains  : 
-                                    - a text input for the name of the subject 
-                                    - a float input for the price of the subject 
-                                    - an add button 
-                                - the list of subjects and each subject must be a card which contains 
-                                    - the name of the subject 
-                                    - the price of the subject 
-                                    - an edit icon in a rounded button and the click on this button will open up a popup form 
-                                      which contains : 
-                                        - a text input for the name of the subject 
-                                        - a float input for the price of the suject 
-                                        - an edit button 
-                                    
-                - the ability to delete any selected item (level,section,list) in bulk through a button, but show the "are you sure" popup to the user
-                  before deleting
+
 
             - notifications screen must contains : 
                 - the number of notifications, which is the number of notifications that were added after the last time the user did open the notification screen
