@@ -1097,79 +1097,224 @@ private classes, which will allow them to :
 
 
             - the student requests screen :  
-                - the title of the App Bar is : "Student Requests ({the number of the new requests before the last time the user opened this screen})"
+                - the title of the App Bar is : "Student Requests ({the number of the new students requests after the last time the user opened this screen})"
                 - the content of the screen : 
                     - UI : 
                         - col : 
                             - row 1 : a filter for the student requests list which contains
-                                - col 1  (this takes the majority of the with of the row) : 
+                                - col 1  (this takes the majority of the width of the row) : 
                                     - a text input to search by the fullname of the student
                                 - col 2 : 
                                     - a square button which contains a filter icon 
                                 
                             - row 2 : list of student requests and each request must be in a card which contains :
-                                - row :
-                                    - col 1
-                                        - the profile image of the student rounded
-                                    - col 2  :
-                                        - row 1 : 
-                                            - the full name of the student
-                                        - row 2 :
-                                            - level and section badges
-                                    - col 3 :
-                                        - row 1 : 
-                                            - an "accept" button highlighted
-                                        - row 2 : 
-                                            - a "decline" button
+                                - col :
+                                    - row 1 : 
+                                        - col 1
+                                            - the profile image of the student rounded
+                                        - col 2  :
+                                            - row 1 : 
+                                                - the full name of the student
+                                            - row 2 :
+                                                - the level and section of the student 
+                                            - row 3 :
+                                                - the requested subject(s) in badge(s) 
+                                        - col 3 :
+                                            if the student request was accepted : 
+                                                - a badge with the content : "Accepted"
+                                            else if the the student request was rejected  : 
+                                                - a badge with the content : "Declined"  
+                                            else
+                                                - row 1 : 
+                                                    - an "Accept" button highlighted
+                                                - row 2 : 
+                                                    - a "Decline" button
+                                    - row 2 : 
+                                        - at the most right : the datetime of the request
                             - row 3 : a pagingation for the student requests list which contains the following : 
                                 - row : 
                                     - col 1 : 
-                                        - "{the rank of the first request showed in the request list out of the full filtered and non paginated list} to {the rank of the last request showed in the request list out of the full filtered and non paginated list} / {the length of the full filtered and non paginated list}"
+                                        - "{the rank of the first student request showed in the student request list out of the full filtered and non paginated list} to {the rank of the last student request showed in the student request list out of the full filtered and non paginated list} / {the length of the full filtered and non paginated list}"
                                     - col 2 : 
-                                        - a select input for selecting page number , with options length of full filtered and non paginated list / batch size
+                                        - a select input for selecting page number , with the options : from 1 to the length of full filtered and non paginated list / batch size
                                     - col 3 :
-                                        - a select input for selecting batch size with options: 20,50,100
+                                        - a select input for selecting batch size with the options: 20,50,100
                     Dynamics :
+                        - clicking on the filter square button opens up a popup form which contains : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : 
+                                        - a select input for the level that contains as options the levels that the teachers teaches 
+                                    - row 2 : 
+                                        - a select input for the section that contains as options the sections of the selected level if the the selected level has sections otherwise keep this field disabled
+                                    - row 3 : 
+                                        - a select input for the subject that contains as options the subjects of the selected level or the selected section of it's select input not disabled
+                                    - row 4 : 
+                                        - a button with name "Filter"
+                            - Dynamics :
+                                - clicking on the "Filter" button closes the popup and updates the student requests list and it's pagination in the screen based on the text and select input values
 
-            
-            - the week schedule screen must contains  : 
-                - a calender for the current week, plotted by the schedule of all of the groups of the teacher 
-                - the teacher can move the schedule of group in the calendar, but not in top of another group schedule, this movement 
-                should trigger a popup which ask the teacher if this new schedule will be permenant or only for this week 
-        
-            - enrollment requests screen must contain : 
-                - list of enrollment requests and each one of them must a clickable card which contains :
-                    - a checkbox (allow only one checkbox to be selected at the time)
-                    - the profile image of the student
-                    - the level and the section of the student 
-                    - the subject he is enrolling for 
-                - a filter for the list of enrollment requests which contains 
-                    - a text input to search on the fullname of the student 
-                    - a select input to filter by the level
-                    - a select input to filter by the section 
-                    - a select input to filter by subject 
-                - an accept button which opens a popup form which contains :
-                    - a select input for group to add the selected student to, the option list of this select must 
-                      be of the groups that have the same level,section and subject as the requesting student 
-                    - a select input to attach the requesting student with an existing one, the option list of this list must 
-                      contain the following options : 
-                      - new student options which mean that student doesn't correspond to any existing student 
-                      - the students of the select group from the previous select field
-                      note : if the user choose the new student option, add the student profile record to this group (many to one relationship) 
-                             and if the user choose an existing student profile, replace the student profile of the requesting student user by the choosen student profile
-                             since there will be a user model and profile model which have a one to one relationship between them 
+                        - clicking on the "Accept" of a student request card, open a popup form which contains : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : 
+                                        - col 1
+                                            - at the center of the col, the profile image of the student rounded
+                                            - at the center of the col, the full name of the student
+                                            - at the center of the col, the level and section of the student
+                                    - row 2 :
+                                        - col : 
+                                            - row 1 :
+                                                - a checkbox with the label "add it as new student"
+                                            - row 2 : 
+                                                - a checkbox with the label "replace it by an existing student"
+                                            - row 3 : 
+                                                - col : 
+                                                    - row 1 : 
+                                                        - the label : "select the student to replace by"
+                                                    - row 2 :
+                                                        - a select input that contains as options, the list of the students created by the teacher (the ones that don't have their own login) that have the same level and section as the requesting student,
+                                                          make this select disabled if the checkbox with the label "replace it by an existing student" isn't checked 
+                                            - for each subject the student asked for :
+                                                - row 4 : 
+                                                    - col : 
+                                                        - row 1 : 
+                                                            - the label : "for the {subject name} subject, select the group to add the student to"
+                                                        - row 2 :
+                                                            - a select input that contains as options :
+                                                                - the option : "decline this subject" which is the default 
+                                                                - the rest of the options  :the list of groups that have the same level,section and the asked subject of the requesting student
+                                                              if the selected student to replace by is already part of a group that teaches this subject, pre-fill the value of this select by it's group 
+                                                
+                                    - row 3 :
+                                        - col 1 : 
+                                            - a button with the name "Cancel"
+                                        - col 2 : 
+                                            - a highlighted button with the name "Accept"
 
+                            - Dynamics :
+                                - allow only one checkbox to be checked at the time and make the the checkbox with the label "add it as new student" to be checked by default
+                                - before openning the popup bring from the server,
+                                    - the list of students that have the same level and section as the requesting student and each one with his groups that teached the requested subjects, this groups 
+                                      will be used to prefill the subject group selects when the teacher chooses to replace by an existing student  
+                                    - for each asked subject the groups that have the same level,section and subject as the requesting student
+                                - clicking on the "Accept" button  : 
+                                    - adds this student as a new student or replaces it by an existing one then assigns him as to the selected group(s)
+                                    - then closes the popup
+                                    - then updates the list of students requests 
+                                - clicking on the "Cancel" button closes the popup form without any action
 
+                        - clicking on the "Decline" button of a student request card, opens a confirmation popup which contains : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : the header of the popup
+                                        - at center of the row, the title of the popup : "Confirm Decline"
+                                    - row 2 : the content area of the group 
+                                        - col : 
+                                            - row 1 : 
+                                                - at the center of the row,a user decline icon 
+                                            - row 2 : 
+                                                - at the center of the row, the text format : "Are you sure you want to decline this request ?"
+                                    - row 3 : the footer of the popup
+                                        - col 1 : 
+                                            - a button with the name "No"
+                                        - col 2 : 
+                                            - a highlighted button with the name "Yes"
+                            - Dynamics :
+                                - clicking on the "No" button, closes the popup form
+                                - clicking on the "Yes" button, declines this request then closes the popup form and updates the list of students requests
+                                
+            - the parent requests screen :  
+                - the title of the App Bar is : "Parent Requests ({the number of the new parent requests after the last time the user opened this screen})"
+                - the content of the screen : 
+                    - UI : 
+                        - col : 
+                            - row 1 : a filter for the parent requests list which contains
+                                - col 1  (this takes the majority of the width of the row) : 
+                                    - a text input to search by the fullname of the parent
+                                - col 2 : 
+                                    - a square button which contains a filter icon 
+                                
+                            - row 2 : list of parent requests and each request must be in a card which contains :
+                                - col :
+                                    - row 1 : 
+                                        - col 1
+                                            - the profile image of the parent rounded
+                                        - col 2  :
+                                            - row 1 : 
+                                                - the full name of the parent
+                                            - row 2 :
+                                                - the requested student(s) in badge(s) 
+                                        - col 3 :
+                                            if the parent request was accepted : 
+                                                - a badge with the content : "Accepted"
+                                            else if the the parent request was rejected  : 
+                                                - a badge with the content : "Declined"  
+                                            else
+                                                - row 1 : 
+                                                    - an "Accept" button highlighted
+                                                - row 2 : 
+                                                    - a "Decline" button
+                                    - row 2 : 
+                                        - at the most right : the datetime of the request
+                            - row 3 : a pagingation for the parent requests list which contains the following : 
+                                - row : 
+                                    - col 1 : 
+                                        - "{the rank of the first parent request showed in the parent request list out of the full filtered and non paginated list} to {the rank of the last parent request showed in the parent request list out of the full filtered and non paginated list} / {the length of the full filtered and non paginated list}"
+                                    - col 2 : 
+                                        - a select input for selecting page number , with the options : from 1 to the length of full filtered and non paginated list / batch size
+                                    - col 3 :
+                                        - a select input for selecting batch size with the options: 20,50,100
+                    Dynamics :
+                        - clicking on the filter square button opens up a popup form which contains : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : 
+                                        - a select input for the student that contains as options the students that the parent requested parenting for
+                                    - row 2 : 
+                                        - a button with name "Filter"
+                            - Dynamics :
+                                - clicking on the "Filter" button closes the popup and updates the parent requests list and its pagination in the screen based on the text and select input values
 
-            - notifications screen must contains : 
-                - the number of notifications, which is the number of notifications that were added after the last time the user did open the notification screen
-                - the notifications list for the students due payments and each notification must be in a clickable card which contains 
-                    - student default profile image 
-                    - the following dynamic message : "{student name} studying {Subject} from the group {Level} {Section} {Group name} has to pay {non paid amount} DT"
-                - if the user did click on a notification item card, he must be routed to the student detail screen
-                some rules : 
-                    - the notification item card must be highlighted until the user clicks on it 
-                    - the notification number must be set to 0 when the user opens the notifications screen 
+                        - clicking on the "Accept" of a parent request card, opens a confirmation popup which contains : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : the header of the popup
+                                        - at center of the row, the title of the popup : "Confirm Accept"
+                                    - row 2 : the content area of the group 
+                                        - col : 
+                                            - row 1 : 
+                                                - at the center of the row, a user accept icon 
+                                            - row 2 : 
+                                                - at the center of the row, the text format : "Are you sure you want to accept this request?"
+                                    - row 3 : the footer of the popup
+                                        - col 1 : 
+                                            - a button with the name "No"
+                                        - col 2 : 
+                                            - a highlighted button with the name "Yes"
+                            - Dynamics :
+                                - clicking on the "No" button, closes the popup form
+                                - clicking on the "Yes" button, accepts this request then closes the popup form and updates the list of parent requests 
+
+                        - clicking on the "Decline" button of a parent request card, opens a confirmation popup which contains : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : the header of the popup
+                                        - at center of the row, the title of the popup : "Confirm Decline"
+                                    - row 2 : the content area of the group 
+                                        - col : 
+                                            - row 1 : 
+                                                - at the center of the row, a user decline icon 
+                                            - row 2 : 
+                                                - at the center of the row, the text format : "Are you sure you want to decline this request?"
+                                    - row 3 : the footer of the popup
+                                        - col 1 : 
+                                            - a button with the name "No"
+                                        - col 2 : 
+                                            - a highlighted button with the name "Yes"
+                            - Dynamics :
+                                - clicking on the "No" button, closes the popup form
+                                - clicking on the "Yes" button, declines this request then closes the popup form and updates the list of parent requests
                     
     - For student profile :  
 
