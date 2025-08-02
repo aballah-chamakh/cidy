@@ -1,50 +1,79 @@
-I want to build a mobile app which allow the government teachers of Tunisia to track the attendance of their students into their 
-private classes, which will allow them to : 
-    - a clear idea on their 
-        - revenue 
-        - unpaid student 
-        - the total unpaid amount 
-    - save the contacts of their students which will allow them to contact next school season and ask them to enroll into 
-      their private classes 
-- in all of the screens of app must have a an app bar which contains 
-    - in the most left a the tree line icons which toggle the sidebar 
-    - in the middle the title of the screen 
-    - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
-      is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
-      to the notifications screen
-- the app must have the following screens 
-    - a login screen which contains : 
-        - the email and the password fields
-        - the forgot password link
-        - the "you don't have an accounct ? register" link 
-    - a register link which contains : 
-        - full name,email,phone number,password, two checkboxes one for register as a student and the other for register as teacher and only one of 
-          them can be selected ,after the user submit the form ask them to confirm his email address by 
-          entering the verfication code which was sent to their email
-        - the "you already have and account ? login" link 
-    - once he logins or registers the app should have a sidebar that is based on the logged or registered profile :
-        - for teachers : 
-            - dashboard 
-            - groups 
-            - students 
-            - settings
-                - the price of each subject 
-                - student payment alert : On or Off
-            - week schedule 
-            - enrollments requests 
+I want to build a mobile app with the name "Cidy" which allows the government teachers of Tunisia to : 
+    - track the attendance of their students into their classes
+    - track the payments of their students
+    - have notifications about the unpaid student 
+    - have a clear idea on their revenue and unpaid students
+    - have a clear idea about their weekly schedule
+    - send notifications for due payments to the student and his parent
+    - give the ability for the parents of the student to view the attendance and the payments of their sons so that the son
+      can't fool his parent about the payments and the attendance
+    - give the ability for the students to view their attendance and payments so that they can track their own payments and attendance
+
+- the app does that throught having 3 profiles a teacher,a student and a parent and common login and register screens: 
+
+- the description for the common Login and Register screens :
+    - The common login screen:
+        - UI:
+            - col:
+                - row 1:
+                    - a text input for the email (required, email format)
+                - row 2:
+                    - a password input for the password with the ability to show and hide the content of the input (required)
+                - row 3:
+                    - a button with the name "Login"
+                - row 4:
+                    - a text with the content: "Don't have an account? Register here", which is clickable and routes to the register screen
+        - Dynamics:
+            - Clicking on the "Login" button authenticates the user based on the provided email and password and routes to the appropriate dashboard based on the profile type (teacher, student, or parent).
+
+    - The common register screen:
+        - UI:
+            - col:
+                - row 1:
+                    - a select input for the profile type with the following options:
+                        - Teacher
+                        - Student
+                        - Parent
+                - row 2:
+                    - a text input for the full name (required)
+                - row 3:
+                    - a text input for the email (required, email format)
+                - row 4:
+                    - a text input for the phone number (required, phone number format,min length = max length = 8)
+                - row 5:
+                    - a password input for the password with the ability to show and hide the content of the input (required)
+                - row 6:
+                    - a password input to confirm the password with the ability to show and hide the content of the input (required, must match the password)
+                - row 7:
+                    - a button with the name "Register"
+                - row 8:
+                    - a text with the content: "Already have an account? Login here", which is clickable and routes to the login screen
+        - Dynamics:
+            - Clicking on the "Register" button creates a new account for the selected profile type and routes to the profile dashboard screen of the selected profile type.
+
+- the description for all the profiles (teacher, student, parent) : 
 
     - For the teacher profile : 
+        - all of the screens of the teacher profile have an app bar which contains : 
+            - in the most left a the tree line icons which toggle the sidebar 
+            - in the middle the title of the screen 
+            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
+              is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
+              to the notifications screen and resets the number of notifications to 0
 
         - the sidebar : 
+            - the profile picture of the teacher rounded (routes to the profile screen)
+            - the full name of the teacher (routes to the profile screen)
             - dashboard (done)
-            - week schedule 
+            - week schedule (done)
             - groups (done)
             - students (done)
             - prices (done)
             - student requests (done)
             - parent requests (done)
             - notifications (done)
-            - profile 
+            - profile (done)
+            - logout (logouts the user and routes to the login screen) (done)
             
         - the screens binded to each navigation item in the sidebar : 
             - the dashboard screen : 
@@ -125,6 +154,49 @@ private classes, which will allow them to :
                                                 - row 2 : 
                                                     - the text format : "{subject} - unpaid amount", in a small size
 
+            - the week schedule screen :
+                - the title of the App Bar is : "Week Schedule"
+                - the content of the screen :
+                    - UI :
+                        - col :
+                            - row 1 :  
+                                - a calendar view that displays only the current week, with each day covering the period between 8 am and midnight and divided into time slots (e.g., 1-hour intervals).
+                                - each group of the teacher is represented as a draggable card plotted on the calendar based on its current schedule and duration.
+                                - each card contains :
+                                    - the group name
+                                    - the subject of the group
+                                    - the level and section of the group
+                                    - the duration of the class 
+                    - Dynamics :
+                        - when the user drag and drop a group card :
+                            - if the new time slot overlap with the schedule of another group, the card returns to its original position without making any changes.
+                            - if the new time slot doesn't overlap with the schedule of another group, the card moves to the new position and a popup form opens up which contains
+                                - UI :
+                                    - col :
+                                        - row 1 : 
+                                            - the header of the popup
+                                                - col 1 :
+                                                    - the title : "Permanent or temporary change?" , in the left
+                                                - col 2 :
+                                                    - the close icon, in the right 
+                                        - row 2 :
+                                            - the content area of the popup
+                                                - col :
+                                                    - row 1 :
+                                                        - a label : "Do you want to change the schedule permanently or only for this week?"
+                                                    - row 2 :
+                                                        - two radio buttons :
+                                                            - "Permanently"
+                                                            - "Only for this week"
+
+                                            - the footer of the popup
+                                                - col 1 :
+                                                    - a "Cancel" button
+                                                - col 2 :
+                                                    - a "Change" button
+                                - Dynamics :
+                                    - clicking on the "Cancel" button, moves back the card to it's original position and closes the popup without making any changes.
+                                    - clicking on the "Change" button updates the schedule of the group based on the selected options (permanent or temporary) and closes the popup .
 
             - the groups screen : 
                 - the title of the App Bar is : "Groups"
@@ -1359,7 +1431,7 @@ private classes, which will allow them to :
                                 - row 2 : 
                                     - col : 
                                         - row 1 :
-                                            - the profile image of the teacher rounded, in the top right bottom corner of it a rounded circle that contains an edit icon 
+                                            - the profile image of the teacher rounded, in the right bottom corner of it a rounded circle that contains an edit icon 
                                         - row 2 :
                                             - col :
                                                 - row 1 : 
@@ -1377,8 +1449,8 @@ private classes, which will allow them to :
                                                 - row 1 : 
                                                     - the label : "Phone number"
                                                 - row 2 : 
-                                                    - a text input for the phone number of teacher, pre-filled with the current email of the teacher (accepts only integer character,min length=max length = 8 )
-                                
+                                                    - a text input for the phone number of teacher, pre-filled with the current phone number of the teacher (accepts only integer character,min length=max length = 8,required)
+
                                         - row 5 : 
                                             - a button with the name "Update account info"
                         - row 2 : 
@@ -1389,11 +1461,6 @@ private classes, which will allow them to :
                                     - col :
                                         - row 1 
                                             - col 1 : 
-                                                - the label "Current password"
-                                            - col 2 : 
-                                                - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled
-                                        - row 1 
-                                            - col 1 : 
                                                 - the label "New password"
                                             - col 2 : 
                                                 - a password input for the new password with the ablility to show and hide the content of the input, not pre-filled
@@ -1401,7 +1468,7 @@ private classes, which will allow them to :
                                             - col 1 : 
                                                 - the label "Confirm new password"
                                             - col 2 : 
-                                                - a password inpu to confirm the new password with the ablility to show and hide the content of the input, not pre-filled
+                                                - a password input to confirm the new password with the ablility to show and hide the content of the input, not pre-filled
 
                                         - row 5 : 
                                             - a button with the name "Change password"
@@ -1431,15 +1498,50 @@ private classes, which will allow them to :
                                             - a "Confirm & update" button 
                             Dynamics : 
                                 - clicking on the "Cancel" button, close the popup form
-                                - clicking on the "Confirm & updated" button , checks if the given password is corret , if it's correct it updates the account 
-                                  info and closes the popup form, otherwise it inform the user that the given password is incorrect 
-                        ## STOPPED AT THE ACCOUNT SCREEN =========================================== ##
+                                - clicking on the "Confirm & update" button , checks if the given password is correct , if it's correct it updates the account 
+                                  info and closes the popup form, otherwise it informs the user that the given password is incorrect without closing the popup
+
+                        - clicking on the "Change password" button, opens up a popup form which contains : 
+                            - UI : 
+                                - row 1 : the header of the popup 
+                                    col : 
+                                        - at the most left, the text : "Confirm your Authorization"      
+                                    col : 
+                                        - at the most right, a close icon 
+
+                                - row 2 : the content area of the popup
+                                    - row :
+                                        - col 1 : 
+                                            - the label "Current password"
+                                        - col 2 : 
+                                            - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled
+                                
+                                - row 3 : the footer of the popup 
+                                    - row : 
+                                        - col 1 : 
+                                            - a "Cancel" button 
+                                        - col 2 : 
+                                            - a "Confirm & change" button 
+                            Dynamics : 
+                                - clicking on the "Cancel" button, close the popup form
+                                - clicking on the "Confirm & change" button , checks if the given password is correct , if it's correct it changes the password and closes the popup form, otherwise it informs the user that the given password is incorrect
+                                  without closing the popup 
+                        
 
 
 
     - For student profile :  
 
+        - all of the screens of the student profile have an app bar which contains : 
+            - in the most left a the tree line icons which toggle the sidebar 
+            - in the middle the title of the screen 
+            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
+              is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
+              to the notifications screen and resets the number of notifications to 0
+
         - the sidebar : 
+            - the profile picture of the student rounded (routes to the profile screen)
+            - the full name of the student (routes to the profile screen)
             - teachers 
             - subjects 
             - parents 
@@ -1678,7 +1780,16 @@ private classes, which will allow them to :
 
     - For the parent profile (THE WHOLE PROFILE IS CONFIRMED) : 
 
+        - all of the screens of the teacher profile have an app bar which contains : 
+            - in the most left a the tree line icons which toggle the sidebar 
+            - in the middle the title of the screen 
+            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
+              is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
+              to the notifications screen and resets the number of notifications to 0
+
         - the sidebar : 
+            - the profile picture of the parent rounded (routes to the profile screen)
+            - the full name of the parent (routes to the profile screen)
             - teachers 
             - sons 
             - notifications 
@@ -1954,23 +2065,3 @@ ideas i shouldn't forget in my prompt :
         - the student 
         - the group
         - the subject (done)
-
-
-
-
-
-###
-
-    - the level list screen which contains : 
-        - the list of levels, each level item must contain the level name and he must she clickable
-        - the ability to create a new level through a button that shows up a popup form which contains : a select input with level options 
-        - on click on a level item :
-            - if a level has sections ,the section list screen must shows up whic contains : 
-                - the list of sections, each section item must contains the section name and she must be clickable
-                - the ability to create a new level through a button that shows up a popup form which contains : a select input with section options 
-                - on click on a section item, the group list screen must shows up which contains  : 
-                    - the list of groups, each group item must contains the group name and he must be clickable
-                    - 
-
-###
- 

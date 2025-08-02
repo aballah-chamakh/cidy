@@ -66,7 +66,44 @@ the notification list of the parent :
 
 to do : 
     - review the student profile (done)
-    - review the teacher profile 
+    - review the teacher profile (done)
     - review the sign'in an the the sign'up for all of the profile 
     - add the general guidelines to the prompt 
     - review every thing again
+
+
+
+I want to build a mobile app which allow the government teachers of Tunisia to track the attendance of their students into their 
+private classes, which will allow them to : 
+    - a clear idea on their 
+        - revenue 
+        - unpaid student 
+        - the total unpaid amount 
+    - save the contacts of their students which will allow them to contact next school season and ask them to enroll into 
+      their private classes 
+- in all of the screens of app must have a an app bar which contains 
+    - in the most left a the tree line icons which toggle the sidebar 
+    - in the middle the title of the screen 
+    - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
+      is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
+      to the notifications screen
+- the app must have the following screens 
+    - a login screen which contains : 
+        - the email and the password fields
+        - the forgot password link
+        - the "you don't have an accounct ? register" link 
+    - a register link which contains : 
+        - full name,email,phone number,password, two checkboxes one for register as a student and the other for register as teacher and only one of 
+          them can be selected ,after the user submit the form ask them to confirm his email address by 
+          entering the verfication code which was sent to their email
+        - the "you already have and account ? login" link 
+    - once he logins or registers the app should have a sidebar that is based on the logged or registered profile :
+        - for teachers : 
+            - dashboard 
+            - groups 
+            - students 
+            - settings
+                - the price of each subject 
+                - student payment alert : On or Off
+            - week schedule 
+            - enrollments requests 
