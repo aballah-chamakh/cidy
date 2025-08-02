@@ -36,14 +36,15 @@ private classes, which will allow them to :
     - For the teacher profile : 
 
         - the sidebar : 
-            - dashboard 
+            - dashboard (done)
             - week schedule 
-            - groups 
-            - students 
-            - prices 
-            - student requests 
-            - parent requests 
-            - notifications
+            - groups (done)
+            - students (done)
+            - prices (done)
+            - student requests (done)
+            - parent requests (done)
+            - notifications (done)
+            - profile 
             
         - the screens binded to each navigation item in the sidebar : 
             - the dashboard screen : 
@@ -1230,11 +1231,8 @@ private classes, which will allow them to :
                     - UI : 
                         - col : 
                             - row 1 : a filter for the parent requests list which contains
-                                - col 1  (this takes the majority of the width of the row) : 
-                                    - a text input to search by the fullname of the parent
-                                - col 2 : 
-                                    - a square button which contains a filter icon 
-                                
+                                - a text input to search by the fullname of the parent
+
                             - row 2 : list of parent requests and each request must be in a card which contains :
                                 - col :
                                     - row 1 : 
@@ -1255,7 +1253,7 @@ private classes, which will allow them to :
                                                     - an "Accept" button highlighted
                                                 - row 2 : 
                                                     - a "Decline" button
-                                    - row 2 : 
+                                    - row 2 : at the footer of the card 
                                         - at the most right : the datetime of the request
                             - row 3 : a pagingation for the parent requests list which contains the following : 
                                 - row : 
@@ -1266,35 +1264,50 @@ private classes, which will allow them to :
                                     - col 3 :
                                         - a select input for selecting batch size with the options: 20,50,100
                     Dynamics :
-                        - clicking on the filter square button opens up a popup form which contains : 
-                            - UI : 
-                                - col : 
-                                    - row 1 : 
-                                        - a select input for the student that contains as options the students that the parent requested parenting for
-                                    - row 2 : 
-                                        - a button with name "Filter"
-                            - Dynamics :
-                                - clicking on the "Filter" button closes the popup and updates the parent requests list and its pagination in the screen based on the text and select input values
-
                         - clicking on the "Accept" of a parent request card, opens a confirmation popup which contains : 
                             - UI : 
                                 - col : 
                                     - row 1 : the header of the popup
-                                        - at center of the row, the title of the popup : "Confirm Accept"
-                                    - row 2 : the content area of the group 
+                                        - col 1 :
+                                            - at the most left of the row, the title of the popup : "Accepting a parent"
+                                        - col 2 :
+                                            - at the most right : the close icon 
+
+                                    - row 2 : the content area of the popup  
                                         - col : 
+
                                             - row 1 : 
-                                                - at the center of the row, a user accept icon 
-                                            - row 2 : 
-                                                - at the center of the row, the text format : "Are you sure you want to accept this request?"
+                                                - col : 
+                                                    - row 1 : 
+                                                        - at the center of the row, the profile image of the parent 
+                                                    - row 2 : 
+                                                        - at the center of the row, the fullname of the parent 
+                                                    - row 3 :
+                                                        - at the center of the row, the phone number of the parent 
+
+                                            - row 2 : for each son in the parent request the following : 
+                                                - row : 
+                                                    - col : 
+                                                        - row 1 : 
+                                                            - the label : "assign a student for to the son / daughter : {the fullname of the son/daughter}, {the level and the section if exists}"
+                                                        - row 2 :  
+                                                            - a select input which contains as options : 
+                                                                - "reject this son/daugther" which the default one 
+                                                                -  and the list of students of the teacher (created by teacher or they have their own login) that have the same level, section (if exist), gender as the son / daugther
+
                                     - row 3 : the footer of the popup
                                         - col 1 : 
-                                            - a button with the name "No"
+                                            - a button with the name "Cancel"
                                         - col 2 : 
-                                            - a highlighted button with the name "Yes"
+                                            - a highlighted button with the name "Accept"
                             - Dynamics :
-                                - clicking on the "No" button, closes the popup form
-                                - clicking on the "Yes" button, accepts this request then closes the popup form and updates the list of parent requests 
+                                - clicking on the close icons, closes the popup form
+                                - clicking on the "Cancel" button, closes the popup form
+                                - clicking on the "Accept" button : 
+                                    - should ensure that the teacher assigned as at least one son to a student and the parent as a parent for it 
+                                    - assigns the son(s) of the parent in the request to the selected student(s) and assigns the parent as a parent 
+                                        for the selected student(s)
+
 
                         - clicking on the "Decline" button of a parent request card, opens a confirmation popup which contains : 
                             - UI : 
@@ -1315,7 +1328,115 @@ private classes, which will allow them to :
                             - Dynamics :
                                 - clicking on the "No" button, closes the popup form
                                 - clicking on the "Yes" button, declines this request then closes the popup form and updates the list of parent requests
-                    
+
+            - the notifications screen : 
+                - the title of the App Bar is : "Notifications ({the number of new notifications after the last time the user opened this screen})" : 
+                - the content of the screen : 
+                    - UI : 
+                        - col : a list of the latest 20 due payment notifications, each one must be in a clickable card which contains : 
+                            - row : 
+                                - col : 
+                                    - a red filled rounded $ icon 
+                                - col : 
+                                    - "the {level of the student} {the section of the student if exist} student : {the full name of the student} should pay {the amount} DT
+                                       for attending 4 classes at the {subject name} group {name of the group}" 
+                            - row : 
+                                - at the most right : the datetime this notification was create at 
+                    - Dynamics : 
+                        - clicking on a notification card routes to the detail screen of the student which has the mentionned group selected  
+                        - when the user reaches the bottom scrolling , load the next latest 20 notifications to the list until there is no more notifications 
+                          to load 
+                        - keep the notification card highlighted until the user clicks on it 
+                        
+            - the Account screen : 
+                - the title of the App Bar is : "Account"
+                - the content of the screen :    
+                    - UI : 
+                        - row 1 : 
+                            col : 
+                                - row 1 : 
+                                    - a header with the name : "Account info", with a border bottom 
+                                - row 2 : 
+                                    - col : 
+                                        - row 1 :
+                                            - the profile image of the teacher rounded, in the top right bottom corner of it a rounded circle that contains an edit icon 
+                                        - row 2 :
+                                            - col :
+                                                - row 1 : 
+                                                    - the label : "Full name"
+                                                - row 2 :
+                                                    - a text input for the full name of the teacher, pre-filled with the current full name of the teacher (required)
+                                        - row 3 :
+                                            - col : 
+                                                - row 1 : 
+                                                    - the label : "E-mail"
+                                                - row 2 : 
+                                                    - a text input for the email of teacher, pre-filled with the current email of the teacher (email,required)
+                                        - row 4 :
+                                            - col : 
+                                                - row 1 : 
+                                                    - the label : "Phone number"
+                                                - row 2 : 
+                                                    - a text input for the phone number of teacher, pre-filled with the current email of the teacher (accepts only integer character,min length=max length = 8 )
+                                
+                                        - row 5 : 
+                                            - a button with the name "Update account info"
+                        - row 2 : 
+                            - col : 
+                                - row 1 : 
+                                    - a header with the name : "Change password", with a bottom border 
+                                - row 2 : 
+                                    - col :
+                                        - row 1 
+                                            - col 1 : 
+                                                - the label "Current password"
+                                            - col 2 : 
+                                                - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled
+                                        - row 1 
+                                            - col 1 : 
+                                                - the label "New password"
+                                            - col 2 : 
+                                                - a password input for the new password with the ablility to show and hide the content of the input, not pre-filled
+                                        - row 1 
+                                            - col 1 : 
+                                                - the label "Confirm new password"
+                                            - col 2 : 
+                                                - a password inpu to confirm the new password with the ablility to show and hide the content of the input, not pre-filled
+
+                                        - row 5 : 
+                                            - a button with the name "Change password"
+
+                    Dynamics : 
+                        - clicking on the profile image allows to upload a new image 
+                        - clicking on the "Update account info" button, opens up a popup form which contains : 
+                            - UI : 
+                                - row 1 : the header of the popup 
+                                    col : 
+                                        - at the most left, the text : "Confirm your Authorization"      
+                                    col : 
+                                        - at the most right, a close icon 
+
+                                - row 2 : the content area of the popup
+                                    - row :
+                                        - col 1 : 
+                                            - the label "Current password"
+                                        - col 2 : 
+                                            - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled
+                                
+                                - row 3 : the footer of the popup 
+                                    - row : 
+                                        - col 1 : 
+                                            - a "Cancel" button 
+                                        - col 2 : 
+                                            - a "Confirm & update" button 
+                            Dynamics : 
+                                - clicking on the "Cancel" button, close the popup form
+                                - clicking on the "Confirm & updated" button , checks if the given password is corret , if it's correct it updates the account 
+                                  info and closes the popup form, otherwise it inform the user that the given password is incorrect 
+                        ## STOPPED AT THE ACCOUNT SCREEN =========================================== ##
+
+
+
     - For student profile :  
 
         - the sidebar : 
@@ -1552,9 +1673,7 @@ private classes, which will allow them to :
                                     - the click on this item card routes to the detail screen of the subject 
 
                         - Dynamics : 
-                            some rules : 
-                                - the notification item card must be highlighted until the user clicks on it 
-                                - the notification number must be set to 0 after the user leaves the Notifications screen
+                            - the notification item card must be highlighted until the user clicks on it 
 
 
     - For the parent profile (THE WHOLE PROFILE IS CONFIRMED) : 
