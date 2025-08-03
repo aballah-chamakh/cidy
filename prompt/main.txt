@@ -14,42 +14,30 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 - the description for the common Login and Register screens :
     - The common login screen:
         - UI:
-            - col:
-                - row 1:
-                    - a text input for the email (required, email format)
-                - row 2:
-                    - a password input for the password with the ability to show and hide the content of the input (required)
-                - row 3:
-                    - a button with the name "Login"
-                - row 4:
-                    - a text with the content: "Don't have an account? Register here", which is clickable and routes to the register screen
+            - the logo of the app Cidy 
+            - A text input for the email (required, email format)
+            - A password input for the password with the ability to show and hide the content of the input (required)
+            - A button with the name "Login"
+            - A clickable text with the content: "Don't have an account? Register here", which routes to the register screen
         - Dynamics:
-            - Clicking on the "Login" button authenticates the user based on the provided email and password and routes to the appropriate dashboard based on the profile type (teacher, student, or parent).
+            - The "Login" button authenticates the user using the provided email and password. Upon successful authentication, the user is routed to their respective dashboard based on their profile type (teacher, student, or parent).
 
     - The common register screen:
         - UI:
-            - col:
-                - row 1:
-                    - a select input for the profile type with the following options:
-                        - Teacher
-                        - Student
-                        - Parent
-                - row 2:
-                    - a text input for the full name (required)
-                - row 3:
-                    - a text input for the email (required, email format)
-                - row 4:
-                    - a text input for the phone number (required, phone number format,min length = max length = 8)
-                - row 5:
-                    - a password input for the password with the ability to show and hide the content of the input (required, min length = 6,contains at least one uppercase letter, one lowercase letter, and one number)
-                - row 6:
-                    - a password input to confirm the password with the ability to show and hide the content of the input (required, must match the password)
-                - row 7:
-                    - a button with the name "Register"
-                - row 8:
-                    - a text with the content: "Already have an account? Login here", which is clickable and routes to the login screen
+            - the logo of the app Cidy
+            - A select input for the profile type with the following options:
+                - Teacher
+                - Student
+                - Parent
+            - A text input for the full name (required)
+            - A text input for the email (required, email format)
+            - A text input for the phone number (required, phone number format, min length = max length = 8)
+            - A password input for the password with the ability to show and hide the content of the input (required, min length = 6, contains at least one uppercase letter, one lowercase letter, and one number)
+            - A password input to confirm the password with the ability to show and hide the content of the input (required, must match the password)
+            - A button with the name "Register"
+            - A clickable text with the content: "Already have an account? Login here", which routes to the login screen
         - Dynamics:
-            - Clicking on the "Register" button creates a new account for the selected profile type and routes to the profile dashboard screen of the selected profile type.
+            - The "Register" button validates the inputs and creates a new account for the selected profile type. Upon successful registration, the user is routed to their respective dashboard based on their profile type (teacher, student, or parent).
 
 - the description for all the profiles (teacher, student, parent) : 
 
@@ -126,10 +114,46 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                 - the title of the App Bar is : "Dashboard"
                 - the content of the screen :  
                     - UI :     
-                        - col : 
-                            - row 1 : Date Range Selector
-                                - a date range picker component to filter all KPIs by a specific time period (defaults to current month)
-                                - includes quick presets: "This Week", "This Month", "Last Month", "Last 3 Months"
+                        - a date range picker component to filter all KPIs by a specific time period (defaults to current month), also 
+                          includes quick presets: "This Week", "This Month", "Last Month", "Last 3 Months"
+
+                        - Overall Performance KPIs : 
+                            - the total paid amount in dinars across all of the students of the teacher in the selected date range
+                            - the total unpaid amount in dinars across all of the students of the teacher in the selected date range
+                            - the total number of active students of the teacher 
+
+                        - for each level the teacher teaches :  
+                            - the total paid amount in dinars across the students of the level in the selected date range
+                            - the total unpaid amount in dinars across the students of the  level in the selected date range
+                            - the total number of active students of the level
+
+                            if the level has sections : 
+                                - for each section of the level : 
+                                    - the total paid amount in dinars across the students of the level and the section in the selected date range
+                                    - the total unpaid amount in dinars across the students of the level and the section in the selected date range
+                                    - the total number of active students of the level and the section
+
+                                    - for each subject of the level and the section : 
+                                        - the total paid amount in dinars across the students of the level and the section of the subject in the selected date range
+                                        - the total unpaid amount in dinars across the students of the level and the section of the subject in the selected date range
+                                        - the total number of active students of the level and the section of the subject
+
+                            else if the selected level doesn't have sections :
+                                - for each subject of the level : 
+                                    - the total paid amount in dinars across the students of the subject of the level in the selected date range
+                                    - the total unpaid amount in dinars across the students of the subject of the level in the selected date range
+                                    - the total number of active students of the subject of the level
+
+
+
+
+
+
+
+
+
+
+
 
                             - row 2 : Overall Performance KPIs
                                 - col 1 : a kpi card that contains  :
@@ -2160,4 +2184,3 @@ tech requirements
     - the mobile app must be built with kotlin multiplatform mobile (KMM)
     - the backend with Django rest framework (DRF) and the database with postgresql
     - the app must be responsive and support both light and dark themes
-    
