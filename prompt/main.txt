@@ -1,13 +1,13 @@
-I want to build a mobile app with the name "Cidy" which allows the government teachers of Tunisia to : 
+I want to build a mobile app with the name "Cidy" which allows the government teachers of Tunisia who run private classes to : 
     - track the attendance of their students into their classes
     - track the payments of their students
-    - have notifications about the unpaid student 
-    - have a clear idea on their revenue and unpaid students
+    - have notifications about the the due payment of students 
+    - have a clear idea on their revenue and the due payments of their students
     - have a clear idea about their weekly schedule
-    - send notifications for due payments to the student and his parent
-    - give the ability for the parents of the student to view the attendance and the payments of their sons so that the son
-      can't fool his parent about the payments and the attendance
-    - give the ability for the students to view their attendance and payments so that they can track their own payments and attendance
+    - send due payment notifications to the student and his parent
+    - give the ability to the parents of the students to view the attendance and the payments of their sons so that the son
+      can't fool his parents about their payments and attendance
+    - give the ability for the students to view their attendance and payments 
 
 - the app does that throught having 3 profiles a teacher,a student and a parent and common login and register screens: 
 
@@ -41,7 +41,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                 - row 4:
                     - a text input for the phone number (required, phone number format,min length = max length = 8)
                 - row 5:
-                    - a password input for the password with the ability to show and hide the content of the input (required)
+                    - a password input for the password with the ability to show and hide the content of the input (required, min length = 6,contains at least one uppercase letter, one lowercase letter, and one number)
                 - row 6:
                     - a password input to confirm the password with the ability to show and hide the content of the input (required, must match the password)
                 - row 7:
@@ -55,25 +55,71 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 
     - For the teacher profile : 
         - all of the screens of the teacher profile have an app bar which contains : 
-            - in the most left a the tree line icons which toggle the sidebar 
+            - in the most left a the tree line icons which opens the sidebar 
             - in the middle the title of the screen 
             - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
               is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
               to the notifications screen and resets the number of notifications to 0
 
         - the sidebar : 
-            - the profile picture of the teacher rounded (routes to the profile screen)
-            - the full name of the teacher (routes to the profile screen)
-            - dashboard (done)
-            - week schedule (done)
-            - groups (done)
-            - students (done)
-            - prices (done)
-            - student requests (done)
-            - parent requests (done)
-            - notifications (done)
-            - profile (done)
-            - logout (logouts the user and routes to the login screen) (done)
+            col : 
+                - row 1 : 
+                    - at the most right a left arrow icon which hides the sidebar
+                - row 1 : routes to the profile screen of the teacher
+                    - col 1 : 
+                        - the profile picture of the teacher rounded
+                    - col 2 : 
+                        - the full name of the teacher
+                - row 2 : 
+                    - col :
+                        - row 1
+                            - col 1 :
+                                - an icon for the dashboard
+                            - col 2 :
+                                - the text : "Dashboard"
+                        - row 2 : routes to the week schedule screen
+                            - col 1 :
+                                - an icon for the calendar
+                            - col 2 :
+                                - the text : "Week Schedule"
+                        - row 3 : routes to the groups screen
+                            - col 1 :
+                                - an icon for the groups
+                            - col 2 :
+                                - the text : "Groups"
+                        - row 4 : routes to the students screen
+                            - col 1 :
+                                - an icon for the students
+                            - col 2 :
+                                - the text : "Students"
+                        - row 5 : routes to the prices screen
+                            - col 1 :
+                                - an icon for the prices
+                            - col 2 :
+                                - the text : "Prices"
+                        - row 6 : routes to the student requests screen
+                            - col 1 :
+                                - an icon for the student requests
+                            - col 2 :
+                                - the text : "Student Requests"
+                        - row 7 : routes to the parent requests screen
+                            - col 1 :
+                                - an icon for the parent requests
+                            - col 2 :
+                                - the text : "Parent Requests"
+                        - row 8 : routes to the notifications screen
+                            - col 1 :
+                                - an icon for the notifications
+                            - col 2 :
+                                - row :
+                                    - the text : "Notifications"
+                                    - the red circle with the number of notifications which is the number of notifications that were added after the last time the user did open the notification screen
+                        - row 9 : logouts the user and routes to the login screen
+                            - col 1 :
+                                - an icon for the logout
+                            - col 2 :
+                                - the text : "Logout"
+
             
         - the screens binded to each navigation item in the sidebar : 
             - the dashboard screen : 
@@ -81,7 +127,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                 - the content of the screen :  
                     - UI :     
                         - col : 
-                            - row 1 : 
+                            - row 1 : Date Range Selector
+                                - a date range picker component to filter all KPIs by a specific time period (defaults to current month)
+                                - includes quick presets: "This Week", "This Month", "Last Month", "Last 3 Months"
+
+                            - row 2 : Overall Performance KPIs
                                 - col 1 : a kpi card that contains  :
                                     - row 1 : 
                                         - the total paid amount in dinars accross all of the students of the teacher in the selected date range, in the green color and a big size
@@ -1533,19 +1583,48 @@ I want to build a mobile app with the name "Cidy" which allows the government te
     - For student profile :  
 
         - all of the screens of the student profile have an app bar which contains : 
-            - in the most left a the tree line icons which toggle the sidebar 
+            - in the most left a the tree line icons which opens the sidebar 
             - in the middle the title of the screen 
             - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
               is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
               to the notifications screen and resets the number of notifications to 0
 
         - the sidebar : 
-            - the profile picture of the student rounded (routes to the profile screen)
-            - the full name of the student (routes to the profile screen)
-            - teachers 
-            - subjects 
-            - parents 
-            - notifications
+            col : 
+                - row 1 : 
+                    - at the most right a left arrow icon which hides the sidebar
+                - row 2 : routes to the profile screen of the student
+                    - col 1 : 
+                        - the profile picture of the student rounded
+                    - col 2 : 
+                        - row 1: 
+                            - the full name of the student
+                        - row 2 :
+                            - the level and the section of the student (mention the section only if it exists)
+                - row 3 : 
+                    - col :
+                        - row 1 : routes to the teachers screen
+                            - col 1 :
+                                - an icon for the teachers
+                            - col 2 :
+                                - the text : "Teachers"
+                        - row 2 : routes to the subjects screen
+                            - col 1 :
+                                - an icon for the subjects
+                            - col 2 :
+                                - the text : "Subjects"
+                        - row 3 : routes to the parents screen
+                            - col 1 :
+                                - an icon for the parents
+                            - col 2 :
+                                - the text : "Parents"
+                        - row 4 : routes to the notifications screen
+                            - col 1 :
+                                - an icon for the notifications
+                            - col 2 :
+                                - row :
+                                    - the text : "Notifications"
+                                    - the red circle with the number of notifications which is the number of notifications that were added after the last time the user did open the notification screen
             
         - the screens binded to each navigation item in the sidebar : 
             - the teachers screen : 
@@ -1781,18 +1860,40 @@ I want to build a mobile app with the name "Cidy" which allows the government te
     - For the parent profile (THE WHOLE PROFILE IS CONFIRMED) : 
 
         - all of the screens of the teacher profile have an app bar which contains : 
-            - in the most left a the tree line icons which toggle the sidebar 
+            - in the most left a the tree line icons which opens the sidebar 
             - in the middle the title of the screen 
             - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
               is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
               to the notifications screen and resets the number of notifications to 0
 
         - the sidebar : 
-            - the profile picture of the parent rounded (routes to the profile screen)
-            - the full name of the parent (routes to the profile screen)
-            - teachers 
-            - sons 
-            - notifications 
+            col : 
+                - row 1 : 
+                    - at the most right a left arrow icon which hides the sidebar
+                - row 2 : routes to the profile screen of the parent
+                    - col 1 : 
+                        - the profile picture of the parent rounded
+                    - col 2 : 
+                        - the full name of the parent
+                - row 3 : 
+                    - col :
+                        - row 1 : routes to the teachers screen
+                            - col 1 :
+                                - an icon for the teachers
+                            - col 2 :
+                                - the text : "Teachers"
+                        - row 2 : routes to the sons screen
+                            - col 1 :
+                                - an icon for the sons
+                            - col 2 :
+                                - the text : "Sons"
+                        - row 3 : routes to the notifications screen
+                            - col 1 :
+                                - an icon for the notifications
+                            - col 2 :
+                                - row :
+                                    - the text : "Notifications"
+                                    - the red circle with the number of notifications which is the number of notifications that were added after the last time the user did open the notification screen
 
         - the screens binded to each navigation item in the sidebar : 
 
@@ -2055,13 +2156,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - the notification number must be set to 0 after the user leaves the Notification screen
 
 
-
-        
-          
-
-ideas i shouldn't forget in my prompt :
-    - student space in which he can follow his payments with all of his teachers 
-    - the ability to edit the info of  : 
-        - the student 
-        - the group
-        - the subject (done)
+tech requirements 
+    - the mobile app must be built with kotlin multiplatform mobile (KMM)
+    - the backend with Django rest framework (DRF) and the database with postgresql
+    - the app must be responsive and support both light and dark themes
+    

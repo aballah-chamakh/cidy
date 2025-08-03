@@ -1,0 +1,64 @@
+The "Cidy" app is a mobile application designed for government teachers in Tunisia who run private classes. It provides the following features:
+
+- **Teacher Features:**
+  - Track student attendance and payments.
+  - Receive notifications for due payments.
+  - View revenue and due payments.
+  - Manage weekly schedules.
+  - Send payment notifications to students and parents.
+
+- **Parent Features:**
+  - View their child's attendance and payments.
+  - Prevent students from misleading parents about payments or attendance.
+
+- **Student Features:**
+  - View their own attendance and payments.
+
+The app includes three profiles: Teacher, Student, and Parent, with common login and registration screens.
+
+### Common Screens:
+1. **Login Screen:**
+   - Email and password inputs with validation.
+   - Login button routes to the appropriate dashboard.
+   - Link to the registration screen.
+2. **Register Screen:**
+   - Profile type selection (Teacher, Student, Parent).
+   - Inputs for name, email, phone, and password with validation.
+   - Register button creates an account and routes to the dashboard.
+
+### Teacher Profile:
+- **App Bar:** Includes a sidebar toggle, screen title, and notification bell.
+- **Sidebar Navigation:**
+  - Profile, Dashboard, Week Schedule, Groups, Students, Prices, Student Requests, Parent Requests, Notifications, and Account.
+- **Screens:**
+  1. Dashboard: KPIs for paid/unpaid amounts, filters by level, section, and subject.
+  2. Week Schedule: Weekly calendar with draggable group cards.
+  3. Groups: List of groups with search, filters, and group details.
+  4. Students: List of students with filters and student details.
+  5. Prices: Manage levels, sections, and subjects.
+  6. Student Requests: Accept or decline student requests.
+  7. Parent Requests: Accept or decline parent requests.
+  8. Notifications: List of notifications with details.
+  9. Account: Update profile and change password.
+
+### Student Profile:
+- **App Bar:** Similar to the teacher profile.
+- **Sidebar Navigation:** Profile, Teachers, Subjects, Parents, and Notifications.
+- **Screens:**
+  1. Teachers: List of teachers with reenroll option.
+  2. Subjects: List of subjects with subject details.
+  3. Parents: List of accepted parents.
+  4. Notifications: List of notifications with details.
+
+### Parent Profile:
+- **App Bar:** Similar to the teacher profile.
+- **Sidebar Navigation:** Profile, Teachers, Sons, and Notifications.
+- **Screens:**
+  1. Teachers: List of teachers with parenting request option.
+  2. Sons: List of sons with details and add son option.
+  3. Notifications: List of notifications with details.
+
+### Technical Requirements:
+- Built with Kotlin Multiplatform Mobile (KMM).
+- Backend: Django Rest Framework (DRF) with PostgreSQL.
+- Responsive design with light and dark themes.
