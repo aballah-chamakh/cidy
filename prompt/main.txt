@@ -434,7 +434,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - col 1 : 
                                                             - in the most left, the title :  {the number of students that belongs to the group} Student(s)
                                                         - col 2  : 
-                                                            - in the most right, an "Edit" button 
+                                                            - in the most right, an "Add" button 
                                                     - row 2 : the content area of the student list card  :
                                                         - col : 
                                                             - row 1 : a filter for the student list
@@ -497,7 +497,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - clicking the close icon, closes the edit popup form 
                                                 - clicking on the edit button, edits the group, closes the edit popup form and update the group detail screen with the new updates
 
-                                        - clicking on the "add"  button of the student list card header,opens up a popup form which contains : 
+                                        - clicking on the "Add" button of the student list card header,opens up a popup form which contains : 
                                             - UI : 
                                                 - col : 
                                                     - row 1 : the header of the popup form 
@@ -521,8 +521,16 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - Dynamics : 
                                                 - clicking on the close icon, closes the popup form
                                                 - clicking on the "Cancel" button, closes the popup form
-                                                - clicking on the "Next" button, replaces the UI of the popup form based on the selected value : 
-                                                    - for selecting : "select an existing student" : 
+                                                - clicking on the "Next" button : 
+                                                    - for selecting : "select an existing student" and the teacher doesn't have students in the same level and section as the group or only in the same level if the group doesn't have a section, opens up a popup form which contains : 
+                                                        - close the existing popup 
+                                                        - then open an info popup with the message : 
+                                                            if the group has a level and a section : 
+                                                                - "You don't have any students in the same level and section as this group"
+                                                            if the group has only a level :
+                                                                - "You don't have any students in the same level as this group"
+
+                                                    - for selecting : "select an existing student" and the teacher has students in the same level and section as the group or only in the same level if the group doesn't have a section, replaces the UI of the popup with : 
                                                         - UI : 
                                                             - col : 
                                                                 - row 1 : the header of the popup form
@@ -558,7 +566,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                 - checks the selected student belongs to a group with the same level,section and subject as the group or only the same level and subject if the group has no section,
                                                                 if so, it be removed from that group 
                                                                 - then adds the selected students to the group, closes the popup form and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
-                                                    - for selecting "create new student" :    
+                                                    - for selecting "create a new student", replaces the UI of the popup to :    
                                                         - UI : 
                                                             - col : 
                                                                 - row 1 : the header of the popup form
@@ -761,411 +769,492 @@ I want to build a mobile app with the name "Cidy" which allows the government te
             - the students screen : 
                 - the title of the App Bar is : "Students"
                 - the content of the screen : 
-                    - UI :
-                        - col : 
-                            - row 1 :
-                                - col 1 : this takes the majority of the width 
-                                        - a text input to search by the fullname of the student 
-                                - col 2 : 
-                                    - a square button that contains the filter icon 
-                            - row 2 : 
-                                - col : the list of first 30 students of the teacher , the ones that belongs to the groups and the ones that don't, and each student must be in a clickable card wich contains : 
+                    - if the teacher has no students :
+                        - UI :
+                            - col :
+                                - row  : at the center of the screen on y and x axis
+                                    - row 1 : 
+                                        - a Students icon 
+                                    - row 2 : 
+                                        - the text : "you don't have any student yet"
+                                    - row 3 : 
+                                        - a button : "Create a student"
+                        - Dynamics :
+                            - clicking on the "Create a student"  : 
+                              - sends a request to the server that checks if the teacher has the ability to create a new student throught ensuring that 
+                                the teacher as at least one of the following : 
+                                    - a level that has no sections
+                                    - a level that has sections with at least one section
+
+                                - if the teacher doesn't have the ability to create a new student, opens up a popup that inform the teacher about that and about the minimum requirements to create a new student
+                                - if the teacher has the ability to create a new student, opens up a popup form which the same as the one open when clicking on the "Add" button in the students screen when the teacher has students (see below)
+                    - if the teacher has students :
+                        - UI :
+                            - col : 
+                                - row 1 :
+                                    - col 1 : this takes the majority of the width 
+                                            - a text input to search by the fullname of the student 
+                                    - col 2 : 
+                                        - a square button that contains the filter icon 
+                                - row 2 : 
                                     - row 1 : 
                                         - col 1 : 
-                                            - the profile of the student rounded 
+                                            - the header of the student list with the title : "{number of students after filtering and without pagination} Students"
                                         - col 2 : 
-                                            - row 1 : 
-                                                - the fullname of the student 
-                                            - row 2 :
-                                                - the level and the section of the student (include the section if it exists)
-                                            - row 3 : 
-                                                - the subjects of the groups that the student belong to, each subject must in a badge (include maximum 2 subjects and if the student belongs to more than 2 groups, show the text "..." in a badge)
-                                        - col 3 :
-                                            - the paid amount by this student in the green color and abbreviated, example : turn 1125 to 1.125k
-                                        - col 4 :
-                                            - the unpaid amount by this student in the red color and abbreviated
-                                        - col 5 : 
-                                            - a checkbox 
-                    - Dynamics : 
-                        - changing the value of the student fullname text input updates the student list by loading the first 30 students that matches its value and the persisted values of the filters of the filter popup form 
-                        - clicking on the filter square button opens up a popup form which contains : 
-                            - UI : 
-                                - col : 
-                                    - row 1 : the header of the popup
-                                        - col 1 : 
-                                            - in the most left the title : "Filter"
-                                        - col 2 : 
-                                            - in the most right the close icon
-                                    - row 2 : the content area of the popup 
+                                            - an "Add" button 
+                                    - col : the list of first 30 students of the teacher , the ones that belongs to the groups and the ones that don't, and each student must be in a clickable card wich contains : 
                                         - row 1 : 
-                                            - col : 
-                                                - row 1 
-                                                    - the label: Level
-                                                - row 2 
-                                                    - a select input which contains as options, all the levels that the teachers teaches (the ones includes in the prices screen)
-
-                                        - row 2 : 
-                                            - col : 
-                                                - row 1
-                                                    - the label : Section 
-                                                - row 2 
-                                                    - a select input which contains as options, all of the sections of the selected level
-                                                    notes :
-                                                        - if the user didn't select a level, keep section select disabled 
-                                                        - if the selected level doesn't have sections according to the prices screen , make the select section disabled otherwise re-enable it
-                                        
-                                        - row 2 : 
-                                            - col : 
-                                                - row 1
-                                                    - the label : Subject 
-                                                - row 2 
-                                                    - a select input which contains as options, all the subjects of the selected section or of the selected level if the selected level doesn't have sections 
-                                                        notes :
-                                                            - make the subject select disabled : 
-                                                                - if the teacher didn't select a level yet 
-                                                                - if the selected level has sections and the user still didn't select a section 
-                                                            
-                                    - row 3 : the footer of the popup 
-                                        - row  : 
                                             - col 1 : 
-                                                - a button with the name : "Reset ({the number of selected options})"     
+                                                - the profile of the student rounded 
                                             - col 2 : 
-                                                - a button with the name : "Filter"
-                            - Dynamics : 
-                                - clicking on the close icon , discards the new selected values and returns to the previous values (the persisted values before opening the filter popup) then closes the popup
-                                - clicking on the "Reset" button of the footer of the popup : 
-                                    - resets all of the selects of the popup 
-                                    - closes the popup 
-                                    - updates the students list by loading the first 30 students that match the fullname text input only 
-                                - clicking on the "Filter" button of the footer of the popup :
-                                    - closes the popup form 
-                                    - maintains the values of the filters of the popup while the user is still in the students screen (when the user leaves the students screen reset them)
-                                    - updates the students list by loading the first 30 students that match the filters (fullname text input, all of the selects in the filter popup form)
-                                    
-                        - checking the checkbox of at least one student card, slides up from the bottom a sticky block at bottom which contains : 
-                            - UI : 
-                                - row : 
-                                    - a button with the name : "Delete ({the number of checked students})"
-                            - Dynamics : 
-                                - clicking on the the delete button, deletes these student even if they are part of groups 
-                        - clicking on any part of a student card aside from the checkbox routes to the student detail screen : 
-                            - the title of the App Bar is : "Student"
-                            - the content of the screen : 
+                                                - row 1 : 
+                                                    - the fullname of the student 
+                                                - row 2 :
+                                                    - the level and the section of the student (include the section if it exists)
+                                                - row 3 : 
+                                                    - the subjects of the groups that the student belongs to, each subject must in a badge (include maximum 2 subjects and if the student belongs to more than 2 groups, show a badge with the content : "and {the number of the rest of the requested subjects} more" )
+                                            - col 3 :
+                                                - the paid amount by this student in the green color and abbreviated, example : turn 1125 to 1.125k
+                                            - col 4 :
+                                                - the unpaid amount by this student in the red color and abbreviated
+                                            - col 5 : 
+                                                - a checkbox 
+                        - Dynamics : 
+                            - changing the value of the student fullname text input updates the student list by loading the first 30 students that matches its value and the persisted values of the filters of the filter popup form 
+                            - clicking on the filter square button opens up a popup form which contains : 
                                 - UI : 
                                     - col : 
-                                        - row 1 : 
-                                            - col : 
-                                                - row 1 : 
-                                                    - at the center of the row,the profile image of the student rounded 
-                                                - row 2 :
-                                                    - at the center of the row,the fullname of the student
-                                                - row 3 :
-                                                    - at the center of the row,the level & the section of the student 
-                                                - row 4 :
-                                                    - at the center of the row,the phone number of the student
-                                        - row 2 : 
-                                            - col 1 : a kpi card 
-                                                - row 1 : 
-                                                    - the paid amount by the students accross all of his groups, in the green color and in a big size 
-                                                - row 2 : 
-                                                    - the text  : "paid", in a small size 
+                                        - row 1 : the header of the popup
+                                            - col 1 : 
+                                                - in the most left the title : "Filter"
+                                            - col 2 : 
+                                                - in the most right the close icon
+                                        - row 2 : the content area of the popup 
+                                            - row 1 : 
+                                                - col : 
+                                                    - row 1 
+                                                        - the label: Level
+                                                    - row 2
+                                                        - a select input for the level of the student which contains as options, all the levels that the teachers teaches (the ones includes in the prices screen) (not required)
 
-                                            - col 1 : a kpi card 
-                                                - row 1 : 
-                                                    - the unpaid amount by the students accross all of his groups, in the red color and in a big size 
-                                                - row 2 : 
-                                                    - the text  : "unpaid", in a small size 
-                                        
-                                        - row 3 : 
-                                            -col : 
-                                                - row 1 : 
-                                                    - the label : "Group"
-                                                - row 2 : 
-                                                    - a select input which contains as options, all the groups that the student belongs to, for each option the label must follow the following format :
-                                                      "{Subject of the group} - {the name of the group}" while the value must be the id of the group
-                                        - row 4 : 
-                                            - col 1 : a kpi card 
-                                                - row 1 : 
-                                                    - the paid amount by the students in the selected group, in the green color and in a big size 
-                                                - row 2 : 
-                                                    - the text  : "{group name} - paid", in a small size 
-
-                                            - col 1 : a kpi card 
-                                                - row 1 : 
-                                                    - the unpaid amount by the students in the selected group, in the red color and in a big size 
-                                                - row 2 : 
-                                                    - the text  : "{group name} - unpaid", in a small size
-
-                                        - row 5 : 
-                                            - col : 
-                                                - row 1 : 
-                                                    - a header with the text : "Class Batches"
-                                                - row 2 : the list of class batches of the selected group and each class batch must be in a card which contains : 
-                                                    - row : justify content : space around
-                                                        col 1 : 
-                                                            -  a circle, which represent a class 
-                                                        col 2 : 
-                                                            -  a circle, which represent a class  
-                                                        col 3 : 
-                                                            -  a circle, which represent a class
-                                                        col 4 : 
-                                                            -  a circle, which represent a class
-                                                    notes : 
-                                                        - the stoke color of the batch card and the circle color represents the status of the payment and attendance of the student,
-                                                          following the following color code below  : 
-                                                            - for the circle (class session)
-                                                                - red circle : the student attended this class , he still didn't pay for it and the payment is due (status : not_paid)
-                                                                - orange circle : the student attended this class , he still didn't pay for it and the payment isn't due (status : not_due)
-                                                                - green circle : the student attended this class and he paid for it (status : paid)
-                                                                - gray circle : the class still in the future (status : future)
-                                                            - for the cards (batch of classes)
-                                                                - red stroke : the batch contains 4 classes that the student attended, didn't pay for them and their payment is due (status : not_paid)
-                                                                - green stroke : the batch contains 4 classes that the student attended and he did pay for them (status : paid)
-                                                                - orange stroke : the batch contains at least one class paid and the rest for the classes are due and not paid (status : not_due)
-                                                                - gray stroke : the rest of the situation (status : new)
-                                        - row 6 : a sticky block at the bottom of the screen that doesn't hide the last element in the screen, which contains  : 
-                                            - row : 
-                                                - col 1 : which takes the double with of the next col 
-                                                    - a select input for the grouped action with the following options : 
-                                                        - mark attendance 
-                                                        - unmark attendance 
-                                                        - mark payment 
-                                                        - unmark payment 
-                                                        - edit 
-                                                        - delete 
-                                                - col 2 : which takes the half of the with of the first column
-                                                    - a button with the name start 
+                                            - row 2 : 
+                                                - col : 
+                                                    - row 1
+                                                        - the label : Section 
+                                                    - row 2 
+                                                        - a select input for the section of the student which contains as options, all of the sections of the selected level (not required)
+                                                        notes :
+                                                            - if the user didn't select a level, keep section select disabled 
+                                                            - if the selected level doesn't have sections according to the prices screen , make the select section disabled otherwise re-enable it
+                                            
+                                            - row 2 : 
+                                                - col : 
+                                                    - row 1
+                                                        - the label : Subject 
+                                                    - row 2 
+                                                        - a select input which contains as options, all of the subjects of the selected section or of the selected level if the selected level doesn't have sections (not required)
+                                                            notes :
+                                                                - make the subject select disabled : 
+                                                                    - if the teacher didn't select a level yet 
+                                                                    - if the selected level has sections and the user still didn't select a section 
+                                                                
+                                        - row 3 : the footer of the popup 
+                                            - row  : 
+                                                - col 1 : 
+                                                    - a button with the name : "Reset ({the number of selected options})"     
+                                                - col 2 : 
+                                                    - a button with the name : "Filter"
                                 - Dynamics : 
-                                    - clicking on any batch card, opens up a popup which contains  : 
-                                        - UI : 
-                                            - col : 
-                                                - row 1 : the header of the popup
-                                                    - col 1 : 
-                                                        - at the most left, the title of the popup : "Class batch details"
-                                                    - col 2 : 
-                                                            - at the most right, the close icon 
-                                                - row 2 : the content area of the popup 
+                                    - clicking on the close icon , discards the new selected values and returns to the previous values (the persisted values before opening the filter popup) then closes the popup
+                                    - clicking on the "Reset" button of the footer of the popup : 
+                                        - resets all of the selects of the popup 
+                                        - closes the popup 
+                                        - updates the students list by loading the first 30 students that match the fullname text input only 
+                                    - clicking on the "Filter" button of the footer of the popup :
+                                        - closes the popup form 
+                                        - maintains the values of the filters of the popup while the user is still in the students screen (when the user leaves the students screen reset them)
+                                        - updates the students list by loading the first 30 students that match the filters (fullname text input, all of the selects in the filter popup form)
+
+                            - clicking on the "Add" button opens up a popup form which contains :
+                                - UI : 
+                                    - col : 
+                                        - row 1 : the header of the popup form
+                                            - in the most left, the title : "Add a student"
+                                            - in the most right, the close icon
+                                        - row 2 : the content area of the popup form
+                                            - row 1 : in the middle of the row
+                                                - the default profile image of a student rounded and on top of it in the bottom right a small circle that contains the edit icon which conveys that you can upload your profile image (not required)
+                                            - row 2 :  
+                                                - a text input for the full name of the student  (required)
+                                            - row 3 : 
+                                                - a text input for the phone number of the student (required, accepts only integer characters, min length = max length = 8)
+                                            - row 4 : 
+                                                - two radio buttons : (required)
+                                                    - "Male"
+                                                    - "Female"
+                                            - row 5 :
+                                                - a select input for the level of the student which contains as options all the levels that the teacher teaches (the ones includes in the prices screen) (required)
+                                            - row 6 : 
+                                                - a select input for the section of the student which contains as options all the sections of the selected level (required if isn't disable)
+                                                    notes :
+                                                        - if the teacher didn't select a level, keep section select disabled 
+                                                        - if the selected level doesn't have sections according to the prices screen , make the select section disabled otherwise re-enable it
+
+                                            - row 7 : the footer of the popup form
+                                                - a button with the name : "Add Student"
+                            - Dynamics : 
+                                - clicking on the close icon of the header, closes the popup form without creating a new student
+                                - clicking on the "Add Student" button : 
+                                    - creates a new student with the specified profile image, full name, phone number, gender, level, and section
+                                    - closes the popup form
+                                    - updates the student list with the first 30 students that match the filters (fullname text input and the selects of the filter popup form)
+
+                            - checking the checkbox of at least one student card, slides up from the bottom a sticky block at bottom which contains : 
+                                - UI : 
+                                    - row : 
+                                        - a button with the name : "Delete ({the number of checked students})"
+                                - Dynamics : 
+                                    - clicking on the the delete button, deletes these student even if they are part of groups 
+
+                            - clicking on any part of a student card aside from the checkbox routes to the student detail screen : 
+                                - the title of the App Bar is : "Student"
+                                - the content of the screen : 
+                                    - UI : 
+                                        - col : 
+                                            - row 1 : 
+                                                - col : 
+                                                    - row 1 : 
+                                                        - at the center of the row,the profile image of the student rounded 
+                                                    - row 2 :
+                                                        - at the center of the row,the fullname of the student
+                                                    - row 3 :
+                                                        - at the center of the row,the level & the section of the student (include the section if it exists)
+                                                    - row 4 :
+                                                        - at the center of the row,the phone number of the student
+                                            - row 2 : 
+                                                - col 1 : a kpi card 
+                                                    - row 1 : 
+                                                        - the paid amount by the students accross all of his groups, in the green color and in a big size 
+                                                    - row 2 : 
+                                                        - the text  : "paid", in a small size 
+
+                                                - col 1 : a kpi card 
+                                                    - row 1 : 
+                                                        - the unpaid amount by the students accross all of his groups, in the red color and in a big size 
+                                                    - row 2 : 
+                                                        - the text  : "unpaid", in a small size 
+                                            
+                                            - row 3 : 
+                                                -col : 
+                                                    - row 1 : 
+                                                        - the label : "Group"
+                                                    - row 2 : 
+                                                        - a select input which contains as options, all the groups that the student belongs to, for each option the label must follow the following format :
+                                                        "{Subject of the group} - {the name of the group}" while the value must be the id of the group
+                                            - row 4 : 
+                                                - col 1 : a kpi card 
+                                                    - row 1 : 
+                                                        - the paid amount by the students in the selected group, in the green color and in a big size 
+                                                    - row 2 : 
+                                                        - the text  : "{group name} - paid", in a small size 
+
+                                                - col 1 : a kpi card 
+                                                    - row 1 : 
+                                                        - the unpaid amount by the students in the selected group, in the red color and in a big size 
+                                                    - row 2 : 
+                                                        - the text  : "{group name} - unpaid", in a small size
+
+                                            - row 5 : 
+                                                - col : 
+                                                    - row 1 : 
+                                                        - a header with the text : "Class Batches"
+                                                    - row 2 : the list of class batches of the selected group and each class batch must be in a clickable card which contains : 
+                                                        - row : justify content : space around
+                                                            col 1 : 
+                                                                -  a circle, which represents a class 
+                                                            col 2 : 
+                                                                -  a circle, which represents a class  
+                                                            col 3 : 
+                                                                -  a circle, which represents  a class
+                                                            col 4 : 
+                                                                -  a circle, which represents a class
+                                                        notes : 
+                                                            - the stoke color of the batch card and the circle color represents the status of the payment and attendance of the student,
+                                                            following the following color code below  : 
+                                                                - for the circle (class)
+                                                                    - red circle : the student attended this class , he still didn't pay for it and the payment is due (status : not_paid)
+                                                                    - orange circle : the student attended this class , he still didn't pay for it and the payment isn't due (status : not_due)
+                                                                    - green circle : the student attended this class and he paid for it (status : paid)
+                                                                    - gray circle : the class still in the future (status : future)
+                                                                - for the cards (batch of classes)
+                                                                    - red stroke : the batch contains 4 classes that the student attended, didn't pay for them and their payment is due (status : not_paid)
+                                                                    - green stroke : the batch contains 4 classes that the student attended and he did pay for them (status : paid)
+                                                                    - orange stroke : the batch contains at least one class paid and the rest for the classes are due and not paid (status : partially_paid)
+                                                                    - gray stroke : the rest of the situation (status : not_due)
+                                            - row 6 : a sticky overlayblock at the bottom of the screen that doesn't hide the last element in the screen, which contains  : 
+                                                - row : 
+                                                    - col 1 : which takes the double with of the next col 
+                                                        - a select input for actions, with the following options : 
+                                                            - mark attendance 
+                                                            - unmark attendance 
+                                                            - mark payment 
+                                                            - unmark payment 
+                                                            - edit (add this options only if the student was created by the teacher and not added by a student request)
+                                                            - delete 
+                                                    - col 2 : which takes the half of the with of the first column
+                                                        - a button with the name start 
+                                    - Dynamics : 
+                                        - clicking on any batch card, opens up a popup which contains  : 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - col 1 : 
+                                                            - at the most left, the title of the popup : "Class batch details"
+                                                        - col 2 : 
+                                                                - at the most right, the close icon 
+                                                    - row 2 : the content area of the popup 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - a badge which contains the status of the batch (status : paid, not_due, not_paid and partially_paid. replace the underscore with a space) 
+                                                                and his background color colored according to the status of the batch
+                                                            - row 2 : 
+                                                                - a vertical line with 4 circles in top of it and spaced, each circle : 
+                                                                    - represents a class of the batch 
+                                                                    - colored according to the status of the class (status : future, paid, not_due, not_paid) 
+                                                                next to each circle there is the details of the class which contains : 
+                                                                    - if the status of the class is attended then the datetime of attendance , if it's paid the datetime of the payment, otherwise skip this part 
+                                                                    - the status of the class (status : future, paid, not_due, not_paid) , replacing the underscore with a space
+                                                    - row 3 : the footer of the popup 
+                                                        - col 1 : 
+                                                            - a button with the name "Close"
+                                            - Dynamics : 
+                                                - clicking on the close icon of the header, closes the popup form 
+                                                - clicking on the close button of the footer, closes the popup form 
+
+                                        - clicking on the "start" button opens up a different popup type depending to the selected action
+                                            - for the action : "mark attendance", the popup contains 
+                                                - UI : 
                                                     - col : 
-                                                        - row 1 : 
-                                                            - a badge which contains the status of the batch (status : new, paid, not_due, not_paid. replace the underscore with a space) 
-                                                              and his background color colored according to the status of the batch
-                                                        - row 2 : 
-                                                            - a vertical line with 4 circles in top of it and spaced, each circle : 
-                                                                - represents a class of the batch 
-                                                                - colored according to the status of the class (status : future, paid, not_due, not_paid) 
-                                                            next to each circle there is the details of the class which contains : 
-                                                                - if the status of the class is attended then the datetime of attendance , if it's paid the datetime of the payment, otherwise skip this part 
-                                                                - the status of the class (status : future, paid, not_due, not_paid) , replacing the underscore with a space
-                                                - row 3 : the footer of the popup 
-                                                    - col 1 : 
-                                                        - a button with the name "Close"
-                                        - Dynamics : 
-                                            - clicking on the close icon of the header, closes the popup form 
-                                            - clicking on the close button of the footer, closes the popup form 
+                                                        - row 1 : the header of the popup
+                                                            - at center of the row, the title of the popup : "Mark attendance"
+                                                        - row 2 : the content area of the group 
+                                                            - col : 
+                                                                - row 1 : 
+                                                                    - at the center of the row, a user attendance icon 
+                                                                - row 3 :
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Mark attendance for"
+                                                                        - row 2 : 
+                                                                            - a radio button group with the following options: (required)
+                                                                                - "Specific date and time range"
+                                                                                - "Next automatic date and time range"
+                                                                        - row 3 (visible only if "Specific date and time range" is selected): 
+                                                                            - col :
+                                                                                - row 1 :  
+                                                                                    - the label : "Date"
+                                                                                - row 2 : 
+                                                                                    - a date picker (required)
+                                                                                - row 3 :  
+                                                                                    - the label : "Time range"
+                                                                                - row 4 : 
+                                                                                    - a time range selector (required)
+                                                                        - row 4 (visible only if "Next automatic date and time range" is selected): 
+                                                                            - col :
+                                                                                - row 1 :  
+                                                                                    - a label with the text: "Attendance will be marked based on the next automatic schedule of the student's class ."
+                                                        - row 3 : the footer of the popup
+                                                            - col 1 : 
+                                                                - a button with the name "Cancel"
+                                                            - col 2 : 
+                                                                - a highlighted button with the name "Mark"
+                                                - Dynamics : 
+                                                    - clicking on the "Cancel" button, closes the the popup 
+                                                    - clicking on the "Yes" button : 
+                                                        - mark the attendance for the student in the date option the teacher choose (the specified date and time range or in the next automatic schedule for student's class)
+                                                        - if the last class of the last class batch of the student is marked as attended or paid, create a new class batch for the student and mark the first class of the new batch as attended in the the date option the teacher choose
+                                                        - then closes the popup  
 
+                                            - for the action : "unmark attendance", the popup contains 
+                                                - UI : 
+                                                    - col : 
+                                                        - row 1 : the header of the popup
+                                                            - at the center of the row, the title of the popup : "Unmark attendance"
+                                                        - row 2 : the content area of the group 
+                                                            - col : 
+                                                                - row 1 : 
+                                                                    - at the center of the row, a user attendance icon with an "x" icon
+                                                                - row 2 : 
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Number of classes"
+                                                                        - row 2 : 
+                                                                            - a number input (min : 1 ,required)
+                                                        - row 3 : the footer of the popup
+                                                            - col 1 : 
+                                                                - a button with the name "Cancel"
+                                                            - col 2 : 
+                                                                - a highlighted button with the name "Unmark"
+                                                - Dynamics : 
+                                                    - clicking on the "Cancel" button, closes the the popup 
+                                                    - clicking on the "Unmark" button : 
+                                                        - unmarks the attendance for the last {the specified number of classes} classes of the selected group for the student, if the student in the selected group has an overflow of unnecessary class batches, delete them
+                                                        - then closes the popup 
 
-                                    - clicking on the "start" button opens up a different popup type depending to the selected grouped action
-                                        - for the grouped action : "mark attendance", the popup contains 
-                                            - UI : 
-                                                - col : 
-                                                    - row 1 : the header of the popup
-                                                        - at center of the row, the title of the popup : "Mark attendance"
-                                                    - row 2 : the content area of the group 
-                                                        - col : 
-                                                            - row 1 : 
-                                                                - at the center of the row, a user attendance icon 
-                                                            - row 2 : 
-                                                                - col :
-                                                                    - row 1 :  
-                                                                        - the label : "Number of classes"
-                                                                    - row 2 : 
-                                                                        - a number input (min : 1 ,required)
-                                                            - row 3 :
-                                                                - col : 
-                                                                    - row 1 :
-                                                                        - the label : "Datetime"
-                                                                    - row 2 : 
-                                                                        - a datetime selector (default value : current datetime, allow past datetimes,required)
-                                                    - row 3 : the footer of the popup
-                                                        - col 1 : 
-                                                            - a button with the name "Cancel"
-                                                        - col 2 : 
-                                                            - a highlighted button with the name "Mark"
-                                            - Dynamics : 
-                                                - clicking on the "Cancel" button, closes the the popup 
-                                                - clicking on the "Mark" button : 
-                                                    - marks the attendance for the last {the specified number of classes} classes in the selected group for the student , if the student doesn't have enough classes to mark their attendance, create new class batches, until he has enough
-                                                    - then closes the popup  
+                                            - for the action : "mark payment", the popup contains 
+                                                - UI : 
+                                                    - col : 
+                                                        - row 1 : the header of the popup
+                                                            - at the center of the row, the title of the popup : "Mark payment"
+                                                        - row 2 : the content area of the group 
+                                                            - col : 
+                                                                - row 1 : 
+                                                                    - at the center of the row, a payment icon 
+                                                                - row 2 : 
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Number of classes"
+                                                                        - row 2 : 
+                                                                            - a number input (min : 1 ,required)
+                                                                - row 3 :
+                                                                    - col : 
+                                                                        - row 1 :
+                                                                            - the label : "Datetime"
+                                                                        - row 2 : 
+                                                                            - a datetime selector (default value : current datetime, allow past datetimes,required)
+                                                        - row 3 : the footer of the popup
+                                                            - col 1 : 
+                                                                - a button with the name "Cancel"
+                                                            - col 2 : 
+                                                                - a highlighted button with the name "Mark"
+                                                - Dynamics : 
+                                                    - clicking on the "Cancel" button, closes the  popup 
+                                                    - clicking on the "Mark" button : 
+                                                        - mark the payment for last {the specified number of classes} classes of the selected group for the the student , if 
+                                                            the student doesn't have enough classes to mark their payment, create new class batches, until he has enough and mark 
+                                                            the missing classes as attended and paid
+                                                        - then closes the popup 
 
-                                        - for the grouped action : "unmark attendance", the popup contains 
-                                            - UI : 
-                                                - col : 
-                                                    - row 1 : the header of the popup
-                                                        - at the center of the row, the title of the popup : "Unmark attendance"
-                                                    - row 2 : the content area of the group 
-                                                        - col : 
-                                                            - row 1 : 
-                                                                - at the center of the row, a user attendance icon with an "x" icon
-                                                            - row 2 : 
-                                                                - col :
-                                                                    - row 1 :  
-                                                                        - the label : "Number of classes"
-                                                                    - row 2 : 
-                                                                        - a number input (min : 1 ,required)
-                                                    - row 3 : the footer of the popup
-                                                        - col 1 : 
-                                                            - a button with the name "Cancel"
-                                                        - col 2 : 
-                                                            - a highlighted button with the name "Unmark"
-                                            - Dynamics : 
-                                                - clicking on the "Cancel" button, closes the the popup 
-                                                - clicking on the "Unmark" button : 
-                                                    - unmarks the attendance for the last {the specified number of classes} classes of the selected group for the student, if the student in the selected group has an overflow of unnecessary class batches, delete them
-                                                    - then closes the popup 
+                                            - for the action : "unmark payment", the popup contains 
+                                                - UI : 
+                                                    - col : 
+                                                        - row 1 : the header of the popup
+                                                            - at the center of the row, the title of the popup : "Unmark payment"
+                                                        - row 2 : the content area of the group 
+                                                            - col : 
+                                                                - row 1 : 
+                                                                    - at the center of the row, a payment icon 
+                                                                - row 2 : 
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Number of classes"
+                                                                        - row 2 : 
+                                                                            - a number input (min : 1 ,required)
+                                                        - row 3 : the footer of the popup
+                                                            - col 1 : 
+                                                                - a button with the name "Cancel"
+                                                            - col 2 : 
+                                                                - a highlighted button with the name "Unmark"
+                                                - Dynamics : 
+                                                    - clicking on the "Cancel" button, closes the the popup 
+                                                    - clicking on the "Unmark" button : 
+                                                        - unmark the payment for the last {the specified number of classes} classes in the selected group for the student
+                                                        - then closes the popup  
 
-                                        - for the grouped action : "mark payment", the popup contains 
-                                            - UI : 
-                                                - col : 
-                                                    - row 1 : the header of the popup
-                                                        - at the center of the row, the title of the popup : "Mark payment"
-                                                    - row 2 : the content area of the group 
-                                                        - col : 
-                                                            - row 1 : 
-                                                                - at the center of the row, a payment icon 
-                                                            - row 2 : 
-                                                                - col :
-                                                                    - row 1 :  
-                                                                        - the label : "Number of classes"
-                                                                    - row 2 : 
-                                                                        - a number input (min : 1 ,required)
-                                                            - row 3 :
-                                                                - col : 
-                                                                    - row 1 :
-                                                                        - the label : "Datetime"
-                                                                    - row 2 : 
-                                                                        - a datetime selector (default value : current datetime, allow past datetimes,required)
-                                                    - row 3 : the footer of the popup
-                                                        - col 1 : 
-                                                            - a button with the name "Cancel"
-                                                        - col 2 : 
-                                                            - a highlighted button with the name "Mark"
-                                            - Dynamics : 
-                                                - clicking on the "Cancel" button, closes the  popup 
-                                                - clicking on the "Mark" button : 
-                                                    - mark the payment for last {the specified number of classes} classes of the selected group for the the student , if 
-                                                        the student doesn't have enough classes to mark their payment, create new class batches, until he has enough and mark 
-                                                        the missing classes as attended and paid
-                                                    - then closes the popup 
+                                            - for the action : "edit", the popup contains 
+                                                - UI : 
+                                                    - col : 
+                                                        - row 1 : the header of the popup
+                                                            - col 1 : 
+                                                                - at the most left, the title of the popup : "Edit the student"
+                                                            - col 2 : 
+                                                                - at the most right, the close icon
+                                                        - row 2 : the content area of the group 
+                                                            - col : 
+                                                                - row 1 : 
+                                                                    - at the center of the row, the profile image of the student rounded, at the bottom right corner of it a circle that contains the edit icon 
+                                                                - row 2 : 
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Full name" 
+                                                                        - row 2 : 
+                                                                            - a text input pre-filled with the current value (required)
+                                                                - row 2 : 
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Phone number" 
+                                                                        - row 2 : 
+                                                                            - a text input pre-filled with the current value (required,accepts only integer characters,min length : 8, max length : 8)
+                                                                - row 3 : 
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Gender" 
+                                                                        - row 2 : 
+                                                                            - radio buttons pre-filled with the current value, with the options:
+                                                                                - "Male"
+                                                                                - "Female"
+                                                                            - validations : required
+                                                                - row 3 : 
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Level" 
+                                                                        - row 2 : 
+                                                                            - a select input pre-filled with the current value, the option list of this select is the list of the levels that the teacher teaches, the ones included 
+                                                                              in the prices screen (required)
 
-                                        - for the grouped action : "unmark payment", the popup contains 
-                                            - UI : 
-                                                - col : 
-                                                    - row 1 : the header of the popup
-                                                        - at the center of the row, the title of the popup : "Unmark payment"
-                                                    - row 2 : the content area of the group 
-                                                        - col : 
-                                                            - row 1 : 
-                                                                - at the center of the row, a payment icon 
-                                                            - row 2 : 
-                                                                - col :
-                                                                    - row 1 :  
-                                                                        - the label : "Number of classes"
-                                                                    - row 2 : 
-                                                                        - a number input (min : 1 ,required)
-                                                    - row 3 : the footer of the popup
-                                                        - col 1 : 
-                                                            - a button with the name "Cancel"
-                                                        - col 2 : 
-                                                            - a highlighted button with the name "Unmark"
-                                            - Dynamics : 
-                                                - clicking on the "Cancel" button, closes the the popup 
-                                                - clicking on the "Unmark" button : 
-                                                    - unmark the payment for the last {the specified number of classes} classes in the selected group for the selected student
-                                                    - then closes the popup  
+                                                                - row 3 : 
+                                                                    - col :
+                                                                        - row 1 :  
+                                                                            - the label : "Section" 
+                                                                        - row 2 : 
+                                                                            - a select input pre-filled with the current value (required if the selected level has sections according to the prices screen)
+                                                                                notes : 
+                                                                                    - disable this select  : 
+                                                                                        - if the teacher didn't select a level
+                                                                                        - if the teacher selected a level that doesn't have sections according to the prices screen           
 
-                                        - for the grouped action : "edit", the popup contains 
-                                            - UI : 
-                                                - col : 
-                                                    - row 1 : the header of the popup
-                                                        - col 1 : 
-                                                            - at the most left, the title of the popup : "Edit the group"
-                                                        - col 2 : 
-                                                            - at the most right, the close icon
-                                                    - row 2 : the content area of the group 
-                                                        - col : 
-                                                            - row 1 : 
-                                                                - at the center of the row, the profile image of the student rounded, at the bottom right corner of it a a circle that contains the edit icon 
-                                                            - row 2 : 
-                                                                - col :
-                                                                    - row 1 :  
-                                                                        - the label : "Full name" 
-                                                                    - row 2 : 
-                                                                        - a text input pre-filled with the current value (required)
-                                                            - row 2 : 
-                                                                - col :
-                                                                    - row 1 :  
-                                                                        - the label : "Phone number" 
-                                                                    - row 2 : 
-                                                                        - a text input pre-filled with the current value (required,accepts only integer characters,min length : 8, max length : 8)
-                                                            - row 3 : 
-                                                                - col :
-                                                                    - row 1 :  
-                                                                        - the label : "Level" 
-                                                                    - row 2 : 
-                                                                        - a select input input pre-filled with the current value, the option list of this select is the list of the levels that the teacher teaches, the ones included 
-                                                                          in the prices screen (required)
-
-                                                            - row 3 : 
-                                                                - col :
-                                                                    - row 1 :  
-                                                                        - the label : "Section" 
-                                                                    - row 2 : 
-                                                                        - a select input input pre-filled with the current value (required if the selected level has sections)
-                                                                            notes : 
-                                                                                - if the selected level doesn't have sections, disable the section select and re-enable it later 
-                                                                                - the option list here is dynamic and must be updated based on the selected level 
-
-                                                    - row 3 : the footer of the popup
-                                                        - col 1 : 
-                                                            - a button with the name "Cancel"
-                                                        - col 2 : 
-                                                            - a highlighted button with the name "Edit"
-                                            - Dynamics : 
-                                                - clicking on the close icon, closes the popup form
-                                                - clicking on the "Cancel" button of the footer, closes the popup 
-                                                - clicking on the "Edit" button of the footer : 
-                                                    - edits the student 
-                                                    - then closes the popup 
-                                                
-                                        - for the grouped action : "delete" the popup contains 
-                                            - UI : 
-                                                - col : 
-                                                    - row 1 : the header of the popup
-                                                        - at center of the row, the title of the popup : "Confirm Delete"
-                                                    - row 2 : the content area of the group 
-                                                        - col : 
-                                                            - row 1 : 
-                                                                - at the center of the row,a trash icon 
-                                                            - row 2 : 
-                                                                - at the center of the row, the text format : "Are you sure you want to delete the student {the student's full name} ?"
-                                                    - row 3 : the footer of the popup
-                                                        - col 1 : 
-                                                            - a button with the name "No"
-                                                        - col 2 : 
-                                                            - a highlighted button with the name "Yes"
-                                            - Dynamics : 
-                                                - clicking on the "No" button, closes the the popup 
-                                                - clicking on the "Yes" button, deletes the student then closes the popup 
+                                                        - row 3 : the footer of the popup
+                                                            - col 1 : 
+                                                                - a button with the name "Cancel"
+                                                            - col 2 : 
+                                                                - a highlighted button with the name "Edit"
+                                                - Dynamics : 
+                                                    - clicking on the close icon, closes the popup form
+                                                    - clicking on the "Cancel" button of the footer, closes the popup 
+                                                    - clicking on the "Edit" button of the footer : 
+                                                        - edits the student 
+                                                        - then closes the popup 
+                                                    
+                                            - for the grouped action : "delete" the popup contains 
+                                                - UI : 
+                                                    - col : 
+                                                        - row 1 : the header of the popup
+                                                            - at center of the row, the title of the popup : "Confirm Delete"
+                                                        - row 2 : the content area of the group 
+                                                            - col : 
+                                                                - row 1 : 
+                                                                    - at the center of the row,a trash icon 
+                                                                - row 2 : 
+                                                                    - at the center of the row, the text format : "Are you sure you want to delete the student {the student's full name} ?"
+                                                        - row 3 : the footer of the popup
+                                                            - col 1 : 
+                                                                - a button with the name "No"
+                                                            - col 2 : 
+                                                                - a highlighted button with the name "Yes"
+                                                - Dynamics : 
+                                                    - clicking on the "No" button, closes the the popup 
+                                                    - clicking on the "Yes" button, deletes the student then closes the popup 
+                                                    - if the student was added by student request, delete this student only for the teacher and don't delete the student it self 
                                         
-            - the price screen : 
+            - the prices screen : this includes the levels and level sections that the teacher teaches and the prices of their subjects 
                 - the title of the App Bar is : "Prices"
                 - the content of the screen :
                     - UI :
                         - col :
                             - row 1 : the header row for the levels list
-                                - col 1 : 
+                                - col 1 : at the most left
                                     - the text "Levels"
-                                - col 2 : 
+                                - col 2 : at the most right
                                     - a button with the name "Add"
                             - row 2 : the list of levels
                                 - col : each level must be in a card which contains :
@@ -1178,7 +1267,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - an arrow down icon in a rounded button
                                     - row (hidden by default, toggled by the arrow down icon button) :
                                         - col :
-                                            - if the level has sections:
+                                            - if the level has sections (according to the tunisian education system):
                                                 - row 1 : the header row for the sections list
                                                     - col 1 :
                                                         - the text "Sections"
@@ -1209,7 +1298,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                                 - the name of the subject
                                                                             - col 3 :
                                                                                 - the price of the subject
-                                            - if the level does not have sections:
+                                            - if the level does not have sections (according to the tunisian education system):
                                                 - row 1 : the header row for the subjects list
                                                     - col 1 :
                                                         - the text "Subjects"
@@ -1227,15 +1316,15 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 
                     - Dynamics :
                         - clicking on the "Add" button in the levels header row opens a popup form which contains :
-                            - a select input for the level with predefined options
+                            - a select input for the level which contains as options, all of the levels of tunisian education system
                             - an "Add" button
-                        - clicking on the arrow down icon of a level card toggles the visibility of its sections block or subjects block (if the level has no sections).
+                        - clicking on the arrow down icon of a level card toggles the visibility of its sections block or subjects block if the level has no sections according to the tunisian education system.
                         - clicking on the "Add" button in the sections header row opens a popup form which contains :
-                            - a select input for the name of the section with predefined options based on the level this sections block is in
+                            - a select input for the section which contains as options, all of the sections of the selected level that the sections block is in, according to the tunisian education system.
                             - an "Add" button
                         - clicking on the arrow down icon of a section card toggles the visibility of its subjects block
                         - clicking on the "Add" button in the subjects header row opens a popup form which contains :
-                            - a select input for the name of the subject with predefined options based on the section or level this subjects block is in 
+                            - a select input for the subject which contains as options, all of the subjects of the selected section that the subjects block is in, according to the tunisian education system.
                             - a float input for the price of the subject
                             - an "Add" button
                         - checking the checkbox of any card (level or section or subject) , slides up a from the bottom of the screen a sticky block a the bottom which contains  : 
@@ -1247,13 +1336,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - UI : 
                                         - col : 
                                             - row 1 : the header of the popup
-                                                - at center of the row, the title of the popup : "Confirm Delete"
+                                                - at center of the row, the title of the popup : "Confirm Delete ({the number of selected items})"
                                             - row 2 : the content area of the group 
                                                 - col : 
                                                     - row 1 : 
                                                         - at the center of the row,a trash icon 
                                                     - row 2 : 
-                                                        - at the center of the row, the text format : "Are you sure you want to delete the selected items {the number of selected items}, since this will delete all of the groups related to them ?"
+                                                        - at the center of the row, the text format : "Are you sure you want to delete the selected {the number of selected items} items , since this will delete all of the groups related to them ?"
                                             - row 3 : the footer of the popup
                                                 - col 1 : 
                                                     - a button with the name "No"
@@ -1262,10 +1351,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - Dynamics : 
                                         - clicking on the "No" button, closes the the popup 
                                         - clicking on the "Yes" button, deletes the selected items with their related groups then closes the popup 
-
+                        - don't allow duplicate levels, sections in the same level, subjects in the same level or section
 
             - the student requests screen :  
-                - the title of the App Bar is : "Student Requests ({the number of the new students requests after the last time the user opened this screen})"
+                - the title of the App Bar is : "Student Requests ({the number of the new students requests after the last time the teacher opened this screen})"
                 - the content of the screen : 
                     - UI : 
                         - col : 
@@ -1275,7 +1364,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - col 2 : 
                                     - a square button which contains a filter icon 
                                 
-                            - row 2 : list of student requests and each request must be in a card which contains :
+                            - row 2 : list of the first 30 student requests and each request must be in a card which contains :
                                 - col :
                                     - row 1 : 
                                         - col 1
@@ -1284,9 +1373,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - row 1 : 
                                                 - the full name of the student
                                             - row 2 :
-                                                - the level and section of the student 
+                                                - the level and section (include it if exists) of the student 
                                             - row 3 :
-                                                - the requested subject(s) in badge(s) 
+                                                - the requested subject(s) in badge(s) (show only the first 2 subjects if there are more than 2, show a badge with the content : "and {the number of the rest of the requested subjects} more" )
                                         - col 3 :
                                             if the student request was accepted : 
                                                 - a badge with the content : "Accepted"
@@ -1299,32 +1388,56 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - a "Decline" button
                                     - row 2 : 
                                         - at the most right : the datetime of the request
-                            - row 3 : a pagingation for the student requests list which contains the following : 
-                                - row : 
-                                    - col 1 : 
-                                        - "{the rank of the first student request showed in the student request list out of the full filtered and non paginated list} to {the rank of the last student request showed in the student request list out of the full filtered and non paginated list} / {the length of the full filtered and non paginated list}"
-                                    - col 2 : 
-                                        - a select input for selecting page number , with the options : from 1 to the length of full filtered and non paginated list / batch size
-                                    - col 3 :
-                                        - a select input for selecting batch size with the options: 20,50,100
                     Dynamics :
                         - clicking on the filter square button opens up a popup form which contains : 
                             - UI : 
                                 - col : 
-                                    - row 1 : 
-                                        - a select input for the level that contains as options the levels that the teachers teaches 
-                                    - row 2 : 
-                                        - a select input for the section that contains as options the sections of the selected level if the the selected level has sections otherwise keep this field disabled
-                                    - row 3 : 
-                                        - a select input for the subject that contains as options the subjects of the selected level or the selected section of it's select input not disabled
-                                    - row 4 : 
-                                        - a button with name "Filter"
+                                    - row 1 :  the header of the popup
+                                        - col 1 : 
+                                            - the title "Filter"
+                                        - col 2 : 
+                                            - a close icon 
+                                    - row 2 : the content area of the popup
+                                        - col : 
+                                            - row 1 : 
+                                                - a select input for the level that contains as options the levels that the teachers teaches accoerding to the prices screen
+                                            - row 2 : 
+                                                - a select input for the section that contains as options the sections of the selected level according to prices screen. 
+                                                    disable this select  : 
+                                                        - if the teacher didn't select a level
+                                                        - if the teacher selected a level that doesn't have sections according to the prices screen
+                                            - row 3 : 
+                                                - a select input for the subject that contains as options the subjects of the selected level or the selected section  : 
+                                                    - disable this select : 
+                                                        - if the teacher didn't select a level
+                                                        - if the teacher selected a level that has sections and he didn't select a section yet 
+                                                    - note : 
+                                                        - this filter filters in the following way : 
+                                                            - does the student request contains in his requested subjects the selected subject
+                                    - row 3 : the footer of the popup 
+                                        - col 1 : 
+                                            - a reset button with the name "Reset ({the number of selected items})"
+                                        - col 2 :
+                                            - a button with the name "Filter" : 
                             - Dynamics :
-                                - clicking on the "Filter" button closes the popup and updates the student requests list and it's pagination in the screen based on the text and select input values
+                                - clicking on the close icon , discards the new selected values and returns to the previous values (the persisted values before opening the filter popup) then closes the popup
+                                - clicking on the "Reset" button of the footer of the popup : 
+                                    - resets all of the selects of the popup 
+                                    - closes the popup 
+                                    - updates the student request list by loading the first 30 student requests that match the fullname text input only 
+                                - clicking on the "Filter" button of the footer of the popup :
+                                    - closes the popup form
+                                    - maintains the values of the filters of the popup while the user is still in the student requests screen (when the user leaves the student requests screen reset them)
+                                    - updates the student request list by loading the first 30 student requests that match the filters (fullname text input, all of the selects in the filter popup form)
 
                         - clicking on the "Accept" of a student request card, open a popup form which contains : 
                             - UI : 
                                 - col : 
+                                    - row 1 : the header of the popup 
+                                        - col 1 : 
+                                            - the title : "Accepting a student"
+                                        - col 2 : 
+                                            - the close icon 
                                     - row 1 : 
                                         - col 1
                                             - at the center of the col, the profile image of the student rounded
