@@ -1364,9 +1364,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - col 2 : 
                                     - a square button which contains a filter icon 
                                 
-                            - row 2 : list of the first 30 student requests and each request must be in a card which contains :
+                            - row 2 : list of the latest 30 student requests and each request must be in a card which contains :
                                 - col :
-                                    - row 1 : 
+                                    - row 1 : highlight the card if the teacher didn't click on the "Accept" or "Decline" button of the card before
                                         - col 1
                                             - the profile image of the student rounded
                                         - col 2  :
@@ -1443,19 +1443,23 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - at the center of the col, the profile image of the student rounded
                                             - at the center of the col, the full name of the student
                                             - at the center of the col, the level and section of the student
+                                            - at the center of the col, the phone number of the student
                                     - row 2 :
                                         - col : 
                                             - row 1 :
-                                                - a checkbox with the label "add it as new student"
-                                            - row 2 : 
-                                                - a checkbox with the label "replace it by an existing student"
-                                            - row 3 : 
+                                                - col 1 : 
+                                                    - the label : "Choose the way to add the student"
+                                                - col 2 :
+                                                    - radio buttons group with two options (only one can be selected at a time, default is first,required):
+                                                        - "Add it as new student"
+                                                        - "Replace it by an existing student"
+
+                                            - row 3 : make this visible if the option "replace it by an existing student" is checked
                                                 - col : 
                                                     - row 1 : 
                                                         - the label : "select the student to replace by"
                                                     - row 2 :
-                                                        - a select input that contains as options, the list of the students created by the teacher (the ones that don't have their own login) that have the same level and section as the requesting student,
-                                                          make this select disabled if the checkbox with the label "replace it by an existing student" isn't checked 
+                                                        - a select input that contains as options, the list of the students created by the teacher (the ones that don't have their own login) that have the same level and section or only the same level (if the level of the student doesn't have sections) as the requesting student (required)
                                             - for each subject the student asked for :
                                                 - row 4 : 
                                                     - col : 
@@ -1464,8 +1468,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - row 2 :
                                                             - a select input that contains as options :
                                                                 - the option : "decline this subject" which is the default 
-                                                                - the rest of the options  :the list of groups that have the same level,section and the asked subject of the requesting student
-                                                              if the selected student to replace by is already part of a group that teaches this subject, pre-fill the value of this select by it's group 
+                                                                - the rest of the options : 
+                                                                   the list of groups that have the same level,section and the asked subject of the requesting student
+                                                                   or the same level and the asked subject if the level of the student doesn't have sections, and the label of each option is the name of the group and the value is the id of the group
+                                                                   - note :
+                                                                        - if the teacher selected student to replace by and this student belongs to a group in the option list of this select, pre-fill the value of this select by it's group 
                                                 
                                     - row 3 :
                                         - col 1 : 
@@ -1474,15 +1481,17 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - a highlighted button with the name "Accept"
 
                             - Dynamics :
-                                - allow only one checkbox to be checked at the time and make the the checkbox with the label "add it as new student" to be checked by default
                                 - before openning the popup bring from the server,
-                                    - the list of students that have the same level and section as the requesting student and each one with his groups that teached the requested subjects, this groups 
-                                      will be used to prefill the subject group selects when the teacher chooses to replace by an existing student  
-                                    - for each asked subject the groups that have the same level,section and subject as the requesting student
-                                - clicking on the "Accept" button  : 
-                                    - adds this student as a new student or replaces it by an existing one then assigns him as to the selected group(s)
-                                    - then closes the popup
-                                    - then updates the list of students requests 
+                                    - the list of students that have the same level and section or only the same level (if the level of the requesting student doesn't have sections) as the requesting student and each one with his groups that teaches the requested subjects, this groups
+                                      will be used to prefill the subject group selects when the teacher chooses to replace by an existing student
+                                    - for each asked subject the groups that have the same level,section and subject or only the same level and subject (if the level of the requesting student doesn't have sections) as the requesting student 
+                                - clicking on the "Accept" button : 
+                                    - if the teacher assinged at least one of the requested subjects to a group :
+                                        - adds this student as a new student or replaces it by an existing one based on what the teacher choose then assigns him as to the selected group(s)
+                                        - then closes the popup
+                                        - finally updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
+                                    - otherwise :
+                                        - shows an error message : "You must assign at least one subject to a group" in the same popup without closing it
                                 - clicking on the "Cancel" button closes the popup form without any action
 
                         - clicking on the "Decline" button of a student request card, opens a confirmation popup which contains : 
@@ -1495,7 +1504,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - row 1 : 
                                                 - at the center of the row,a user decline icon 
                                             - row 2 : 
-                                                - at the center of the row, the text format : "Are you sure you want to decline this request ?"
+                                                - at the center of the row, the text format : "Are you sure you want to decline this student request ?"
                                     - row 3 : the footer of the popup
                                         - col 1 : 
                                             - a button with the name "No"
@@ -1503,8 +1512,16 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - a highlighted button with the name "Yes"
                             - Dynamics :
                                 - clicking on the "No" button, closes the popup form
-                                - clicking on the "Yes" button, declines this request then closes the popup form and updates the list of students requests
-                                
+                                - clicking on the "Yes" button : 
+                                    - declines this request 
+                                    - then closes the popup form 
+                                    - finally updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Declined"
+                        - clicking on the "Accept" or "Decline" button of a student request card, should unhighlight the card and decreases the number of new student requests in the App Bar title and in the sidebar badge
+                        - reaching the end of the list of student requests scrolling, loads the next 30 student requests that match the fullname text input and the persisted values of the filters of the popup form and append them to the list
+                        - periodically keep :
+                            - adding the new student requests to the top of the list, the ones that matches the fullname text input and the persisted values of the filters of the popup form
+                            - updating the number of new student requests in the App Bar title and in the sidebar badge by adding to it the number of the new students requests
+                              that happened during opening this screen (don't follow the fullname text input filters of the popup filter here)
             - the parent requests screen :  
                 - the title of the App Bar is : "Parent Requests ({the number of the new parent requests after the last time the user opened this screen})"
                 - the content of the screen : 
@@ -1513,8 +1530,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - row 1 : a filter for the parent requests list which contains
                                 - a text input to search by the fullname of the parent
 
-                            - row 2 : list of parent requests and each request must be in a card which contains :
-                                - col :
+                            - row 2 : list of the latest 30 parent requests and each request must be in a card which contains :
+                                - col : highlight the card if the teacher didn't click on the "Accept" or "Decline" button of the card before
                                     - row 1 : 
                                         - col 1
                                             - the profile image of the parent rounded
@@ -1522,7 +1539,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - row 1 : 
                                                 - the full name of the parent
                                             - row 2 :
-                                                - the requested student(s) in badge(s) 
+                                                - the requested student(s) in badge(s), show only the first 2 students if there are more than 2, show a badge with the content : "and {the number of the rest of the requested students} more"
                                         - col 3 :
                                             if the parent request was accepted : 
                                                 - a badge with the content : "Accepted"
@@ -1535,14 +1552,6 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - a "Decline" button
                                     - row 2 : at the footer of the card 
                                         - at the most right : the datetime of the request
-                            - row 3 : a pagingation for the parent requests list which contains the following : 
-                                - row : 
-                                    - col 1 : 
-                                        - "{the rank of the first parent request showed in the parent request list out of the full filtered and non paginated list} to {the rank of the last parent request showed in the parent request list out of the full filtered and non paginated list} / {the length of the full filtered and non paginated list}"
-                                    - col 2 : 
-                                        - a select input for selecting page number , with the options : from 1 to the length of full filtered and non paginated list / batch size
-                                    - col 3 :
-                                        - a select input for selecting batch size with the options: 20,50,100
                     Dynamics :
                         - clicking on the "Accept" of a parent request card, opens a confirmation popup which contains : 
                             - UI : 
@@ -1555,7 +1564,6 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 
                                     - row 2 : the content area of the popup  
                                         - col : 
-
                                             - row 1 : 
                                                 - col : 
                                                     - row 1 : 
@@ -1584,10 +1592,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - clicking on the close icons, closes the popup form
                                 - clicking on the "Cancel" button, closes the popup form
                                 - clicking on the "Accept" button : 
-                                    - should ensure that the teacher assigned as at least one son to a student and the parent as a parent for it 
-                                    - assigns the son(s) of the parent in the request to the selected student(s) and assigns the parent as a parent 
-                                        for the selected student(s)
-
+                                    if the teacher assigned at least one son/daughter to a student : 
+                                        - assigns the son(s) of the parent in the request to the selected student(s) and assigns the parent as a parent 
+                                          for the selected student(s)
+                                        - finally updates the card of this parent request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
+                                    otherwise :
+                                        - shows an error message : "You must assign at least one son/daughter to a student" in the same popup without closing it
 
                         - clicking on the "Decline" button of a parent request card, opens a confirmation popup which contains : 
                             - UI : 
@@ -1599,7 +1609,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - row 1 : 
                                                 - at the center of the row, a user decline icon 
                                             - row 2 : 
-                                                - at the center of the row, the text format : "Are you sure you want to decline this request?"
+                                                - at the center of the row, the text format : "Are you sure you want to decline this parent request?"
                                     - row 3 : the footer of the popup
                                         - col 1 : 
                                             - a button with the name "No"
@@ -1607,13 +1617,22 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - a highlighted button with the name "Yes"
                             - Dynamics :
                                 - clicking on the "No" button, closes the popup form
-                                - clicking on the "Yes" button, declines this request then closes the popup form and updates the list of parent requests
+                                - clicking on the "Yes" button : 
+                                    - declines this request 
+                                    - then closes the popup form
+                                    - finally updates the card of this parent request by replacing the "Accept" and "Decline" buttons with the badge "Declined"
+                        - clicking on the "Accept" or "Decline" button of a parent request card, should unhighlight the card and decreases the number of new parent requests in the App Bar title and in the sidebar badge
+                        - reaching the end of the list of parent requests scrolling, loads the next 30 parent requests that match the fullname text input and append them to the list
+                        - periodically keep :
+                            - adding the new parent requests to the top of the list, the ones that matches the fullname text input
+                            - updating the number of new parent requests in the App Bar title and in the sidebar badge by adding to it the number of new parent requests
+                              that happened during opening this screen (don't follow the fullname text input filters of the popup filter here)
 
             - the notifications screen : 
                 - the title of the App Bar is : "Notifications ({the number of new notifications after the last time the user opened this screen})" : 
                 - the content of the screen : 
                     - UI : 
-                        - col : a list of the latest 20 due payment notifications, each one must be in a clickable card which contains : 
+                        - col : a list of the latest 30 due payment notifications, each one must be in a clickable card which contains : 
                             - row : 
                                 - col : 
                                     - a red filled rounded $ icon 
@@ -1623,10 +1642,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - row : 
                                 - at the most right : the datetime this notification was create at 
                     - Dynamics : 
-                        - clicking on a notification card routes to the detail screen of the student which has the mentionned group selected  
-                        - when the user reaches the bottom scrolling , load the next latest 20 notifications to the list until there is no more notifications 
-                          to load 
+                        - clicking on a notification card routes to the detail screen of the student, pre-selected with the mentionned group    
+                        - when the user reaches the bottom scrolling ,load the next latest 30 notifications 
                         - keep the notification card highlighted until the user clicks on it 
+                        - periodically keep : 
+                            - adding the new notifications to the top of the list, the ones that matches the fullname text input
+                            - updating the number of new notifications in the App Bar title and in the sidebar badge by adding to it the number of new notifications
+                              that happened during opening this screen (don't follow the fullname text input filters of the popup filter here)
                         
             - the Account screen : 
                 - the title of the App Bar is : "Account"
@@ -1696,7 +1718,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - col 1 : 
                                             - the label "Current password"
                                         - col 2 : 
-                                            - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled
+                                            - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled (required)
                                 
                                 - row 3 : the footer of the popup 
                                     - row : 
@@ -1722,7 +1744,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - col 1 : 
                                             - the label "Current password"
                                         - col 2 : 
-                                            - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled
+                                            - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled (required)
                                 
                                 - row 3 : the footer of the popup 
                                     - row : 
