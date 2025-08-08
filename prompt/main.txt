@@ -45,9 +45,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
         - all of the screens of the teacher profile have an app bar which contains : 
             - in the most left a the tree line icons which opens the sidebar 
             - in the middle the title of the screen 
-            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
-              is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
-              to the notifications screen and resets the number of notifications to 0
+            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color, clicking on this bell routes us 
+              to the notifications screen 
+                notes : 
+                    - the number of notifications is the total number of new notifications that were added after the last time the user did open the notification screen
+                    - this number of notifications gets reseted to 0 after the user leaves the notifications screen
+                    - it gets increased by 1 when a new notification is added and decreased by 1 when the the teacher clicks on a clickable notification card or clicks on one of the buttons 
+                        of a notification card of the notifications screen, in real time
 
         - the sidebar : 
             col : 
@@ -85,23 +89,19 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - an icon for the prices
                             - col 2 :
                                 - the text : "Prices"
-                        - row 6 : routes to the student requests screen
-                            - col 1 :
-                                - an icon for the student requests
-                            - col 2 :
-                                - the text : "Student Requests"
-                        - row 7 : routes to the parent requests screen
-                            - col 1 :
-                                - an icon for the parent requests
-                            - col 2 :
-                                - the text : "Parent Requests"
                         - row 8 : routes to the notifications screen
                             - col 1 :
                                 - an icon for the notifications
                             - col 2 :
                                 - row :
                                     - the text : "Notifications"
-                                    - the red circle with the number of notifications which is the number of notifications that were added after the last time the user did open the notification screen
+                                    - a red rectangle with some border radius that contains the number of notifications 
+                                        notes : 
+                                            - the number of notifications is the total number of new notifications that were added after the last time the user did open the notification screen
+                                            - this number of notifications gets reseted to 0 after the user leaves the notifications screen
+                                            - it gets increased by 1 when a new notification is added and decreased by 1 when the the teacher clicks on a clickable notification card or clicks on one of the buttons 
+                                              of a notification card of the notifications screen, in real time
+
                         - row 9 : logouts the user and routes to the login screen
                             - col 1 :
                                 - an icon for the logout
@@ -1353,289 +1353,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - clicking on the "Yes" button, deletes the selected items with their related groups then closes the popup 
                         - don't allow duplicate levels, sections in the same level, subjects in the same level or section
 
-            - the student requests screen :  
-                - the title of the App Bar is : "Student Requests ({the number of the new students requests after the last time the teacher opened this screen})"
-                - the content of the screen : 
-                    - UI : 
-                        - col : 
-                            - row 1 : a filter for the student requests list which contains
-                                - col 1  (this takes the majority of the width of the row) : 
-                                    - a text input to search by the fullname of the student
-                                - col 2 : 
-                                    - a square button which contains a filter icon 
-                                
-                            - row 2 : list of the latest 30 student requests and each request must be in a card which contains :
-                                - col :
-                                    - row 1 : highlight the card if the teacher didn't click on the "Accept" or "Decline" button of the card before
-                                        - col 1
-                                            - the profile image of the student rounded
-                                        - col 2  :
-                                            - row 1 : 
-                                                - the full name of the student
-                                            - row 2 :
-                                                - the level and section (include it if exists) of the student 
-                                            - row 3 :
-                                                - the requested subject(s) in badge(s) (show only the first 2 subjects if there are more than 2, show a badge with the content : "and {the number of the rest of the requested subjects} more" )
-                                        - col 3 :
-                                            if the student request was accepted : 
-                                                - a badge with the content : "Accepted"
-                                            else if the the student request was rejected  : 
-                                                - a badge with the content : "Declined"  
-                                            else
-                                                - row 1 : 
-                                                    - an "Accept" button highlighted
-                                                - row 2 : 
-                                                    - a "Decline" button
-                                    - row 2 : 
-                                        - at the most right : the datetime of the request
-                    Dynamics :
-                        - clicking on the filter square button opens up a popup form which contains : 
-                            - UI : 
-                                - col : 
-                                    - row 1 :  the header of the popup
-                                        - col 1 : 
-                                            - the title "Filter"
-                                        - col 2 : 
-                                            - a close icon 
-                                    - row 2 : the content area of the popup
-                                        - col : 
-                                            - row 1 : 
-                                                - a select input for the level that contains as options the levels that the teachers teaches accoerding to the prices screen
-                                            - row 2 : 
-                                                - a select input for the section that contains as options the sections of the selected level according to prices screen. 
-                                                    disable this select  : 
-                                                        - if the teacher didn't select a level
-                                                        - if the teacher selected a level that doesn't have sections according to the prices screen
-                                            - row 3 : 
-                                                - a select input for the subject that contains as options the subjects of the selected level or the selected section  : 
-                                                    - disable this select : 
-                                                        - if the teacher didn't select a level
-                                                        - if the teacher selected a level that has sections and he didn't select a section yet 
-                                                    - note : 
-                                                        - this filter filters in the following way : 
-                                                            - does the student request contains in his requested subjects the selected subject
-                                    - row 3 : the footer of the popup 
-                                        - col 1 : 
-                                            - a reset button with the name "Reset ({the number of selected items})"
-                                        - col 2 :
-                                            - a button with the name "Filter" : 
-                            - Dynamics :
-                                - clicking on the close icon , discards the new selected values and returns to the previous values (the persisted values before opening the filter popup) then closes the popup
-                                - clicking on the "Reset" button of the footer of the popup : 
-                                    - resets all of the selects of the popup 
-                                    - closes the popup 
-                                    - updates the student request list by loading the first 30 student requests that match the fullname text input only 
-                                - clicking on the "Filter" button of the footer of the popup :
-                                    - closes the popup form
-                                    - maintains the values of the filters of the popup while the user is still in the student requests screen (when the user leaves the student requests screen reset them)
-                                    - updates the student request list by loading the first 30 student requests that match the filters (fullname text input, all of the selects in the filter popup form)
-
-                        - clicking on the "Accept" of a student request card, open a popup form which contains : 
-                            - UI : 
-                                - col : 
-                                    - row 1 : the header of the popup 
-                                        - col 1 : 
-                                            - the title : "Accepting a student"
-                                        - col 2 : 
-                                            - the close icon 
-                                    - row 1 : 
-                                        - col 1
-                                            - at the center of the col, the profile image of the student rounded
-                                            - at the center of the col, the full name of the student
-                                            - at the center of the col, the level and section of the student
-                                            - at the center of the col, the phone number of the student
-                                    - row 2 :
-                                        - col : 
-                                            - row 1 :
-                                                - col 1 : 
-                                                    - the label : "Choose the way to add the student"
-                                                - col 2 :
-                                                    - radio buttons group with two options (only one can be selected at a time, default is first,required):
-                                                        - "Add it as new student"
-                                                        - "Replace it by an existing student"
-
-                                            - row 3 : make this visible if the option "replace it by an existing student" is checked
-                                                - col : 
-                                                    - row 1 : 
-                                                        - the label : "select the student to replace by"
-                                                    - row 2 :
-                                                        - a select input that contains as options, the list of the students created by the teacher (the ones that don't have their own login) that have the same level and section or only the same level (if the level of the student doesn't have sections) as the requesting student (required)
-                                            - for each subject the student asked for :
-                                                - row 4 : 
-                                                    - col : 
-                                                        - row 1 : 
-                                                            - the label : "for the {subject name} subject, select the group to add the student to"
-                                                        - row 2 :
-                                                            - a select input that contains as options :
-                                                                - the option : "decline this subject" which is the default 
-                                                                - the rest of the options : 
-                                                                   the list of groups that have the same level,section and the asked subject of the requesting student
-                                                                   or the same level and the asked subject if the level of the student doesn't have sections, and the label of each option is the name of the group and the value is the id of the group
-                                                                   - note :
-                                                                        - if the teacher selected student to replace by and this student belongs to a group in the option list of this select, pre-fill the value of this select by it's group 
-                                                
-                                    - row 3 :
-                                        - col 1 : 
-                                            - a button with the name "Cancel"
-                                        - col 2 : 
-                                            - a highlighted button with the name "Accept"
-
-                            - Dynamics :
-                                - before openning the popup bring from the server,
-                                    - the list of students that have the same level and section or only the same level (if the level of the requesting student doesn't have sections) as the requesting student and each one with his groups that teaches the requested subjects, this groups
-                                      will be used to prefill the subject group selects when the teacher chooses to replace by an existing student
-                                    - for each asked subject the groups that have the same level,section and subject or only the same level and subject (if the level of the requesting student doesn't have sections) as the requesting student 
-                                - clicking on the "Accept" button : 
-                                    - if the teacher assinged at least one of the requested subjects to a group :
-                                        - adds this student as a new student or replaces it by an existing one based on what the teacher choose then assigns him as to the selected group(s)
-                                        - then closes the popup
-                                        - finally updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
-                                    - otherwise :
-                                        - shows an error message : "You must assign at least one subject to a group" in the same popup without closing it
-                                - clicking on the "Cancel" button closes the popup form without any action
-
-                        - clicking on the "Decline" button of a student request card, opens a confirmation popup which contains : 
-                            - UI : 
-                                - col : 
-                                    - row 1 : the header of the popup
-                                        - at center of the row, the title of the popup : "Confirm Decline"
-                                    - row 2 : the content area of the group 
-                                        - col : 
-                                            - row 1 : 
-                                                - at the center of the row,a user decline icon 
-                                            - row 2 : 
-                                                - at the center of the row, the text format : "Are you sure you want to decline this student request ?"
-                                    - row 3 : the footer of the popup
-                                        - col 1 : 
-                                            - a button with the name "No"
-                                        - col 2 : 
-                                            - a highlighted button with the name "Yes"
-                            - Dynamics :
-                                - clicking on the "No" button, closes the popup form
-                                - clicking on the "Yes" button : 
-                                    - declines this request 
-                                    - then closes the popup form 
-                                    - finally updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Declined"
-                        - clicking on the "Accept" or "Decline" button of a student request card, should unhighlight the card and decreases the number of new student requests in the App Bar title and in the sidebar badge
-                        - reaching the end of the list of student requests scrolling, loads the next 30 student requests that match the fullname text input and the persisted values of the filters of the popup form and append them to the list
-                        - periodically keep :
-                            - adding the new student requests to the top of the list, the ones that matches the fullname text input and the persisted values of the filters of the popup form
-                            - updating the number of new student requests in the App Bar title and in the sidebar badge by adding to it the number of the new students requests
-                              that happened during opening this screen (don't follow the fullname text input filters of the popup filter here)
-            - the parent requests screen :  
-                - the title of the App Bar is : "Parent Requests ({the number of the new parent requests after the last time the user opened this screen})"
-                - the content of the screen : 
-                    - UI : 
-                        - col : 
-                            - row 1 : a filter for the parent requests list which contains
-                                - a text input to search by the fullname of the parent
-
-                            - row 2 : list of the latest 30 parent requests and each request must be in a card which contains :
-                                - col : highlight the card if the teacher didn't click on the "Accept" or "Decline" button of the card before
-                                    - row 1 : 
-                                        - col 1
-                                            - the profile image of the parent rounded
-                                        - col 2  :
-                                            - row 1 : 
-                                                - the full name of the parent
-                                            - row 2 :
-                                                - the requested student(s) in badge(s), show only the first 2 students if there are more than 2, show a badge with the content : "and {the number of the rest of the requested students} more"
-                                        - col 3 :
-                                            if the parent request was accepted : 
-                                                - a badge with the content : "Accepted"
-                                            else if the the parent request was rejected  : 
-                                                - a badge with the content : "Declined"  
-                                            else
-                                                - row 1 : 
-                                                    - an "Accept" button highlighted
-                                                - row 2 : 
-                                                    - a "Decline" button
-                                    - row 2 : at the footer of the card 
-                                        - at the most right : the datetime of the request
-                    Dynamics :
-                        - clicking on the "Accept" of a parent request card, opens a confirmation popup which contains : 
-                            - UI : 
-                                - col : 
-                                    - row 1 : the header of the popup
-                                        - col 1 :
-                                            - at the most left of the row, the title of the popup : "Accepting a parent"
-                                        - col 2 :
-                                            - at the most right : the close icon 
-
-                                    - row 2 : the content area of the popup  
-                                        - col : 
-                                            - row 1 : 
-                                                - col : 
-                                                    - row 1 : 
-                                                        - at the center of the row, the profile image of the parent 
-                                                    - row 2 : 
-                                                        - at the center of the row, the fullname of the parent 
-                                                    - row 3 :
-                                                        - at the center of the row, the phone number of the parent 
-
-                                            - row 2 : for each son in the parent request the following : 
-                                                - row : 
-                                                    - col : 
-                                                        - row 1 : 
-                                                            - the label : "assign a student for to the son / daughter : {the fullname of the son/daughter}, {the level and the section if exists}"
-                                                        - row 2 :  
-                                                            - a select input which contains as options : 
-                                                                - "reject this son/daugther" which the default one 
-                                                                -  and the list of students of the teacher (created by teacher or they have their own login) that have the same level, section (if exist), gender as the son / daugther
-
-                                    - row 3 : the footer of the popup
-                                        - col 1 : 
-                                            - a button with the name "Cancel"
-                                        - col 2 : 
-                                            - a highlighted button with the name "Accept"
-                            - Dynamics :
-                                - clicking on the close icons, closes the popup form
-                                - clicking on the "Cancel" button, closes the popup form
-                                - clicking on the "Accept" button : 
-                                    if the teacher assigned at least one son/daughter to a student : 
-                                        - assigns the son(s) of the parent in the request to the selected student(s) and assigns the parent as a parent 
-                                          for the selected student(s)
-                                        - finally updates the card of this parent request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
-                                    otherwise :
-                                        - shows an error message : "You must assign at least one son/daughter to a student" in the same popup without closing it
-
-                        - clicking on the "Decline" button of a parent request card, opens a confirmation popup which contains : 
-                            - UI : 
-                                - col : 
-                                    - row 1 : the header of the popup
-                                        - at center of the row, the title of the popup : "Confirm Decline"
-                                    - row 2 : the content area of the group 
-                                        - col : 
-                                            - row 1 : 
-                                                - at the center of the row, a user decline icon 
-                                            - row 2 : 
-                                                - at the center of the row, the text format : "Are you sure you want to decline this parent request?"
-                                    - row 3 : the footer of the popup
-                                        - col 1 : 
-                                            - a button with the name "No"
-                                        - col 2 : 
-                                            - a highlighted button with the name "Yes"
-                            - Dynamics :
-                                - clicking on the "No" button, closes the popup form
-                                - clicking on the "Yes" button : 
-                                    - declines this request 
-                                    - then closes the popup form
-                                    - finally updates the card of this parent request by replacing the "Accept" and "Decline" buttons with the badge "Declined"
-                        - clicking on the "Accept" or "Decline" button of a parent request card, should unhighlight the card and decreases the number of new parent requests in the App Bar title and in the sidebar badge
-                        - reaching the end of the list of parent requests scrolling, loads the next 30 parent requests that match the fullname text input and append them to the list
-                        - periodically keep :
-                            - adding the new parent requests to the top of the list, the ones that matches the fullname text input
-                            - updating the number of new parent requests in the App Bar title and in the sidebar badge by adding to it the number of new parent requests
-                              that happened during opening this screen (don't follow the fullname text input filters of the popup filter here)
-
             - the notifications screen : 
-                - the title of the App Bar is : "Notifications ({the number of new notifications after the last time the user opened this screen})" : 
+                - the title of the App Bar is : "Notifications ({the number of unread notification})" : 
                 - the content of the screen : 
                     - UI : 
                         - row 1 : 
                             -col :
                                 - row 1 : 
-                                    - a text input to search by the fullname of the student or full name of the parent
+                                    - a text input to search by the fullname of the student and full name of the parent in all of the notifications 
                                 - row 2 : 
                                     - a select input to filter the notifications by the type of the notification :
                                         - options : 
@@ -1663,7 +1388,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - for a student request notifications :
                                     - UI : 
                                         - col :
-                                            - row 1 : highlight the card if the teacher didn't click on the "Accept" or "Decline" button of the card before
+                                            - row 1 : 
                                                 - col 1
                                                     - the profile image of the student rounded
                                                 - col 2  :
@@ -1684,9 +1409,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - row 2 : 
                                                             - a "Decline" button
                                             - row 2 : 
-                                                - at the most right : the datetime of the request
+                                                - at the most right : the datetime the request was created at 
                                     - Dynamics : 
-                                         - clicking on the "Accept" button of a student request notification card, opens up a popup form which contains : 
+                                        - clicking on the "Accept" button of a student request notification card, opens up a popup form which contains : 
                                             - UI : 
                                                 - col : 
                                                     - row 1 : the header of the popup 
@@ -1715,7 +1440,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                     - row 1 : 
                                                                         - the label : "select the student to replace by"
                                                                     - row 2 :
-                                                                        - a select input that contains as options, the list of the students created by the teacher (the ones that don't have their own login) that have the same level and section or only the same level (if the level of the student doesn't have sections) as the requesting student (required)
+                                                                        - a select input that contains as options, the list of the students created by the teacher (the ones that don't have their own login) that have the same level,section and gender or only the same level and gender (if th
+                                                                        
+                                                                        e level of the requesting student doesn't have sections) as the requesting student (required)
                                                             - for each subject the student asked for :
                                                                 - row 4 : 
                                                                     - col : 
@@ -1725,10 +1452,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                             - a select input that contains as options :
                                                                                 - the option : "decline this subject" which is the default 
                                                                                 - the rest of the options : 
-                                                                                the list of groups that have the same level,section and the asked subject of the requesting student
-                                                                                or the same level and the asked subject if the level of the student doesn't have sections, and the label of each option is the name of the group and the value is the id of the group
+                                                                                    the list of groups that have the same level,section and the asked subject of the requesting student
+                                                                                    or the same level and the asked subject if the level of the student doesn't have sections, and the label of each option is the name of the group and the value is the id of the group
                                                                                 - note :
-                                                                                        - if the teacher selected student to replace by and this student belongs to a group in the option list of this select, pre-fill the value of this select by it's group 
+                                                                                    - if the teacher selected student to replace by and this student belongs to a group in the option list of this select, pre-fill the value of this select by it's group 
                                                                 
                                                                         - row 3 :
                                                                             - col 1 : 
@@ -1741,6 +1468,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - the list of students that have the same level and section or only the same level (if the level of the requesting student doesn't have sections) as the requesting student and each one with his groups that teaches the requested subjects, this groups
                                                       will be used to prefill the subject group selects when the teacher chooses to replace by an existing student
                                                     - for each asked subject the groups that have the same level,section and subject or only the same level and subject (if the level of the requesting student doesn't have sections) as the requesting student 
+                                                - clicking on the close icon closes the popup 
                                                 - clicking on the "Accept" button : 
                                                     - if the teacher assinged at least one of the requested subjects to a group :
                                                         - adds this student as a new student or replaces it by an existing one based on what the teacher choose then assigns him as to the selected group(s)
@@ -1748,15 +1476,132 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - finally updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
                                                     - otherwise :
                                                         - shows an error message : "You must assign at least one subject to a group" in the same popup without closing it
-                                                - clicking on the "Cancel" button closes the popup form without any action
+                                                - clicking on the "Cancel" button closes the popup without any action
 
-                                                    - Dynamics : 
-                                                        - when the user reaches the bottom scrolling ,load the next latest 30 notifications and append them to the list at the bottom of the list
-                                                        - keep the notification card highlighted until the user either clicks on it if it's clickable or clicks on one of her buttons 
-                                                        - periodically keep : 
-                                                            - adding the new notifications to the top of the list, the ones that matches the fullname text input
-                                                            - updating the number of notifications in the App Bar title by adding to it the number of new notifications
-                                                                that happened during opening this screen (without filtering by the fullname text input)
+                                        - clicking on the "Decline" button of a student request card, opens a confirmation popup which contains : 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - at center of the row, the title of the popup : "Confirm Decline"
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row,a user decline icon 
+                                                            - row 2 : 
+                                                                - at the center of the row, the text format : "Are you sure you want to decline this student request ?"
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "No"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Yes"
+                                            - Dynamics :
+                                                - clicking on the "No" button, closes the popup 
+                                                - clicking on the "Yes" button : 
+                                                    - declines this student request 
+                                                    - then closes the popup  
+                                                    - finally updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Declined"            
+                                - for parent request notifications : 
+                                    - UI : 
+                                        - col :
+                                            - row 1 : 
+                                                - col 1
+                                                    - the profile image of the parent rounded
+                                                - col 2  :
+                                                    - row 1 : 
+                                                        - the full name of the parent
+                                                    - row 2 :
+                                                        - the requested student(s) in badge(s), show only the first 2 students if there are more than 2, show a badge with the content : "and {the number of the rest of the requested students} more"
+                                                - col 3 :
+                                                    if the parent request was accepted : 
+                                                        - a badge with the content : "Accepted"
+                                                    else if the the parent request was rejected  : 
+                                                        - a badge with the content : "Declined"  
+                                                    else
+                                                        - row 1 : 
+                                                            - an "Accept" button highlighted
+                                                        - row 2 : 
+                                                            - a "Decline" button
+                                            - row 2 : at the footer of the card 
+                                                - at the most right : the datetime of the request
+                                    - Dynamics :
+                                        - clicking on the "Accept" of a parent request card, opens a confirmation popup which contains : 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - col 1 :
+                                                            - at the most left of the row, the title of the popup : "Accepting a parent"
+                                                        - col 2 :
+                                                            - at the most right : the close icon 
+
+                                                    - row 2 : the content area of the popup  
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - col : 
+                                                                    - row 1 : 
+                                                                        - at the center of the row, the profile image of the parent 
+                                                                    - row 2 : 
+                                                                        - at the center of the row, the fullname of the parent 
+                                                                    - row 3 :
+                                                                        - at the center of the row, the phone number of the parent 
+
+                                                            - row 2 : for each son in the parent request the following : 
+                                                                - row : 
+                                                                    - col : 
+                                                                        - row 1 : 
+                                                                            - the label : "assign a student for to the son / daughter : {the fullname of the son/daughter}, {the level and the section if exists}"
+                                                                        - row 2 :  
+                                                                            - a select input which contains as options : 
+                                                                                - "reject this son/daugther" which the default one 
+                                                                                -  and the list of students of the teacher (created by teacher or they have their own login) that have the same level, section (if exist), gender as the son / daugther
+
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "Cancel"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Accept"
+                                            - Dynamics :
+                                                - clicking on the close icons, closes the popup form
+                                                - clicking on the "Cancel" button, closes the popup form
+                                                - clicking on the "Accept" button : 
+                                                    if the teacher assigned at least one son/daughter to a student : 
+                                                        - assigns the son(s) of the parent in the request to the selected student(s) and assigns the parent as a parent 
+                                                        for the selected student(s)
+                                                        - finally updates the card of this parent request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
+                                                    otherwise :
+                                                        - shows an error message : "You must assign at least one son/daughter to a student" in the same popup without closing it
+
+                                        - clicking on the "Decline" button of a parent request card, opens a confirmation popup which contains : 
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - at center of the row, the title of the popup : "Confirm Decline"
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row, a user decline icon 
+                                                            - row 2 : 
+                                                                - at the center of the row, the text format : "Are you sure you want to decline this parent request?"
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "No"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Yes"
+                                            - Dynamics :
+                                                - clicking on the "No" button, closes the popup form
+                                                - clicking on the "Yes" button : 
+                                                    - declines this request 
+                                                    - then closes the popup form
+                                                    - finally updates the card of this parent request by replacing the "Accept" and "Decline" buttons with the badge "Declined"
+
+                    - Dynamics : 
+                        - when the user reaches the bottom scrolling ,load the next latest 30 notifications and append them to the list at the bottom of the list
+                        - keep the notification card highlighted until the teacher either clicks on it if it's clickable or clicks on one of her buttons 
+                        - when the user clicks on a highlighted clickable card or clicks on the one of the button of a highlighted card decrease the number of 
+                          unread notifications by 1 
+                        - periodically keep : 
+                            - adding the new notifications to the top of the list, the ones that matches the fullname text input
+                            - updating the number of notifications in the App Bar title by adding to it the number of new notifications
+                              that happened during opening this screen (without filtering by the fullname text input)
                              
             - the Account screen : 
                 - the title of the App Bar is : "Account"
@@ -1788,6 +1633,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - the label : "Phone number"
                                                 - row 2 : 
                                                     - a text input for the phone number of teacher, pre-filled with the current phone number of the teacher (accepts only integer character,min length=max length = 8,required)
+                                        - row 5 :
+                                            - col : 
+                                                - row 1 : 
+                                                    - the label : "Gender"
+                                                - row 2 : 
+                                                    - two radio buttons : (required)
+                                                        - "Male"
+                                                        - "Female"
 
                                         - row 5 : 
                                             - a button with the name "Update account info"
