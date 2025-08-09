@@ -1598,9 +1598,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - keep the notification card highlighted until the teacher either clicks on it if it's clickable or clicks on one of her buttons 
                         - when the user clicks on a highlighted clickable card or clicks on the one of the button of a highlighted card decrease the number of 
                           unread notifications by 1 
-                        - periodically keep : 
-                            - adding the new notifications to the top of the list, the ones that matches the fullname text input
-                            - updating the number of notifications in the App Bar title by adding to it the number of new notifications
+                        - in real time : 
+                            - add the new notifications to the top of the list, the ones that matches the fullname text input
+                            - update the number of notifications in the App Bar title by adding to it the number of new notifications
                               that happened during opening this screen (without filtering by the fullname text input)
                              
             - the Account screen : 
@@ -1726,14 +1726,18 @@ I want to build a mobile app with the name "Cidy" which allows the government te
         - all of the screens of the student profile have an app bar which contains : 
             - in the most left a the tree line icons which opens the sidebar 
             - in the middle the title of the screen 
-            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
-              is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
-              to the notifications screen and resets the number of notifications to 0
+            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color, clicking on this bell routes us 
+              to the notifications screen 
+                notes : 
+                    - the number of notifications is the total number of new notifications that were added after the last time the user did open the notification screen
+                    - this number of notifications gets reseted to 0 after the user leaves the notifications screen
+                    - it gets increased by 1 when a new notification is added and decreased by 1 when the the teacher clicks on a clickable notification card or clicks on one of the buttons 
+                        of a notification card of the notifications screen, in real time
 
         - the sidebar : 
             col : 
                 - row 1 : 
-                    - at the most right a left arrow icon which hides the sidebar
+                    - at the most right a left arrow icon, clicking on it hides the sidebar
                 - row 2 : routes to the profile screen of the student
                     - col 1 : 
                         - the profile picture of the student rounded
@@ -1778,39 +1782,40 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - row 1 : 
                                         - a text input to search on the fullname of the teacher
                                     - row 2 : 
-                                        - a select input for the subjects, make this select in a way that allows the student to select many subjects, the options list must be the list of all of the possible subjects that the student can study in his level and section
+                                        - a select input for the subjects, which contains as options all of the possible subjects that the student can study in his level and section or only in his level if the level of the student doesn't have sections according to the tunisian education system
+                                            - note : make this select in a way that allows the student to select many subjects
                                     - row 3 : 
                                         - a "Filter" button 
-                            - row 2 : list of teachers that only teaches the the level and the section of the currently logged student, each teacher must be in a clickable card which contains : 
+                            - row 2 : list of the first 30 teachers that only teaches the the level and the section or only the level (if the level of the student doesn't have sections according to the tunisian education system) of the currently logged student, each teacher must be in a clickable card which contains : 
                                 - row : 
                                     - col 1 : 
                                         - the profile image of the teacher
                                     - col 2 : 
                                         - row 1 : the full name of the teachers 
-                                        - row 2 : the levels with their sections that he teaches in badges, examples : (3 xiéme Math , 4 iéme Science)
                                         - row 3 : the subjects that he teaches in badges, example (Math,Physique)
                                     - col 3 : 
                                         - an "enroll" button 
-                            - row 3 : a pagingation for the teacher list which contains the following : 
-                                - row : 
-                                    - col 1 : 
-                                        - "{the rank of the first teacher showed in the teacher list out of the full filtered and the non paginated list} to {the rank of the last teacher showed in the teacher list out of the full filtered and the non paginated list} / {the length of the full filtered and non paginated list}"
-                                    - col 2 : 
-                                        - a select input for selecting the page number , the list of options must be the length of the full filtered and non paginated list / batch size
-                                    - col 3 :
-                                        - a select input for selecting the batch size of the teacher list, with the options : 20,50,100
                     Dynamics : 
-                        - clicking on the "filter" button update the teacher list and it's pagination in the screen based on the text and select input values
-                        - clicking on the "reenroll" button of a teacher card item  opens up a popup form which contains : 
+                        - clicking on the "filter" button update the update the list of teachers by loading the first 30 teachers that match the filter criteria
+                        - clicking on the "enroll" button of a teacher card item  opens up a popup form which contains : 
                             - UI : 
+                                - row 1 : the header of the popup 
+                                    - col : 
+                                        - at the most left, the text : "Enroll in a subject"
+                                    - col : 
+                                        - at the most right, a close icon
                                 - row 1 : 
                                     - col : 
-                                        - the profile image of the teacher (this is not editable)
-                                        - the full name of the teacher (this is not editable)
+                                        - row 1 : 
+                                            - at the center of the row, the profile image of the teacher rounded
+                                        - row 2 :
+                                            - at the center of the row, the full name of the teacher
+                                        - row 2 : 
+                                            - at the center of the row, the phone number of the teacher
                                 - row 2 :
                                     - col : 
                                         - row 1 : 
-                                            - a select input for the subjects the student wants to enroll in, make this select in a way that allows the student to select many subjects, the options must be only the subjects that the teacher teaches in the level and the section of the logged student
+                                            - a select input for the subjects the student wants to enroll in, make this select in a way that allows the student to select many subjects, the options must be only the subjects that the teacher teaches in the level and the section or only the level (if the level of the logged student does have sections according to the tunisian education system) of the logged student
                                         - row 2 : 
                                             - an "enroll" button 
                             - Dynamics : 
@@ -2003,14 +2008,18 @@ I want to build a mobile app with the name "Cidy" which allows the government te
         - all of the screens of the teacher profile have an app bar which contains : 
             - in the most left a the tree line icons which opens the sidebar 
             - in the middle the title of the screen 
-            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color and this number
-              is : the number of notifications that were added after the last time the user did open the notification screen , clicking on this bell routes us 
-              to the notifications screen and resets the number of notifications to 0
+            - in the most right a bell icon with a red circle in the top right of it which contains the number of notifications in the white color, clicking on this bell routes us 
+              to the notifications screen 
+                notes : 
+                    - the number of notifications is the total number of new notifications that were added after the last time the user did open the notification screen
+                    - this number of notifications gets reseted to 0 after the user leaves the notifications screen
+                    - it gets increased by 1 when a new notification is added and decreased by 1 when the the teacher clicks on a clickable notification card or clicks on one of the buttons 
+                        of a notification card of the notifications screen, in real time
 
         - the sidebar : 
             col : 
                 - row 1 : 
-                    - at the most right a left arrow icon which hides the sidebar
+                    - at the most right a left arrow icon, clicking on it hides the sidebar
                 - row 2 : routes to the profile screen of the parent
                     - col 1 : 
                         - the profile picture of the parent rounded
