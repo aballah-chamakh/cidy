@@ -300,11 +300,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - clicking on the "Reset ({the number of selected options})" button :
                                         - resets all of the filters of the popup 
                                         - closes the filter popup
-                                        - updates the group list by loading the first 30 groups that match the group name text input only
+                                        - updates the group list by replacing it with the first 30 groups that match the group name text input only
                                     - clicking on the "Filter" button  :
-                                        - closes the filter popup
                                         - maintains the values of the filters of the popup while the user is still in the groups screen (when the user leaves the groups screen reset them)
-                                        - updates the group list by loading the first 30 groups that match the filters (name text input,all of the selects and the selectors of the filter popup form)
+                                        - closes the filter popup
+                                        - updates the group list by replacing it with the first 30 groups that match the filters (name text input,all of the selects and the selectors of the filter popup form)
 
                             - clicking on the "add"  button opens up a popup form which contains 
                                 UI : 
@@ -869,11 +869,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - clicking on the "Reset" button of the footer of the popup : 
                                         - resets all of the selects of the popup 
                                         - closes the popup 
-                                        - updates the students list by loading the first 30 students that match the fullname text input only 
+                                        - updates the students list by replacing it with the first 30 students that match the fullname text input only 
                                     - clicking on the "Filter" button of the footer of the popup :
-                                        - closes the popup form 
                                         - maintains the values of the filters of the popup while the user is still in the students screen (when the user leaves the students screen reset them)
-                                        - updates the students list by loading the first 30 students that match the filters (fullname text input, all of the selects in the filter popup form)
+                                        - closes the popup form 
+                                        - updates the students list by replacing it with the first 30 students that match the filters (fullname text input, all of the selects in the filter popup form)
 
                             - clicking on the "Add" button opens up a popup form which contains :
                                 - UI : 
@@ -968,7 +968,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col : 
                                                     - row 1 : 
                                                         - a header with the text : "Class Batches"
-                                                    - row 2 : the list of class batches of the selected group and each class batch must be in a clickable card which contains : 
+                                                    - row 2 :
+                                                        - a date range picker 
+                                                    - row 2 : the list of latest 30 class batches of the selected group and each class batch must be in a clickable card which contains : 
                                                         - row : justify content : space around
                                                             col 1 : 
                                                                 -  a circle, which represents a class 
@@ -1004,6 +1006,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - col 2 : which takes the half of the with of the first column
                                                         - a button with the name start 
                                     - Dynamics : 
+                                        - picking a date range , updates the list of class batches by replacing it with the first 30 class batches that match the selected date range
+                                          in a descendant order by date time (start from the latest one to the oldest one)
                                         - clicking on any batch card, opens up a popup which contains  : 
                                             - UI : 
                                                 - col : 
@@ -1870,7 +1874,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - row 3 : 
                                             - the header for the class batches list which contains the text "Class Batches"
                                         - row 4 : 
-                                            - the list of class batches of this subject which must be similar to the one in the student detail screen of the teacher 
+                                            - the list of class batches of this subject with its date range picker which must be similar to the one in the student detail screen of the teacher 
                                                 profile with no ability to make any action on them
             - parents screen : 
                 - the title of the App Bar is : "Parent(s)"
@@ -2201,7 +2205,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - col : 
                             - row 1 : a filter for the teacher list which contains
                                 col (represents the majority of the width of the row) : 
-                                    - a text input to search on name of the teacher (the filtering of the list must be on changing the value of this input)
+                                    - a text input to search by the  fullname of the teacher (the filtering of the list must be on changing the value of this input)
                                 col : 
                                     - a square button which contains a filter icon 
                             - row 2 : 
@@ -2223,7 +2227,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - clicking on the filter square button opens up a popup form for advanced filtering which contains :
                             - UI : 
                                 - col : 
-                                    - row 1 : the footer of the popup 
+                                    - row 1 : the header of the popup 
                                         - col : 
                                             - at the most left, the text : "Filter"
                                         - col : 
@@ -2244,15 +2248,23 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - the user didn't select a level yet 
                                                         - the selected level doesn't have sections according to the tunisian education system
                                                         - the selected level has sections and the user didn't select a section yet
-
-                                    - row 3 : the footer of the popup 
+                                    - row 3 : 
                                         - col 1 : 
-                                            - a "Cancel" button 
+                                            - a button with the name : "Reset ({the number of selected options})"     
                                         - col 2 : 
-                                            - a "Filter" button
-                            - Dynamics : 
-                                - clicking on the "Filter" button closes the popup form and update the list by replacing it with the first 30 teachers that match the selects filter and the teacher fullname text input 
-                                - clicking on the "Cancel" button of the popup form closes the popup form without updating the list of teachers
+                                            - a button with the name : "Filter"
+
+                                - Dynamics : 
+                                    - clicking on the close icon , discards the new selected values and returns to the previous values (the persisted values before opening the filter popup) then closes the popup
+                                    - clicking on the "Reset" button of the footer of the popup : 
+                                        - resets all of the selects of the popup 
+                                        - closes the popup 
+                                        - updates the students list by replacing it with the first 30 teachers that match the fullname text input only 
+                                    - clicking on the "Filter" button of the footer of the popup :
+                                        - maintains the values of the filters of the popup while the user is still in the students screen (when the user leaves the students screen reset them)
+                                        - closes the popup form 
+                                        - updates the students list by replacing it with the first 30 teachers that match the filters (fullname text input, all of the selects in the filter popup form)
+
                         - clicking on the "request parenting" button of any teacher card opens up a popup form : 
                             UI : 
                                 - col 
@@ -2264,17 +2276,22 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - row 2 : the content area of the popup
                                         - col :
                                             - row 1 : 
-                                                - a select input to select a son that contains as an option list, the list of the sons of the parent (required)
-                                            - row 2 : 
-                                                - a select input to select subject(s) that contains as an option list, the list of subjects that the teacher teaches in the level and the section of the selected son or only in the selected level if it doesn't have sections according to the tunisian education system
-                                                  (required)
-                                                    - allow the parent to select multiple subjects for his son 
-                                                    - don't include the subjects that the parent was already accepted in before 
+                                                - a select input to select a son that contains as an option list, the list of the sons of the parent (required,allow multi choice)
                                     - row 3 : the footer of the popup 
-                                        - the button "request parenting"  
-                            Dynamics : 
+                                        - col 1 : 
+                                            - a "Cancel" button
+                                        - col 2 :  
+                                            - the button "request parenting"  
+                            Dynamics :  
+                                - clicking on the "Cancel" button of the popup form closes the popup form without sending any parenting request
                                 - clicking on the "request parenting" button of the popup form sends a parenting request for the selected son/student to the teacher of the card,
-                                  then closes the popup form
+                                  if the parent has already sent a parenting request for this teacher and son/student and the teacher still didn't respond back by accepting or declining
+                                  it informs the user that he has already sent a parenting request for this teacher and son/student in the popup without closing it 
+                        - if the user reaches the bottom of the screen scrolling, loads the next 30 teachers that matches fullname of the text input and the and the selects of the filter popup 
+                          and adds them to the bottom of the list
+
+                        
+            ############# STOPPED HERE
             - the sons screen :
                 - the title of the App Bar is : "Sons"
                 - the content of the screen : 
@@ -2287,22 +2304,25 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - the profile image of the son 
                                         - col 2 : 
                                             - the fullname of the son 
-                                            - the level and section of the son 
+                                            - the level and section (include the section if it exists) of the son 
                             - a sticky button at the bottom with the name "add a son" that doesn't hide the last card of the son list
                     - Dynamics : 
                         - clicking on a son card routes to the son detail screen which contains : 
-                            - the title of the App Bar is : "Son : {fullname of the son}"
+                            - the title of the App Bar is : "{fullname of the son}"
                             - the content of the screen : 
                                 - UI : 
                                     - col :
                                         - row 1 : 
                                             - the student profile identity which contains : 
-                                                - col (align-items : center)
-                                                    - the student profile image rounded 
-                                                    - the the student's fullname 
-                                                    - the the level and the section of the student
+                                                - col 
+                                                    - row 1 : 
+                                                        - at the center of the row,the student profile image rounded 
+                                                    - row 2 :
+                                                        - at the center of the row,the the student's fullname 
+                                                    - row 3 : 
+                                                        - at the center of the row,the the level and the section of the student
                                         - row 2 : 
-                                            - the subjects header which contains the text "Subjects" in the left 
+                                            - the subjects header which contains the text "Subjects" in the left
                                         - row 3 : 
                                             - col 1 : 
                                                 - in a kpi card the total paid amount in DT across all of the subjects of the son 
@@ -2318,9 +2338,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - the name of subject
                                                             - the week day and the time range of it's class session in the following fomat  : "{week day} - {start time} to {end time}"
                                                         - col 3 : 
-                                                            - the total paid amount on this subject 
-                                                        - col 4 : 
-                                                            - the total unpaid amount for this subject
+                                                            - row 1 : 
+                                                                - the total paid amount on this subject 
+                                                            - row 2 : 
+                                                                - the total unpaid amount for this subject
                                                     - row 2 (the footer of the card) : 
                                                         - in the right of the row  : the text format : "by {name of the teacher}"
                                 - Dynamics : 
@@ -2339,29 +2360,55 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - row 3 : 
                                                         - the header for the class session batches list which contains the text "Class Session Batches"
                                                     - row 4 : 
-                                                        - the list of class session batch of this subject which must be similar to the one in the student detail screen of the teacher 
-                                                          profile with no ability to make any action on them 
+                                                        - the list of class batches of this subject with its date range picker which must be similar to the one in the student detail screen of the teacher 
+                                                          profile with no ability to make any action on them
 
                         - clicking on the "Add a son" button opens up a popup form : 
                             - UI : 
                                 - col : 
-                                    - row 1 : 
-                                        - a text input for the fullname of the son
-                                    - row 2 : 
-                                        - a select input for the level of the son 
-                                    - row 3 : 
-                                        - a select input for the section of the som 
-                                    - row 4 : 
-                                        - an "add a son" button
-                            - Dynamics : 
-                                - clicking the "Add a son" button of the popup form creates a new son for the parent and it refreshes the son list 
+                                    - row 1 : the header of the popup 
+                                        - col : 
+                                            - at the most left, the text : "Add a son"      
+                                        - col : 
+                                            - at the most right, a close icon
+                                    - row 2 : the content area of the popup
+                                        - col :
+                                            - row 1 : 
+                                                - col :
+                                                    - row 1 : 
+                                                        - the label : "Full name"
+                                                    - row 2 : 
+                                                        - a text input for the fullname of the son (required)
+                                            - row 2 : 
+                                                - col :
+                                                    - row 1 : 
+                                                        - the label : "Level"
+                                                    - row 2 : 
+                                                        - a select input for the level of the son which contains as options : the list of all of the levels according to the tunisian education system (required)
+                                            - row 3 : 
+                                                - col :
+                                                    - row 1 : 
+                                                        - the label : "Section"
+                                                    - row 2 : 
+                                                        - a select input for the section of the son which contains as options : the sections of the selected level according to the tunisian education system (required if the selected level has sections according to the tunisian education system)
+                                                        - notes:
+                                                            - disable this select if the level doesn't have sections according to the tunisian education system 
+                                    - row 3 : the footer of the popup 
+                                        - col 1 : 
+                                            - a "Cancel" button
+                                        - col 2 :  
+                                            - a highlighted button with the name "Add a son"  
+                            - Dynamics :  
+                                - clicking on the close icon, closes the popup form 
+                                - clicking on the "Cancel" button of the popup form closes the popup form without creating a new son
+                                - clicking on the "Add a son" button of the popup form creates a new son for the parent, closes the popup form, and adds the son to the son list
 
             - the notifications screen : 
                 - the title of the App Bar is : "Notifications ({number of un read notifications})"
                 - the content of the screen : 
                     - UI : 
                         - col : 
-                            - a notification list , each notification item must be in a clickable card which contains depend to the type of notfication the following : 
+                            - the lastest 30 notifications, each notification item must be in a clickable card which contains depend to the type of notfication the following : 
                                 - for the due payment notification : 
                                     - UI : 
                                         - col : 
@@ -2369,25 +2416,25 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col 1 : 
                                                     - a rounded red filled dollar icon
                                                 - col2 : 
-                                                    - the following dynamic text : you have to pay the teacher {Teacher fullname} {The non paid amount} since your son {Son name} reached 4 unpaid {Subject} class sessions 
+                                                    - the following dynamic text : you have to pay the teacher {Teacher fullname} {The non paid amount} since your son {Son name} reached 4 unpaid {Subject} classes  
                                             - row 2 (the footer of the card) : 
                                                 - in the most right of the row : the datetime that notification was created at
                                     - Dynamics : 
                                         - the click on this item card routes to the Subject detail screen of the mentionned Son and Subject 
-                                - for the teacher marking the attendance of a student notification : 
+                                - for the teacher marking the attendance of a student in a class of a subjectnotification : 
                                     - UI : 
                                         - col : 
                                             - row 1 : 
                                                 - col 1 : 
                                                     - the profile image of teacher rounded
                                                 - col 2 : 
-                                                    - the following dynamic text : the teacher {Teacher fullname} marked for your son {son fullname} the attendance of {nb of classes marked as attended for the son} {Subject}'s class(es)
+                                                    - the following dynamic text : the teacher {Teacher fullname} marked for your son {son fullname} the attendance in his last attended {Subject}'s class(es)
                                             - row 2 (the footer of the card) : 
                                                 - in the most right of the row : the datetime that notification was created at
                                     - Dynamics : 
                                         - the click on this item card routes to the Subject detail screen of the mentionned Son and Subject 
 
-                                - for the teacher marking class session(s) as paid notificaton
+                                - for the teacher marking classes of a subject as paid notificaton
                                     - UI 
                                         - col : 
                                             - row 1 : 
@@ -2420,7 +2467,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col 1 : 
                                                     - the profile image of teacher rounded
                                                 - col 2 : 
-                                                    - the following dynamic text : "the teacher {Teacher fullname} accepted your parenting request for the son(s) : {son(s) fullname(s)} only."
+                                                    - the following dynamic text : "the teacher {Teacher fullname} accepted your parenting request only for the son(s) : {son(s) fullname(s)} ."
                                             - row 2 (the footer of the card) : 
                                                 - in the most right of the row : the datetime that notification was created at
                                     - Dynamics : 
@@ -2459,7 +2506,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - col 1 : 
                                                 - the profile image of teacher rounded
                                             - col 2 : 
-                                                - the following dynamic text : "the teacher {Teacher fullname} removed your son {Son fullname} from the {Subject name}'s classes."
+                                                - the following dynamic text : "the teacher {Teacher fullname} removed your son {Son fullname} from the classes of the following subject(s) : {Subject name(s)}."
                                         - row 2 : 
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
@@ -2472,7 +2519,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - col 1 : 
                                                 - the profile image of teacher rounded
                                             - col 2 : 
-                                                - the following dynamic text : "the teacher changed for your don  the schedule of the {Subject name}'s class to : {week day} from {start time of the class} to {end time of the class} {only this week or permanently}."
+                                                - the following dynamic text : "the teacher changed for your son the schedule of the {Subject name}'s class to : {week day} from {start time of the class} to {end time of the class} {only this week or permanently}."
                                         - row 2 : 
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
@@ -2480,7 +2527,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 
                     - Dynamics : 
                         - the notification item card must be highlighted until the user clicks on it 
-                        - the notification number must be set to 0 after the user leaves the Notification screen
+                        - when the user reaches the bottom scrolling ,load the next latest 30 notifications and append them to the list at the bottom of the list
+                        - when the user clicks on a highlighted notification card, unhighlight the card and decrease the number of unread notifications by 1 in the app title
+                        - in real time : 
+                            - add the new notifications to the top of the list
+                            - update the number of unread notifications in the App Bar title by adding to it the number of new notifications
+                                that happened during opening this screen
 
 
 tech requirements 
