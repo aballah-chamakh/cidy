@@ -57,7 +57,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
             col : 
                 - row 1 : 
                     - at the most right a left arrow icon which hides the sidebar
-                - row 1 : routes to the profile screen of the teacher
+                - row 1 : routes to the account screen
                     - col 1 : 
                         - the profile picture of the teacher rounded
                     - col 2 : 
@@ -1600,7 +1600,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                           unread notifications by 1 
                         - in real time : 
                             - add the new notifications to the top of the list, the ones that matches the fullname text input
-                            - update the number of notifications in the App Bar title by adding to it the number of new notifications
+                            - update the number of unread notifications in the App Bar title by adding to it the number of new notifications
                               that happened during opening this screen (without filtering by the fullname text input)
                              
             - the Account screen : 
@@ -1642,7 +1642,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - "Male"
                                                         - "Female"
 
-                                        - row 5 : 
+                                        - row 6 : 
                                             - a button with the name "Update account info"
                         - row 2 : 
                             - col : 
@@ -1654,12 +1654,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - col 1 : 
                                                 - the label "New password"
                                             - col 2 : 
-                                                - a password input for the new password with the ablility to show and hide the content of the input, not pre-filled
+                                                - a password input for the new password with the ablility to show and hide the content of the input, not pre-filled (required,min length = 8)
                                         - row 1 
                                             - col 1 : 
                                                 - the label "Confirm new password"
                                             - col 2 : 
-                                                - a password input to confirm the new password with the ablility to show and hide the content of the input, not pre-filled
+                                                - a password input to confirm the new password with the ablility to show and hide the content of the input, not pre-filled (required,min length = 8)
 
                                         - row 5 : 
                                             - a button with the name "Change password"
@@ -1690,7 +1690,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             Dynamics : 
                                 - clicking on the "Cancel" button, close the popup form
                                 - clicking on the "Confirm & update" button , checks if the given password is correct , if it's correct it updates the account 
-                                  info and closes the popup form, otherwise it informs the user that the given password is incorrect without closing the popup
+                                  info and closes the popup form, otherwise it informs the user that the given password is incorrect in the popup without closing it 
 
                         - clicking on the "Change password" button, opens up a popup form which contains : 
                             - UI : 
@@ -1716,8 +1716,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             Dynamics : 
                                 - clicking on the "Cancel" button, close the popup form
                                 - clicking on the "Confirm & change" button , checks if the given password is correct , if it's correct it changes the password and closes the popup form, otherwise it informs the user that the given password is incorrect
-                                  without closing the popup 
-                        
+                                  in the popup without closing it
+
 
 
 
@@ -1732,13 +1732,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                     - the number of notifications is the total number of new notifications that were added after the last time the user did open the notification screen
                     - this number of notifications gets reseted to 0 after the user leaves the notifications screen
                     - it gets increased by 1 when a new notification is added and decreased by 1 when the the teacher clicks on a clickable notification card or clicks on one of the buttons 
-                        of a notification card of the notifications screen, in real time
+                      of a notification card of the notifications screen, in real time
 
         - the sidebar : 
             col : 
                 - row 1 : 
                     - at the most right a left arrow icon, clicking on it hides the sidebar
-                - row 2 : routes to the profile screen of the student
+                - row 2 : routes to the account screen
                     - col 1 : 
                         - the profile picture of the student rounded
                     - col 2 : 
@@ -1769,8 +1769,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - col 2 :
                                 - row :
                                     - the text : "Notifications"
-                                    - the red circle with the number of notifications which is the number of notifications that were added after the last time the user did open the notification screen
-            
+                                    - a red rectangle with some border radius that contains the number of notifications 
+                                        notes : 
+                                            - the number of notifications is the total number of new notifications that were added after the last time the user did open the notification screen
+                                            - this number of notifications gets reseted to 0 after the user leaves the notifications screen
+                                            - it gets increased by 1 when a new notification is added and decreased by 1 when the the student clicks on a notification card
+                                              of the notifications screen, in real time
+
         - the screens binded to each navigation item in the sidebar : 
             - the teachers screen : 
                 - the title of the App Bar is : "Teachers"
@@ -1821,7 +1826,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - Dynamics : 
                                 - clicking on the "enroll" button of the popup form, sends an enroll request to the teacher
                                   of the card and closes the popup form
-                                        
+                        - reaching the bottom of the list, loads the next 30 teachers that match the filter criteria and appends them to the list at the bottom of it  
+
             - the subjects screen : 
                 - the title of the App Bar is : "Subjects"
                 - the content of the screen :                 
@@ -1842,9 +1848,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - row 2 :
                                             - the week day and the time range of it's class in the following fomat  : "{week day} - {start time} to {end time}"
                                     - col 3 : 
-                                        - the total paid amount on this subject 
-                                    - col 4 : 
-                                        - the total unpaid amount for this subject
+                                        - row 1 :
+                                            - the total paid amount on this subject by the student in green 
+                                        - row 2 : 
+                                            - the total unpaid amount for this subject by the student in red
                                 - row 2 (the footer of the card) : 
                                     - in the right of the row  : the text format : "by {name of the teacher}"                            
                     - Dynamics : 
@@ -1857,14 +1864,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - the subject card which must be the same as the subject card item of the Subjects screen 
                                         - row 2 : 
                                             - col 1 : 
-                                                - in a kpi card the total paid amount in DT on this subject 
+                                                - in a kpi card the total paid amount in DT on this subject by the student 
                                             - col 2 : 
-                                                - in a kpi card the total non paid amount in DT for this subject 
+                                                - in a kpi card the total non paid amount in DT for this subject by the student
                                         - row 3 : 
-                                            - the header for the class session batches list which contains the text "Class Session Batches"
+                                            - the header for the class batches list which contains the text "Class Batches"
                                         - row 4 : 
-                                            - the list of class session batch of this subject which must be similar to the one in the student detail screen of the teacher 
-                                                profile with no ability to mark attendance nor payment 
+                                            - the list of class batches of this subject which must be similar to the one in the student detail screen of the teacher 
+                                                profile with no ability to make any action on them
             - parents screen : 
                 - the title of the App Bar is : "Parent(s)"
                 - the content of the screen :  
@@ -1876,11 +1883,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - row 1 : the fullname of the parent
                                 - row 2 : the list of subjects he has access to in badges
 
-            - the notifications screen must contains : 
-                - the title of the App Bar is : "Notifications ({number of notifications})"
+            - the notifications screen : 
+                - the title of the App Bar is : "Notifications ({number of unread notifications})"
                 - the content of the screen : 
                     - UI :
-                        - col : a notification list , each notification item must be in a clickable card which contains depend to the type of notfication the following : 
+                        - col : a list of the latest 30 notifications , each notification item must be in a clickable card which contains depend to the type of notfication the following : 
 
                             - for the due payment notification 
                                 - UI : 
@@ -1901,9 +1908,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - row 1 :
                                             - col 1 : 
                                                 - the profile image of teacher rounded
-                                            - col 2 : 
-                                                - the following dynamic text : "the teacher {Teacher fullname} marked your attendance for {the number of classes marked as attended} {Subject}'s class(es)."
-                                        - row 2 : 
+                                            - col 2 :
+                                                - the following dynamic text : "the teacher {Teacher fullname} marked your attendance for your last {Subject} class."
+                                        - row 2 :
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
                                     - the click on this item card routes to the detail screen of the subject
@@ -1914,9 +1921,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - row 1 :
                                             - col 1 :
                                                 - the profile image of teacher rounded
-                                            - col 2 : 
-                                                - the following dynamic text : the teacher {Teacher fullname} marked your payment for {The number classes marked as paid} {Subject name}'s classe(s)."
-                                        - row 2 : 
+                                            - col 2 :
+                                                - the following dynamic text : the teacher {Teacher fullname} marked your payment for your last {The number classes marked as paid} {Subject name}'s classe(s).
+                                        - row 2 :
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
                                     - the click on this item card routes the detail screen of the subject
@@ -1973,14 +1980,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - Dynamics : 
                                     - the click on this item card routes the detail screen of the subject  
 
-                            - for the teacher removed you from the classes of a subject notification
+                            - for the teacher removed you from the classes of subject(s) notification
                                 - UI : 
                                     - col :
                                         - row 1 :
                                             - col 1 : 
                                                 - the profile image of teacher rounded
                                             - col 2 : 
-                                                - the following dynamic text : "the teacher {Teacher fullname} removed you from the {Subject name}'s classes."
+                                                - the following dynamic text : "the teacher {Teacher fullname} removed you from the classes of the following subject(s) : {Subject name(s)}."
                                         - row 2 : 
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
@@ -2001,7 +2008,143 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 
                         - Dynamics : 
                             - the notification item card must be highlighted until the user clicks on it 
+                            - when the user reaches the bottom scrolling ,load the next latest 30 notifications and append them to the list at the bottom of the list
+                            - when the user clicks on a highlighted notification card, unhighlight the card and decrease the number of
+                              unread notifications by 1 
+                            - in real time : 
+                                - add the new notifications to the top of the list
+                                - update the number of unread notifications in the App Bar title by adding to it the number of new notifications
+                                  that happened during opening this screen
+            - the Account screen : 
+                - the title of the App Bar is : "Account"
+                - the content of the screen :    
+                    - UI : 
+                        - row 1 : 
+                            col : 
+                                - row 1 : 
+                                    - a header with the name : "Account info", with a border bottom 
+                                - row 2 : 
+                                    - col : 
+                                        - row 1 :
+                                            - the profile image of the student rounded, in the right bottom corner of it a rounded circle that contains an edit icon 
+                                        - row 2 :
+                                            - col :
+                                                - row 1 : 
+                                                    - the label : "Full name"
+                                                - row 2 :
+                                                    - a text input for the full name of the student, pre-filled with the current full name of the student (required)
+                                        - row 3 :
+                                            - col : 
+                                                - row 1 : 
+                                                    - the label : "E-mail"
+                                                - row 2 : 
+                                                    - a text input for the email of student, pre-filled with the current email of the student (email,required)
+                                        - row 4 :
+                                            - col : 
+                                                - row 1 : 
+                                                    - the label : "Phone number"
+                                                - row 2 : 
+                                                    - a text input for the phone number of student, pre-filled with the current phone number of the student (accepts only integer character,min length=max length = 8,required)
 
+                                        - row 5 :
+                                            - col : 
+                                                - row 1 : 
+                                                    - the label : "Gender"
+                                                - row 2 : 
+                                                    - two radio buttons : (required)
+                                                        - "Male"
+                                                        - "Female"
+                                        - row 6 :
+                                            - col : 
+                                                - row 1 : 
+                                                    - the label : "Level"
+                                                - row 2 : 
+                                                    - a select input for the level of the student, pre-filled with the current level of the student (required)
+                                                        - options : the list of all of the levels that the student can study in according to the tunisian education system
+                                        - row 7 :
+                                            - col : 
+                                                - row 1 : 
+                                                    - the label : "Section"
+                                                - row 2 : 
+                                                    - a select input for the section of the student, pre-filled with the current section of the student (required if the selected level has sections according to the tunisian education system)
+                                                        - options : the list of sections of the selected level that the student can study in according to the tunisian education system
+                                                        - notes:
+                                                            - disable this select if the level doesn't have sections
+                                - row 3 : 
+                                    - a button with the name "Update account info"
+                        - row 2 : 
+                            - col : 
+                                - row 1 : 
+                                    - a header with the name : "Change password", with a bottom border 
+                                - row 2 : 
+                                    - col :
+                                        - row 1 
+                                            - col 1 : 
+                                                - the label "New password"
+                                            - col 2 : 
+                                                - a password input for the new password with the ablility to show and hide the content of the input, not pre-filled (has at least 8 characters long, required)
+                                        - row 2 
+                                            - col 1 : 
+                                                - the label "Confirm new password"
+                                            - col 2 : 
+                                                - a password input to confirm the new password with the ablility to show and hide the content of the input, not pre-filled (has at least 8 characters long, required)
+                                - row 3 : 
+                                    - a button with the name "Change password"
+                    Dynamics : 
+                        - clicking on the profile image allows to upload a new image 
+                        - clicking on the "Update account info" button opens up a popup form which contains : 
+                            - UI : 
+                                - row 1 : the header of the popup 
+                                    col : 
+                                        - at the most left, the text : "Confirm your Authorization"      
+                                    col : 
+                                        - at the most right, a close icon 
+
+                                - row 2 : the content area of the popup
+                                    - row 1 :
+                                        - an Authorization icon 
+                                    - row 2 :
+                                        - col 1 : 
+                                            - the label "Current password"
+                                        - col 2 : 
+                                            - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled (required)
+                                
+                                - row 3 : the footer of the popup 
+                                    - row : 
+                                        - col 1 : 
+                                            - a "Cancel" button 
+                                        - col 2 : 
+                                            - a "Confirm & update" button 
+                            Dynamics : 
+                                - clicking on the "Cancel" button, close the popup form
+                                - clicking on the "Confirm & update" button , checks if the given password is correct , if it's correct it updates the account info and closes the popup form, otherwise it informs the user that the given password is incorrect in the popup without closing it 
+
+                        - clicking on the "Change password" button opens up a popup form which contains : 
+                            - UI : 
+                                - row 1 : the header of the popup 
+                                    col : 
+                                        - at the most left, the text : "Confirm your Authorization"      
+                                    col : 
+                                        - at the most right, a close icon 
+
+                                - row 2 : the content area of the popup
+                                    - row 1 :
+                                        - an Authorization icon
+                                    - row 2 :
+                                        - col 1 : 
+                                            - the label "Current password"
+                                        - col 2 : 
+                                            - a password input for the current password with the ablility to show and hide the content of the input, not pre-filled (required)
+                                
+                                - row 3 : the footer of the popup 
+                                    - row : 
+                                        - col 1 : 
+                                            - a "Cancel" button 
+                                        - col 2 : 
+                                            - a "Confirm & change" button 
+                            Dynamics : 
+                                - clicking on the "Cancel" button, close the popup form
+                                - clicking on the "Confirm & change" button , checks if the given password is correct , if it's correct it updates the account info and closes the popup form, otherwise it informs the user that the given password is incorrect in the popup without closing it
 
     - For the parent profile (THE WHOLE PROFILE IS CONFIRMED) : 
 
@@ -2013,14 +2156,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                 notes : 
                     - the number of notifications is the total number of new notifications that were added after the last time the user did open the notification screen
                     - this number of notifications gets reseted to 0 after the user leaves the notifications screen
-                    - it gets increased by 1 when a new notification is added and decreased by 1 when the the teacher clicks on a clickable notification card or clicks on one of the buttons 
-                        of a notification card of the notifications screen, in real time
+                    - it gets increased by 1 when a new notification is added and decreased by 1 when the the parent clicks on a notification card of the notifications screen, in real time
 
         - the sidebar : 
             col : 
                 - row 1 : 
                     - at the most right a left arrow icon, clicking on it hides the sidebar
-                - row 2 : routes to the profile screen of the parent
+                - row 2 : routes to the account screen 
                     - col 1 : 
                         - the profile picture of the parent rounded
                     - col 2 : 
@@ -2043,7 +2185,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - col 2 :
                                 - row :
                                     - the text : "Notifications"
-                                    - the red circle with the number of notifications which is the number of notifications that were added after the last time the user did open the notification screen
+                                    - a red rectangle with some border radius that contains the number of notifications 
+                                        notes : 
+                                            - the number of notifications is the total number of new notifications that were added after the last time the user did open the notification screen
+                                            - this number of notifications gets reseted to 0 after the user leaves the notifications screen
+                                            - it gets increased by 1 when a new notification is added and decreased by 1 when the the student clicks on a notification card
+                                              of the notifications screen, in real time
 
         - the screens binded to each navigation item in the sidebar : 
 
@@ -2056,15 +2203,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 col (represents the majority of the width of the row) : 
                                     - a text input to search on name of the teacher (the filtering of the list must be on changing the value of this input)
                                 col : 
-                                    - a square button which contains a filter icon , clicking on it opens up a popup form for advanced filtering which contains :
-                                        - col : 
-                                            - a select input for the level 
-                                            - a select input for the section 
-                                            - a select input for the subject
-                                            - a filter button which closes the this popup and update the list of teachers based on the value of the selects and the 
-                                                text input 
+                                    - a square button which contains a filter icon 
                             - row 2 : 
-                                - list of teachers and each teacher must be in a card which contains 
+                                - list of first 30 teachers and each teacher must be in a card which contains 
                                     - row : 
                                         - col 1 : 
                                             - the profile image of the teacher
@@ -2077,28 +2218,63 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - the subjects he teaches in badges, example (Math,Physique)
                                         - col 3 :
                                             - a "request parenting" button
-                            - row 3 : 
-                                - a pagingation for the teacher list which contains the following : 
-                                    - row : 
-                                        - col 1 : 
-                                            - "{the rank of the first teacher showed in the teacher list out of the full filtered and the non paginated list} to {the rank of the last teacher showed in the teacher list out of the full filtered and the non paginated list} / {the length of the full filtered and non paginated list}"
-                                        - col 2 : 
-                                            - a select input for selecting the page number , the list of options must be the length of the full filtered and non paginated list / batch size
-                                        - col 3 :
-                                            - a select input for selecting the batch size of the teacher list 
+
                     - Dynamics : 
+                        - clicking on the filter square button opens up a popup form for advanced filtering which contains :
+                            - UI : 
+                                - col : 
+                                    - row 1 : the footer of the popup 
+                                        - col : 
+                                            - at the most left, the text : "Filter"
+                                        - col : 
+                                            - at the most right, a close icon
+                                    - row 2 : the content area of the popup
+                                        - col : 
+                                            - row 1 : 
+                                                - a select input for the level of the student (the options must be the list of all of the levels that the student can study in according to the tunisian education system)
+                                            - row 2 : 
+                                                - a select input for the section of the student (the options must be the list of sections of the selected level that the student can study in according to the tunisian education system)
+                                                    - disable this select if either : 
+                                                        - the user didn't select a level yet 
+                                                        - the selected level doesn't have sections according to the tunisian education system
+                                            - row 3 : 
+                                                - a select input for the subject (the options must be the list of subjects that are taught in the selected level and section or only in the selected level if it doesn't have sections according to the tunisian education system)
+                                                    - allowing the user to select multiple subjects
+                                                    - disable this select if either : 
+                                                        - the user didn't select a level yet 
+                                                        - the selected level doesn't have sections according to the tunisian education system
+                                                        - the selected level has sections and the user didn't select a section yet
+
+                                    - row 3 : the footer of the popup 
+                                        - col 1 : 
+                                            - a "Cancel" button 
+                                        - col 2 : 
+                                            - a "Filter" button
+                            - Dynamics : 
+                                - clicking on the "Filter" button closes the popup form and update the list by replacing it with the first 30 teachers that match the selects filter and the teacher fullname text input 
+                                - clicking on the "Cancel" button of the popup form closes the popup form without updating the list of teachers
                         - clicking on the "request parenting" button of any teacher card opens up a popup form : 
                             UI : 
                                 - col 
-                                    - row 1 : 
-                                        - a select input that contains as an option list, the list of the sons of the parent that the requested teacher didn't give a parent access for them before (allow the parent to select multiple sons)
-                                    - row 
-                                        - the button "request parenting" which sends a parent request for the student that his details mentionned in form to the teacher
-                                        of the card 
+                                    - row 1 : the header of the popup 
+                                        - col : 
+                                            - at the most left, the text : "Request Parenting"      
+                                        - col : 
+                                            - at the most right, a close icon
+                                    - row 2 : the content area of the popup
+                                        - col :
+                                            - row 1 : 
+                                                - a select input to select a son that contains as an option list, the list of the sons of the parent (required)
+                                            - row 2 : 
+                                                - a select input to select subject(s) that contains as an option list, the list of subjects that the teacher teaches in the level and the section of the selected son or only in the selected level if it doesn't have sections according to the tunisian education system
+                                                  (required)
+                                                    - allow the parent to select multiple subjects for his son 
+                                                    - don't include the subjects that the parent was already accepted in before 
+                                    - row 3 : the footer of the popup 
+                                        - the button "request parenting"  
                             Dynamics : 
                                 - clicking on the "request parenting" button of the popup form sends a parenting request for the selected son/student to the teacher of the card,
-                                  if the parent already requested parenting for the selected son/student and the teacher still didn't respond, close the popup form and open a 
-                                  popup that inform the parent about that, otherwise just close the popup form 
+                                  then closes the popup form
             - the sons screen :
                 - the title of the App Bar is : "Sons"
                 - the content of the screen : 
@@ -2164,7 +2340,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - the header for the class session batches list which contains the text "Class Session Batches"
                                                     - row 4 : 
                                                         - the list of class session batch of this subject which must be similar to the one in the student detail screen of the teacher 
-                                                          profile with no ability to mark attendance nor payment 
+                                                          profile with no ability to make any action on them 
+
                         - clicking on the "Add a son" button opens up a popup form : 
                             - UI : 
                                 - col : 
@@ -2180,7 +2357,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - clicking the "Add a son" button of the popup form creates a new son for the parent and it refreshes the son list 
 
             - the notifications screen : 
-                - the title of the App Bar is : "Notifications ({number of notifications})"
+                - the title of the App Bar is : "Notifications ({number of un read notifications})"
                 - the content of the screen : 
                     - UI : 
                         - col : 
