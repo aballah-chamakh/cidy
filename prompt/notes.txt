@@ -107,3 +107,34 @@ private classes, which will allow them to :
                 - student payment alert : On or Off
             - week schedule 
             - enrollments requests 
+
+
+    to do : 
+        - for all of the inputs : 
+            - check the if we added the right validations 
+            - for the selects :
+                - check if we added the right options with right dynamics 
+            - the filter inputs that arents in the popup filters : 
+                - mention that changing their values updates the list in real time 
+    
+        - for each actions the user does (edit,create,delete,remove from) :
+            - check if we have the right pre-requisites for it 
+            - check how it will affects other things and handle that through either : 
+                - a warning message 
+                - restricting the action
+
+        - for all of the lists  : 
+            - check if did define how the empty list looks like
+            - for the lists that contains many items : 
+                - check if did include the pagination dynamics 
+
+        - for all of the profiles : (done)
+            - check if we did miss any notification type throught analyzing the actions of all of the profiles 
+
+        - define in a json format  : 
+            - the years of each level in tunisian education system from 6 years old to 18 years old
+                - if the year has sections 
+                    - include it's sections with his subject
+                - otherwise
+                    - include the subjects of the year only
+        - since i removed filters for the notifications update the dynamics of the notifications related to the filter 
