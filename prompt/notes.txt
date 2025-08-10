@@ -110,11 +110,16 @@ private classes, which will allow them to :
 
 
     to do : 
+
+        - since i removed filters for the notifications update the dynamics of the notifications related to the filter (done)
+
+        
+
         - for all of the inputs : 
             - check the if we added the right validations 
             - for the selects :
                 - check if we added the right options with right dynamics 
-            - the filter inputs that arents in the popup filters : 
+            - the filter inputs that aren't in the popup filters : 
                 - mention that changing their values updates the list in real time 
     
         - for each actions the user does (edit,create,delete,remove from) :
@@ -128,8 +133,11 @@ private classes, which will allow them to :
             - for the lists that contains many items : 
                 - check if did include the pagination dynamics 
 
-        - for all of the profiles : (done)
+        - for all of the profiles :
             - check if we did miss any notification type throught analyzing the actions of all of the profiles 
+
+
+
 
         - define in a json format  : 
             - the years of each level in tunisian education system from 6 years old to 18 years old
@@ -137,4 +145,4 @@ private classes, which will allow them to :
                     - include it's sections with his subject
                 - otherwise
                     - include the subjects of the year only
-        - since i removed filters for the notifications update the dynamics of the notifications related to the filter 
+        

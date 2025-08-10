@@ -20,7 +20,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
             - A button with the name "Login"
             - A clickable text with the content: "Don't have an account? Register here", which routes to the register screen
         - Dynamics:
-            - The "Login" button authenticates the user using the provided email and password. Upon successful authentication, the user is routed to their respective dashboard based on their profile type (teacher, student, or parent).
+            - The "Login" button authenticates the user using the provided email and password. Upon successful authentication, the user is routed to a particular screen based on the profile type.
+                for a teacher : routes to the teacher dashboard
+                for a student : routes to the student subjects screen 
+                for a parent : routes to the parent sons screen
 
     - The common register screen:
         - UI:
@@ -35,12 +38,15 @@ I want to build a mobile app with the name "Cidy" which allows the government te
             - radio buttons for gender selection (required)
                 - Male
                 - Female
-            - A password input for the password with the ability to show and hide the content of the input (required, min length = 6, contains at least one uppercase letter, one lowercase letter, and one number)
+            - A password input for the password with the ability to show and hide the content of the input (required, min length = 8)
             - A password input to confirm the password with the ability to show and hide the content of the input (required, must match the password)
             - A button with the name "Register"
             - A clickable text with the content: "Already have an account? Login here", which routes to the login screen
         - Dynamics:
-            - The "Register" button validates the inputs and creates a new account for the selected profile type. Upon successful registration, the user is routed to their respective dashboard based on their profile type (teacher, student, or parent).
+            - The "Register" button validates the inputs and creates a new account for the selected profile type. Upon successful registration, the user is routed to a particular screen based on the profile type.
+                for a teacher : routes to the teacher dashboard
+                for a student : routes to the student subjects screen 
+                for a parent : routes to the parent sons screen
 
 - the description for all the profiles (teacher, student, parent) : 
 
@@ -116,35 +122,46 @@ I want to build a mobile app with the name "Cidy" which allows the government te
             - the dashboard screen : 
                 - the title of the App Bar is : "Dashboard"
                 - the content of the screen :  
-                    - UI :     
-                        - a date range picker component to update the value of majority of the KPIs below by a specific time period (defaults to current month), also 
-                          include quick presets: "This Week", "This Month", "Last Month", "Last 3 Months"
+                    - if the teacher has no groups : 
+                        - UI : 
+                            - col : 
+                                - row : 
+                                    - col : at the center of y and x axis 
+                                        - row 1 : 
+                                            - a dashboard kpi icon 
+                                        - row 2 : 
+                                            - a text : "You don’t have any dashboard KPIs because you don’t have any groups."
 
-                        - Overall Performance KPIs : 
-                            - the total paid amount in dinars across all of the students of the teacher in the selected date range
-                            - the total unpaid amount in dinars across all of the students of the teacher in the selected date range
-                            - the total number of active students of the teacher (the ones that belong to groups)
+                    - if the teacher has groups :
+                        - UI :     
+                            - a date range picker to update the value of majority of the KPIs below by a specific time period (defaults to current month), also 
+                            include quick presets: "This Week", "This Month", "This Year".
 
-                        - for each level the teacher teaches :  
-                            - the total paid amount in dinars across the students of the level in the selected date range
-                            - the total unpaid amount in dinars across the students of the level in the selected date range
-                            - the total number of active students of the level (the ones that belong to groups)
+                            - Overall Performance KPIs : 
+                                - the total paid amount in dinars across all of the students of the teacher in the selected date range
+                                - the total unpaid amount in dinars across all of the students of the teacher in the selected date range
+                                - the total number of active students of the teacher (the ones that belong to groups)
 
-                            if the level has sections : 
-                                - for each section of the level : 
-                                    - the total paid amount in dinars across the students of the section of the level in the selected date range
-                                    - the total unpaid amount in dinars across the students of the section of the level in the selected date range
-                                    - the total number of active students of the section of the level
+                            - for each level the teacher teaches :  
+                                - the total paid amount in dinars across the students of the level in the selected date range
+                                - the total unpaid amount in dinars across the students of the level in the selected date range
+                                - the total number of active students of the level (the ones that belong to groups)
 
-                                    - for each subject of the section of the level : 
-                                        - the total paid amount in dinars across the students of the subject of the section of the level in the selected date range
-                                        - the total unpaid amount in dinars across the students of the subject of the section of the level in the selected date range
-                                        - the total number of active students of the subject of the section of the level
+                                if the level has sections (according to prices screen below)  : 
+                                    - for each section of the level : 
+                                        - the total paid amount in dinars across the students of the section of the level in the selected date range
+                                        - the total unpaid amount in dinars across the students of the section of the level in the selected date range
+                                        - the total number of active students of the section of the level
 
-                            else if the level doesn't have sections :
-                                - for each subject of the level : 
-                                    - the total paid amount in dinars across the students of the subject of the level in the selected date range
-                                    - the total unpaid amount in dinars across the students of the subject of the level in the selected date range
+                                        - for each subject of the section of the level (according to prices screen below) : 
+                                            - the total paid amount in dinars across the students of the subject of the section of the level in the selected date range
+                                            - the total unpaid amount in dinars across the students of the subject of the section of the level in the selected date range
+                                            - the total number of active students of the subject of the section of the level
+
+                                else if the level doesn't have sections (according to prices screen below) :
+                                    - for each subject of the level (according to prices screen below) : 
+                                        - the total paid amount in dinars across the students of the subject of the level in the selected date range
+                                        - the total unpaid amount in dinars across the students of the subject of the level in the selected date range
                                     - the total number of active students of the subject of the level
 
             - the week schedule screen :
@@ -156,7 +173,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - each card contains :
                             - the group name
                             - the subject of the group
-                            - the level and section of the group
+                            - the level and section (include the section if it exists) of the group
                             - the duration of the class 
                     - Dynamics :
                         - when the user drag and drop a group card :
@@ -179,7 +196,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - row 1 :
                                                             - a label : "Do you want to change the schedule permanently or only for this week?"
                                                         - row 2 :
-                                                            - two radio buttons :
+                                                            - two radio buttons : (required, only one radio button can be selected)
                                                                 - "Permanently"
                                                                 - "Only for this week"
 
@@ -197,20 +214,19 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                 - the content of the screen :  
                     if the teacher has no groups :
                         - UI :
-                            - col :
-                                - row  : at the center of the screen on y and x axis
-                                    - row 1 : 
-                                        - a groups icon 
-                                    - row 2 : 
-                                        - the text : "you have no groups yet"
-                                    - row 3 : 
-                                        - a button : "Create a group"
+                            - col  : at the center of the screen on y and x axis
+                                - row 1 : 
+                                    - a groups icon 
+                                - row 2 : 
+                                    - the text : "you don't have any group yet"
+                                - row 3 : 
+                                    - a button : "Create a group"
                         - Dynamics :
                             - clicking on the "Create a group"  : 
                               - sends a request to the server that checks if the teacher has the ability to create a new group throught ensuring that 
-                                the teacher as at least one of the following : 
+                                the teacher has at least one of the following in the prices screen (see below) : 
                                     - a level that doesn't have sections with at least one subject 
-                                    - a level with at least once section and that section with at least one subject
+                                    - a level with at least one section and that section with at least one subject
 
                                 - if the teacher doesn't have the ability to create a new group, opens up a popup that inform the teacher about that and about the minimum requirements to create a new group
                                 - if the teacher has the ability to create a new group, opens up a popup form which the same as the one open when clicking on the "Add" button in the groups screen when the teacher has groups (see below)
@@ -243,13 +259,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - the group level and section (include the section if exist)
                                                 - row 3 :
                                                     - the subject of the group 
-                                            - col 3 :
+                                            - col 3 : 
                                                 - the total paid amount in dinars of this group,in the green color and abbreviate using K (for 1000) or M (for 1 000 000)
-                                            - col 3 :
                                                 - the total non paid amount in dinars of this group,in the red color and abbreviate using K (for 1000) or M (for 1 000 000)
                         Dynamics : 
                             - chaging the value of the group name text input updates the group list by loading the first 30 groups that matches its value and the persisted values of the filters of the filter popup form 
-                            - clicking on the filter square button opens up popup form which contains  : 
+                            - clicking on the filter square button opens up a filter popup form which contains  : 
                                 UI : 
                                     - col : 
                                         - row 1 : in the header of the popup
@@ -267,11 +282,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - row 2 : 
                                                     - a select input to filter by a section : 
                                                         - the option : a blank option and the sections of the selected level (the ones included in the prices screen) 
-                                                        - make this select disabled if the value of the level is blank or the the selected level doesn't have sections 
+                                                        - make this select disabled if the value of the level is blank or the the selected level doesn't have sections according to the prices screen
                                                         - the value can be blank 
                                                 - row 3 : 
                                                     - a select input to filter by a subject : 
-                                                        - the options : the subjects of the selected section of the selected level or only of the selected level if the selected level doesn't have sections (the ones included in the prices screen)
+                                                        - the options : the subjects of the selected section of the selected level or only of the selected level if the selected level doesn't have sections according to the prices screen
                                                         - disable this select in the following cases : 
                                                             - if level select input is blank
                                                             - if section select input isn't disabled and it's value is blank
@@ -308,7 +323,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - maintains the values of the filters of the popup while the user is still in the groups screen (when the user leaves the groups screen reset them)
                                         - closes the filter popup
                                         - updates the group list by replacing it with the first 30 groups that match the filters (name text input,all of the selects and the selectors of the filter popup form)
-
+                            STOPPED here 
                             - clicking on the "add"  button opens up a popup form which contains 
                                 UI : 
                                     - col : 
@@ -1591,7 +1606,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - in real time : 
                             - add the new notifications to the top of the list, the ones that matches the fullname text input
                             - update the number of unread notifications in the App Bar title by adding to it the number of new notifications
-                              that happened during opening this screen (without filtering by the fullname text input)
+                              that happened during opening this screen
                              
             - the Account screen : 
                 - the title of the App Bar is : "Account"
