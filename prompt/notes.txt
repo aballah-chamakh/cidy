@@ -113,7 +113,7 @@ private classes, which will allow them to :
 
         - since i removed filters for the notifications update the dynamics of the notifications related to the filter (done)
 
-        
+
 
         - for all of the inputs : 
             - check the if we added the right validations 
@@ -135,6 +135,10 @@ private classes, which will allow them to :
 
         - for all of the profiles :
             - check if we did miss any notification type throught analyzing the actions of all of the profiles 
+
+            new notifications types : 
+                - for the student and the teacher : 
+                    - the teacher changed the group of your subject 
 
 
 

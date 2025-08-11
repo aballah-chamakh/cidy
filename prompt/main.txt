@@ -225,8 +225,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - clicking on the "Create a group"  : 
                               - sends a request to the server that checks if the teacher has the ability to create a new group throught ensuring that 
                                 the teacher has at least one of the following in the prices screen (see below) : 
-                                    - a level that doesn't have sections with at least one subject 
-                                    - a level with at least one section and that section with at least one subject
+                                    - a level that doesn't have sections according to the tunisian education system and he has at least one subject.
+                                    - a level with at least one section and that section with at least one subject.
 
                                 - if the teacher doesn't have the ability to create a new group, opens up a popup that inform the teacher about that and about the minimum requirements to create a new group
                                 - if the teacher has the ability to create a new group, opens up a popup form which the same as the one open when clicking on the "Add" button in the groups screen when the teacher has groups (see below)
@@ -260,10 +260,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - row 3 :
                                                     - the subject of the group 
                                             - col 3 : 
-                                                - the total paid amount in dinars of this group,in the green color and abbreviate using K (for 1000) or M (for 1 000 000)
-                                                - the total non paid amount in dinars of this group,in the red color and abbreviate using K (for 1000) or M (for 1 000 000)
+                                                - row 1 : 
+                                                    - the total paid amount in dinars of this group,in the green color and abbreviate using K (for 1000) or M (for 1 000 000)
+                                                - row 2 : 
+                                                    - the total non paid amount in dinars of this group,in the red color and abbreviate using K (for 1000) or M (for 1 000 000)
                         Dynamics : 
-                            - chaging the value of the group name text input updates the group list by loading the first 30 groups that matches its value and the persisted values of the filters of the filter popup form 
+                            - changing the value of the group name text input updates the group list by loading the first 30 groups that matches its value and the persisted values of the filters of the filter popup form 
                             - clicking on the filter square button opens up a filter popup form which contains  : 
                                 UI : 
                                     - col : 
@@ -277,20 +279,32 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - col : 
                                                 - row 1 : 
                                                     - a select input to filter by a level  : 
-                                                        - the options : a blank option and the levels that the teachers teaches (the ones included in the prices screen)
+                                                        - the options : a blank option and the levels that the teachers teaches, the ones included in the prices screen
                                                         - the value can be blank 
                                                 - row 2 : 
                                                     - a select input to filter by a section : 
-                                                        - the option : a blank option and the sections of the selected level (the ones included in the prices screen) 
-                                                        - make this select disabled if the value of the level is blank or the the selected level doesn't have sections according to the prices screen
-                                                        - the value can be blank 
+                                                        - the option : a blank option and the sections of the selected level, the ones included in the prices screen
+                                                        - make this select disabled if one of the following is true: 
+                                                            - if the user didn't select a level yet 
+                                                            - if the selected level doesn't have sections according to the data of the prices screen 
+                                                        - validations : the value can be blank 
+                                
                                                 - row 3 : 
                                                     - a select input to filter by a subject : 
-                                                        - the options : the subjects of the selected section of the selected level or only of the selected level if the selected level doesn't have sections according to the prices screen
+                                                        - the options : 
+                                                            - a blank option and : 
+                                                                - if the selected level has sections according to the tunisian education system : 
+                                                                    the subjects of the selected section of the selected level according to the data of the prices screen 
+                                                                - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system : 
+                                                                    the subjects of the selected level according to the data of prices screen
                                                         - disable this select in the following cases : 
-                                                            - if level select input is blank
-                                                            - if section select input isn't disabled and it's value is blank
-                                                    
+                                                            - if the user didn't select a level yet 
+                                                            - if section select input isn't disabled and the user didn't select a section yet 
+                                                            - if the selected section doesn't have subjects according to the data of the prices screen 
+                                                            - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system
+                                                              and that level doesn't have subjects according to the data of the prices screen
+                                                        validations : the value can be blank
+
                                                 - row 4 : 
                                                     - a select input to filter by weekly scheduled day of the group 
                                                         - options : a blank option and all of the week days
@@ -301,11 +315,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - make this selector disabled if the week day select input has blank value
                                                 
                                                 - row 6 : 
-                                                    - a select input that allows to sort the groups by the following options : 
-                                                        - paid amount descendant 
-                                                        - paid amount ascendant 
-                                                        - unpaid amount descendant
-                                                        - unpaid amount ascendant
+                                                    - a select input that allows to sort the groups by the paid and unpaid amounts : 
+                                                        - options : 
+                                                            - a blank option 
+                                                            - paid amount descendant 
+                                                            - paid amount ascendant 
+                                                            - unpaid amount descendant
+                                                            - unpaid amount ascendant 
+                                                        - validations : the value can be blank
 
                                             - row 3 : the footer of the popup
                                                 - col 1 : 
@@ -323,7 +340,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - maintains the values of the filters of the popup while the user is still in the groups screen (when the user leaves the groups screen reset them)
                                         - closes the filter popup
                                         - updates the group list by replacing it with the first 30 groups that match the filters (name text input,all of the selects and the selectors of the filter popup form)
-                            STOPPED here 
+                            
                             - clicking on the "add"  button opens up a popup form which contains 
                                 UI : 
                                     - col : 
@@ -340,20 +357,29 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - validations : required 
                                                 - row 1 : 
                                                     - a select input for the level of the group 
-                                                        - options : the levels that the teacher teaches (the ones included in the prices screen)
+                                                        - options : the levels that the teacher teaches, the ones included in the prices screen
                                                         - validations : required
                                                 - row 2 : 
                                                     - a select input for the section of the group 
-                                                    - options : the sections of the selected level (the ones included in the prices screen)
-                                                    - make this select disabled if the user didn't select a level yet or the selected level doesn't have sections 
-                                                    - validations : required if the selected level has sections
+                                                        - options : the sections of the selected level, the ones included in the prices screen
+                                                        - make this select disabled if one of the following is true: 
+                                                            - if the user didn't select a level yet 
+                                                            - if the selected level doesn't have sections according to the prices screen 
+                                                        - validations : required if itsn't disabled
                                                 - row 3 : 
                                                     - a select input for the subject of the group :
-                                                        - options : the subjects of the selected section of the selected level or only of the selected level if the selected level doesn't have sections (the ones included in the prices screen)
+                                                        - options : 
+                                                            - if the selected level has sections according to the tunisian education system : 
+                                                                the subjects of the selected section of the selected level according to the data of the prices screen 
+                                                            - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system : 
+                                                                the subjects of the selected level according to the data of prices screen
                                                         - disable this select in the following cases : 
                                                             - if the user didn't select a level yet 
                                                             - if section select input isn't disabled and the user didn't select a section yet 
-                                                        validations : required
+                                                            - if the selected section doesn't have subjects according to the data of the prices screen 
+                                                            - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system
+                                                              and that level doesn't have subjects according to the data of the prices screen
+                                                        validations : required if it's not disabled
                                                 - row 4 : 
                                                     - a select input for the scheduled weekly of the group 
                                                         - options : all of the week days
@@ -369,9 +395,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - clicking on the close icon , close the popup form 
                                     - clicking on the "Create" button : 
                                         - validates the inputs of the popup form by making these checks : 
-                                            - there is no groups with the same name in the same level,section and subject or in the same level and subject if the level doesn't have sections
+                                            - there is no groups with the same name in the same level,section and subject or in the same level and subject if the level doesn't have sections according to the tunisian education system
                                             - the time range of the group doesn't overlap with the time range of another group in the same weekly scheduled day
-                                        and if there is any validation error inform the user about it in the popup form 
+                                          and if there is any validation error inform the user about it in the popup form 
                                         - after validating the form successfully creates a new group with the values of the form then routes to the group detail screen of this new group
 
                             - checking any checkbox of a card, slides up a sticy block in the bottom of the screen that contains :                         
@@ -397,7 +423,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - a highlighted button with the name "Yes"
                                         - Dynamics : 
                                             - clicking on the "No" button, closes the the popup 
-                                            - clicking on the "Yes" button, deletes the selected groups then closes popup and update the groups list with the first 30 groups that match the filters (name text input and all of the selects and the selectors of the filter popup form)
+                                            - clicking on the "Yes" button : 
+                                                - deletes the selected groups which leads to : 
+                                                     - deleting the association records linking the students to these groups without deleting the students themselves, which leads to : 
+                                                        - deleting the class batches and their associated classes that were related to the association records linking the groups and students.
+                                                - sends notifications to the students that were in the deleted groups and to their parents informing them that they/their sons were removed from the groups.
+                                                - then closes popup 
+                                                - finally it updates the groups list with the first 30 groups that match the filters (name text input and all of the selects and the selectors of the filter popup form)
 
                             - clicking on a group card item anywhere aside from the checkbox routes to the group detail screen : 
                                 - the title of the App Bar is : "Group : {the name of the group}"
@@ -445,12 +477,17 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - the unpaid amount accross all of the students of the group , in the red  color and in big size 
                                                     - row 2 : 
                                                         - the text  : "unpaid", in a small size  
+                                                 - col 1 : a kpi card 
+                                                    - row 1 : 
+                                                        - the number of students that belongs to the group , in the {any suitable color you find} color and in big size 
+                                                    - row 2 : 
+                                                        - the text  : "students", in a small size  
 
                                             - row 2 : the student list card 
                                                 - col : 
                                                     - row 1 : the header of the student list card 
                                                         - col 1 : 
-                                                            - in the most left, the title :  {the number of students that belongs to the group} Student(s)
+                                                            - in the most left, the title : {the number of students that belongs to the group} Student(s)
                                                         - col 2  : 
                                                             - in the most right, an "Add" button 
                                                     - row 2 : the content area of the student list card  :
@@ -468,17 +505,18 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - row 3 : the list of the first 30 students that belongs to the group, and each student must in clickable card which contains : 
                                                                 - row : 
                                                                     - col 1 : 
-                                                                        -  a rounded image for the profile of the student 
+                                                                        - a checkbox 
                                                                     - col 2 : 
+                                                                        -  a rounded image for the profile of the student 
+                                                                    - col 3 : 
                                                                         - row 1 : 
                                                                             - the fullname of the student 
-                                                                        - row 2 : 
-                                                                            - the text format : "{the amount paid by this student} paid" in the green color 
-                                                                        - row 3 : 
-                                                                            - the text format : "{the amount unpaid by this student} unpaid" in the red color 
                                                                     - col 3 : 
-                                                                        - a checkbox 
-
+                                                                        - row 1 : 
+                                                                            - the text format : "{the amount paid by this student} paid" in the green color 
+                                                                        - row 2 :  
+                                                                            - the text format : "{the amount unpaid by this student} unpaid" in the red color 
+                                                                    
                                     - Dynamics : 
                                         - clicking on the "Edit" button of the group details, opens up a popup form which contains : 
                                             - UI :
@@ -509,28 +547,50 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - the label : "Time range"
                                                                     - row 2 : 
                                                                         - a time range selector for the group, pre-filled with the current value (required, allowed time range is between 8h and 23h59)
+                                                            - row 6 : show this row if either the week day or time range has changed and remove it if the user returned to the original values
+                                                                - col :
+                                                                    - row 1 : 
+                                                                        - the label : "the schedule change is permanent or for only this week"
+                                                                    - row 2 : 
+                                                                        - a select input with the following options : 
+                                                                            - "Only this week"
+                                                                            - "Permanently"
                                                             - row 2 :
                                                                 - a button with the name "Edit" 
                                             - Dynamics : 
                                                 - clicking the close icon, closes the edit popup form 
-                                                - clicking on the edit button, edits the group, closes the edit popup form and update the group detail screen with the new updates
+                                                - clicking on the edit button : 
+                                                    - validates the inputs of the popup form by making these checks : 
+                                                        - if the name of the group was changed :
+                                                            - there is no groups with the same name in the same level,section and subject or in the same level and subject if the level doesn't have sections according to the tunisian education system
+                                                        - if the week day or time range of the group was changed :
+                                                            - the time range of the group doesn't overlap with the time range of another group in the same weekly scheduled day
+                                                      and if there is any validation error inform the user about it in the popup form without closing it 
+                                                    - then if the validation was successful edits the group 
+                                                    - next if the teacher changed the schedule of the group send notifications to students of this groups and to their parents informing 
+                                                      them about the change of the schedule 
+                                                    - finally closes the edit popup form and update the group detail screen with the new updates
 
                                         - clicking on the "Add" button of the student list card header,opens up a popup form which contains : 
                                             - UI : 
                                                 - col : 
                                                     - row 1 : the header of the popup form 
                                                         - col 1 : 
-                                                            - in the most left, the title : "Add a student"
+                                                            - in the most left, the title : "Add student(s)"
                                                         - col 2 : 
                                                             - in the the most right, the close icon 
                                                     - row 2 : the content area of the popup form 
                                                         - col : 
-                                                            - row 1 : 
-                                                                - the label : "Choose between selecting an existing student or creating a new student"
+                                                            - row 1 :
+                                                                - an add student icon 
                                                             - row 2 : 
-                                                                - a select input with the following two options : (required)
-                                                                    - select an existing student 
-                                                                    - create a new student 
+                                                                - col : 
+                                                                    - row 1 : 
+                                                                        - the label : "Choose between adding existing students or creating a new student then add it"
+                                                                    - row 2 : 
+                                                                        - a select input with the following two options : (required)
+                                                                            - add existing student(s) 
+                                                                            - create a new student then add it 
                                                     - row 3 : the footer of the popup form  
                                                         - col 1 : 
                                                             - a button with the name "Cancel"
@@ -540,7 +600,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - clicking on the close icon, closes the popup form
                                                 - clicking on the "Cancel" button, closes the popup form
                                                 - clicking on the "Next" button : 
-                                                    - for selecting : "select an existing student" and the teacher doesn't have students in the same level and section as the group or only in the same level if the group doesn't have a section, opens up a popup form which contains : 
+                                                    - for selecting : "add existing student(s)" and the teacher doesn't have students in the same level and section as the group or only in the same level if the group doesn't have a section, opens up a popup form which contains : 
                                                         - close the existing popup 
                                                         - then open an info popup with the message : 
                                                             if the group has a level and a section : 
@@ -553,7 +613,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - col : 
                                                                 - row 1 : the header of the popup form
                                                                     - col 1 : 
-                                                                        - in the most left, the title : "Select an existing student"
+                                                                        - in the most left, the title : "Add existing student(s)"
                                                                     - col 2 : 
                                                                         - in the most right, the close icon  
                                                                 - row 2 : the content area of the popup form 
@@ -562,7 +622,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                             - text input to search by the fullname of the student 
                                                                         - row 2 :
                                                                             -  a header for the student list with the title : "{number of student after filtering and without pagination} Students"
-                                                                        - row 3 : the list of the first 30 students that are not part of the group and they have the same level and section as the group or only the same level if the group has no section
+                                                                        - row 3 : the list of the first 30 students (either were created by the teacher or by the student) that are not part of the group and they have the same level and section as the group or only the same level if the group has no section
                                                                                 and each student must be in a card which contains  : 
                                                                             - row : 
                                                                                 - col 1 : 
@@ -577,13 +637,17 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                     - col 2 : 
                                                                         - a button with the name "Add" , disabled when there is no selected student
                                                         - Dynamics : 
-                                                            - allow one student to be selected 
+                                                            - allow multiple student to be selected 
                                                             - reaching the end of the list of students, loads the next 30 students that match the filters (name text input) 
                                                             - clicking on the "Back" button returns the UI of popup form to the previous one 
                                                             - clicking on the "Add" button : 
-                                                                - checks the selected student belongs to a group with the same level,section and subject as the group or only the same level and subject if the group has no section,
-                                                                if so, it be removed from that group 
-                                                                - then adds the selected students to the group, closes the popup form and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
+                                                                - checks for each selected student if belongs to a group with the same level,section and subject as the group or only the same level and subject if the group has no section,
+                                                                  if so, removes the student from that group which leads to : 
+                                                                    - deleting the association between the student and his old group (without deleting the student record) which leads to : 
+                                                                        - deleting the the class batches related to this association with their classes 
+                                                                - then adds the selected students to the group, 
+                                                                - next sends a notification to the select student(s) and to their parents informing them that the teacher has changed the group of their {subject} subject/ the subject of their son
+                                                                - finally closes the popup form and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
                                                     - for selecting "create a new student", replaces the UI of the popup to :    
                                                         - UI : 
                                                             - col : 
@@ -616,8 +680,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - Dynamics : 
                                                             - clicking on the "Back" button returns the UI of popup form to the previous one 
                                                             - clicking on the "Add" button , creates the student with the specified profile image, full name, phone number and gender in the popup form and with the level and section of the group 
-                                                            or only with the level of the group if the group doesn't have a section, then adds this student to the group, closes the popup form and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
+                                                              to add to or only with the level of the group if the group doesn't have a section, then adds this student to the group, closes the popup form and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
 
+                                        - changing the value of fullname text input or the sort select input updates the student list in real time
 
                                         - checking the checkbox of at least one student card item, slides up from the bottom of the screen a sticky overlay block at the bottom which contains : 
                                             - UI  : 
@@ -651,7 +716,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - a highlighted button with the name "Yes"
                                                         - Dynamics : 
                                                             - clicking on the "No" button, closes the the popup 
-                                                            - clicking on the "Yes" button, removes the selected students from the group, closes the popup and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
+                                                            - clicking on the "Yes" button :
+                                                                - removes the selected students from the group which means :
+                                                                    - deleting the association records linking the selected students and the group without deleting the students themselves which leads to :
+                                                                        - deleting the class batches and their associated classes that were related to the association records that were linking the selected students with the group.
+                                                                - then sends a notification to the selected student(s) and to their parents informing them that the teacher removed them from the {subject of the group} classes/ removed their sons from their {subject of the group} classes
+                                                                - finally closes the popup and updates the student list with the first 30 students that match the filters ( the fullname text input and the sort select input)
                                                     - for the grouped action : "mark attendance", the popup contains 
                                                         - UI : 
                                                             - col : 
@@ -664,12 +734,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - row 3 :
                                                                             - col :
                                                                                 - row 1 :  
-                                                                                    - the label : "Mark attendance for"
+                                                                                    - the label : "Choose the way you set the date and time of range of attendance :"
                                                                                 - row 2 : 
                                                                                     - a radio button group with the following options:
-                                                                                        - "Specific date and time range"
                                                                                         - "Next automatic date and time range"
-                                                                                - row 3 (visible only if "Specific date and time range" is selected): 
+                                                                                        - "Specify the date and the time range"
+                                                                                        
+                                                                                - row 3 (visible only if "Specify the date and the time range" is selected): 
                                                                                     - col :
                                                                                         - row 1 :  
                                                                                             - the label : "Date"
@@ -682,7 +753,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                                 - row 4 (visible only if "Next automatic date and time range" is selected): 
                                                                                     - col :
                                                                                         - row 1 :  
-                                                                                            - a label with the text: "Attendance will be marked based on the next automatic schedule for each student."
+                                                                                            - a label with the text: "Attendance will be marked based on the next automatic scheduled class for each student."
                                                                 - row 3 : the footer of the popup
                                                                     - col 1 : 
                                                                         - a button with the name "Cancel"
@@ -691,8 +762,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - Dynamics : 
                                                             - clicking on the "Cancel" button, closes the the popup 
                                                             - clicking on the "Yes" button : 
-                                                                - mark the attendance for each selected student in the date option the teacher choose (the specified date and time range or in the next automatic schedule for each student)
-                                                                - if the last class of the last class batch of the student is marked as attended or paid, create a new class batch for the student and mark the first class of the new batch as attended in the the date option the teacher choose
+                                                                for each selected student : (STOPPED HERE ============)
+
+                                                                    - mark the attendance for each selected student in the date and the time range option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
+                                                                
+                                                                - if the last class of the last class batch of the student in this group is marked as attended or paid, creates a new class batch for the student and mark the first class of the new batch as attended in the the date option the teacher choose
                                                                 - then closes the popup  
 
                                                     - for the grouped action : "unmark attendance", the popup contains 
