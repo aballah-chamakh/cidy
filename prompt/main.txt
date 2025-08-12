@@ -427,7 +427,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - deletes the selected groups which leads to : 
                                                      - deleting the association records linking the students to these groups without deleting the students themselves, which leads to : 
                                                         - deleting the class batches and their associated classes that were related to the association records linking the groups and students.
-                                                - sends notifications to the students that were in the deleted groups and to their parents informing them that they/their sons were removed from the groups.
+                                                - sends a notification to the students that were in the deleted groups informing them that the teacher deleted their {the subject of group} group 
+                                                  and if they have parents sends a notification to them informing them that the teacher deleted the {the subject of group} group of their son
                                                 - then closes popup 
                                                 - finally it updates the groups list with the first 30 groups that match the filters (name text input and all of the selects and the selectors of the filter popup form)
 
@@ -567,7 +568,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - the time range of the group doesn't overlap with the time range of another group in the same weekly scheduled day
                                                       and if there is any validation error inform the user about it in the popup form without closing it 
                                                     - then if the validation was successful edits the group 
-                                                    - next if the teacher changed the schedule of the group send notifications to students of this groups and to their parents informing 
+                                                    - next if the teacher changed the schedule of the group send a notification to the students of this groups and to their parents if they have ones informing 
                                                       them about the change of the schedule 
                                                     - finally closes the edit popup form and update the group detail screen with the new updates
 
@@ -646,7 +647,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                     - deleting the association between the student and his old group (without deleting the student record) which leads to : 
                                                                         - deleting the the class batches related to this association with their classes 
                                                                 - then adds the selected students to the group, 
-                                                                - next sends a notification to the select student(s) and to their parents informing them that the teacher has changed the group of their {subject} subject/ the subject of their son
+                                                                - next sends a notification to the select student(s) informing them that the teacher has changed the group of their {subject} subject
+                                                                  and if the selected student(s) have parents sends a notification to them informing them that the teacher has changed the group of their son in his {subject} subject
                                                                 - finally closes the popup form and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
                                                     - for selecting "create a new student", replaces the UI of the popup to :    
                                                         - UI : 
@@ -720,7 +722,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                 - removes the selected students from the group which means :
                                                                     - deleting the association records linking the selected students and the group without deleting the students themselves which leads to :
                                                                         - deleting the class batches and their associated classes that were related to the association records that were linking the selected students with the group.
-                                                                - then sends a notification to the selected student(s) and to their parents informing them that the teacher removed them from the {subject of the group} classes/ removed their sons from their {subject of the group} classes
+                                                                - then sends a notification to the selected student(s) informing them that the teacher removed them from the {subject of the group} classes
+                                                                  and if the selected student(s) have parents, sends a notification to them informing them that the teacher removed their sons from the {subject of the group} classes
                                                                 - finally closes the popup and updates the student list with the first 30 students that match the filters ( the fullname text input and the sort select input)
                                                     - for the grouped action : "mark attendance", the popup contains 
                                                         - UI : 
@@ -762,11 +765,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - Dynamics : 
                                                             - clicking on the "Cancel" button, closes the the popup 
                                                             - clicking on the "Yes" button : 
-                                                                for each selected student : (STOPPED HERE ============)
-
-                                                                    - mark the attendance for each selected student in the date and the time range option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
-                                                                
-                                                                - if the last class of the last class batch of the student in this group is marked as attended or paid, creates a new class batch for the student and mark the first class of the new batch as attended in the the date option the teacher choose
+                                                                    - if the last class of the last class batch of the student in this group is marked as attended or paid : 
+                                                                        - create a new class batch for the student in this group and mark the first class of the new batch as attended in the the date option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
+                                                                    - otherwise : 
+                                                                        - mark as attended the first class that is not marked as attended nor as paid in the last class batch of the student in this group, in the date and the time range option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
+                                                                    - send a notification to the student informing him that the teacher marked him as attended in his last {subject of the group} class
+                                                                    - if the student has parents send a notification to them informing them that the teacher marked their son as attended in his last {subject of the group} class
                                                                 - then closes the popup  
 
                                                     - for the grouped action : "unmark attendance", the popup contains 
@@ -781,20 +785,24 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - row 2 : 
                                                                             - col :
                                                                                 - row 1 :  
-                                                                                    - the label : "Number of classes"
+                                                                                    - the label : "Number of classes to unmark their attendance"
                                                                                 - row 2 : 
                                                                                     - a number input (min : 1 ,required)
                                                                 - row 3 : the footer of the popup
                                                                     - col 1 : 
                                                                         - a button with the name "Cancel"
                                                                     - col 2 : 
-                                                                        - a highlighted button with the name "Mark"
+                                                                        - a highlighted button with the name "Unmark"
                                                         - Dynamics : 
                                                             - clicking on the "Cancel" button, closes the the popup 
                                                             - clicking on the "Yes" button : 
-                                                                - mark the unattendance for {the specified number of classes} classes for each selected student, after that if a student had an overflow of unnecessary class batches, delete them
+                                                                for each selected student :
+                                                                    - unmark the attendance for his last {the specified number of classes} classes in this group 
+                                                                    - if a student had an overflow of unnecessary class batches, delete them
+                                                                    - send a notification to the student informing him that the teacher unmarked his attendance in his last {the specified number of classes} 
+                                                                    - if the student has parents send a notification to them informing them that the teacher unmarked the attendance for their son in his last {the specified number of classes} {subject of the group} class(es)
                                                                 - then closes the popup 
-
+                                                    # STOPPED HERE  
                                                     - for the grouped action : "mark payment", the popup contains 
                                                         - UI : 
                                                             - col : 
