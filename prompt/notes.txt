@@ -125,20 +125,22 @@ private classes, which will allow them to :
         - for each actions the user does (edit,create,delete,remove from) :
             - check if we have the right pre-requisites for it 
             - check how it will affects other things and handle that through either : 
+                - specify what it affects
                 - a warning message 
                 - restricting the action
+            - check if we missed a notification type 
 
         - for all of the lists  : 
             - check if did define how the empty list looks like
             - for the lists that contains many items : 
                 - check if did include the pagination dynamics 
 
-        - for all of the profiles :
-            - check if we did miss any notification type throught analyzing the actions of all of the profiles 
+
 
             new notifications types : 
                 - for the student and the teacher : 
                     - the teacher changed the group of your subject 
+                    - the teacher deleted the group of your subject (don't make this notification part of the teacher remove you from a subject classes notificationtion)
 
 
 

@@ -28,7 +28,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
     - The common register screen:
         - UI:
             - the logo of the app Cidy
-            - A select input for the profile type with the following options:
+            - A select input for the profile type with the following options: (required)
                 - Teacher
                 - Student
                 - Parent
@@ -140,7 +140,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - Overall Performance KPIs : 
                                 - the total paid amount in dinars across all of the students of the teacher in the selected date range
                                 - the total unpaid amount in dinars across all of the students of the teacher in the selected date range
-                                - the total number of active students of the teacher (the ones that belong to groups)
+                                - the total number of active students (the ones that belong to groups) of the teacher (the ones that belong to groups)
 
                             - for each level the teacher teaches :  
                                 - the total paid amount in dinars across the students of the level in the selected date range
@@ -151,18 +151,18 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - for each section of the level : 
                                         - the total paid amount in dinars across the students of the section of the level in the selected date range
                                         - the total unpaid amount in dinars across the students of the section of the level in the selected date range
-                                        - the total number of active students of the section of the level
+                                        - the total number of active students (the ones that belong to groups)  of the section of the level
 
                                         - for each subject of the section of the level (according to prices screen below) : 
                                             - the total paid amount in dinars across the students of the subject of the section of the level in the selected date range
                                             - the total unpaid amount in dinars across the students of the subject of the section of the level in the selected date range
-                                            - the total number of active students of the subject of the section of the level
+                                            - the total number of active students (the ones that belong to groups) of the subject of the section of the level
 
                                 else if the level doesn't have sections (according to prices screen below) :
                                     - for each subject of the level (according to prices screen below) : 
                                         - the total paid amount in dinars across the students of the subject of the level in the selected date range
                                         - the total unpaid amount in dinars across the students of the subject of the level in the selected date range
-                                    - the total number of active students of the subject of the level
+                                    - the total number of active students (the ones that belong to groups) of the subject of the level
 
             - the week schedule screen :
                 - the title of the App Bar is : "Week Schedule"
@@ -207,7 +207,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - a "Change" button
                                 - Dynamics :
                                     - clicking on the "Cancel" button, moves back the card to it's original position and closes the popup without making any changes.
-                                    - clicking on the "Change" button updates the schedule of the group based on the selected options (permanent or temporary) and closes the popup .
+                                    - clicking on the "Change" button  : 
+                                        - updates the schedule of the group based on the selected options (permanent or temporary) 
+                                        - send a notification to the student(s) of the group and to their parents if they have ones, informing them about the schedule change 
+                                        - finally closes the popup .
 
             - the groups screen : 
                 - the title of the App Bar is : "Groups"
@@ -236,14 +239,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - col : 
                                 - row 1 :
 
-                                    - col 1 : this takes the majority of the with 
+                                    - col 1 : this takes the majority of the width 
                                             - a text input to search by the name of the group 
                                     - col 2 : 
                                         - a square button that contains the filter icon 
 
                                 - row 2 : add a bottom border for this row
                                     - col 1 : 
-                                        - at the most left the header of the group list : "{the length of group list after applying the filters and without pagination} Group(s)" 
+                                        - at the most left the header of the group list : "{the length of group list after applying the filters (the group name text input and the value of inputs maintained in the popup filter ) and without pagination} Group(s)" 
                                     - col 2 :
                                         - an "Add" button to create a new group
 
@@ -398,7 +401,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - there is no groups with the same name in the same level,section and subject or in the same level and subject if the level doesn't have sections according to the tunisian education system
                                             - the time range of the group doesn't overlap with the time range of another group in the same weekly scheduled day
                                           and if there is any validation error inform the user about it in the popup form 
-                                        - after validating the form successfully creates a new group with the values of the form then routes to the group detail screen of this new group
+                                        - if the validation of the form was successful creates a new group with the values of the form then routes to the group detail screen of this new group
 
                             - checking any checkbox of a card, slides up a sticy block in the bottom of the screen that contains :                         
                                 UI : 
@@ -426,7 +429,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - clicking on the "Yes" button : 
                                                 - deletes the selected groups which leads to : 
                                                      - deleting the association records linking the students to these groups without deleting the students themselves, which leads to : 
-                                                        - deleting the class batches and their associated classes that were related to the association records linking the groups and students.
+                                                        - deleting the paid and unpaid amounts kpis related to the deleted the association records linking the groups and students.
+                                                        - deleting the class batches and their associated classes that were related to the deleted the association records linking the groups and students.
                                                 - sends a notification to the students that were in the deleted groups informing them that the teacher deleted their {the subject of group} group 
                                                   and if they have parents sends a notification to them informing them that the teacher deleted the {the subject of group} group of their son
                                                 - then closes popup 
@@ -441,7 +445,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col : 
                                                     - row 1 : the header of the card 
                                                         - col :
-                                                            - in the most left the title : "Group  Details"
+                                                            - in the most left the title : "Group Details"
                                                         - col : 
                                                             - in the most right of the card  : an "Edit" button 
                                                     - row 2 : the content area of the card 
@@ -488,7 +492,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col : 
                                                     - row 1 : the header of the student list card 
                                                         - col 1 : 
-                                                            - in the most left, the title : {the number of students that belongs to the group} Student(s)
+                                                            - in the most left, the title : {the number of students that belongs to the group filtered and non paginated} Student(s)
                                                         - col 2  : 
                                                             - in the most right, an "Add" button 
                                                     - row 2 : the content area of the student list card  :
@@ -503,20 +507,23 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                             - paid amount ascendant 
                                                                             - unpaid amount descendant
                                                                             - unpaid amount ascendant
-                                                            - row 3 : the list of the first 30 students that belongs to the group, and each student must in clickable card which contains : 
-                                                                - row : 
-                                                                    - col 1 : 
-                                                                        - a checkbox 
-                                                                    - col 2 : 
-                                                                        -  a rounded image for the profile of the student 
-                                                                    - col 3 : 
-                                                                        - row 1 : 
-                                                                            - the fullname of the student 
-                                                                    - col 3 : 
-                                                                        - row 1 : 
-                                                                            - the text format : "{the amount paid by this student} paid" in the green color 
-                                                                        - row 2 :  
-                                                                            - the text format : "{the amount unpaid by this student} unpaid" in the red color 
+                                                            - if the group has no students :
+                                                                - row 3 : in the middle of the x and y axis of a borderless rectangle a message indicating that there are no students in the group
+                                                            - if the group has students :
+                                                                - row 3 : the list of the first 30 students that belongs to the group, and each student must in clickable card which contains : 
+                                                                    - row : 
+                                                                        - col 1 : 
+                                                                            - a checkbox 
+                                                                        - col 2 : 
+                                                                            -  a rounded image for the profile of the student 
+                                                                        - col 3 : 
+                                                                            - row 1 : 
+                                                                                - the fullname of the student 
+                                                                        - col 3 : 
+                                                                            - row 1 : 
+                                                                                - the text format : "{the amount paid by this student} paid" in the green color 
+                                                                            - row 2 :  
+                                                                                - the text format : "{the amount unpaid by this student} unpaid" in the red color 
                                                                     
                                     - Dynamics : 
                                         - clicking on the "Edit" button of the group details, opens up a popup form which contains : 
@@ -566,11 +573,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - there is no groups with the same name in the same level,section and subject or in the same level and subject if the level doesn't have sections according to the tunisian education system
                                                         - if the week day or time range of the group was changed :
                                                             - the time range of the group doesn't overlap with the time range of another group in the same weekly scheduled day
-                                                      and if there is any validation error inform the user about it in the popup form without closing it 
-                                                    - then if the validation was successful edits the group 
-                                                    - next if the teacher changed the schedule of the group send a notification to the students of this groups and to their parents if they have ones informing 
-                                                      them about the change of the schedule 
-                                                    - finally closes the edit popup form and update the group detail screen with the new updates
+                                                    - if there is any validation error inform the user about it in the popup form without closing it
+                                                    - if the validation was successful 
+                                                        - edits the group
+                                                        - next if the teacher changed the schedule of the group send a notification to the students of this groups and to their parents if they have ones informing
+                                                          them about the change of the schedule
+                                                        - finally closes the edit popup form and update the group detail screen with the new updates
 
                                         - clicking on the "Add" button of the student list card header,opens up a popup form which contains : 
                                             - UI : 
@@ -748,7 +756,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                                         - row 1 :  
                                                                                             - the label : "Date"
                                                                                         - row 2 : 
-                                                                                            - a date picker (required)
+                                                                                            - a date picker (required,allow past dates)
                                                                                         - row 3 :  
                                                                                             - the label : "Time range"
                                                                                         - row 4 : 
@@ -832,8 +840,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - Dynamics : 
                                                             - clicking on the "Cancel" button, closes the the popup 
                                                             - clicking on the "Mark" button : 
-                                                                - mark the payment for {the specified number of classes} classes for each selected student 
-                                                                - if a student doesn't have enough classes to marked as paid, just mark the payment for the classes that the student has
+                                                                - for each selected students : 
+                                                                    - mark his last {the specified number of classes} non marked as paid classes in this group as paid 
+                                                                    - if the student doesn't have enough classes non marked a paid, create new class batches until he has enough then mark 
+                                                                      the missed ones as paid 
+                                                                    - send a notification to the student informing him that the teacher marked his last {the specified number of classes} classes as paid in his {subject of the group} subject
+                                                                    - if the student has parents, send a notification to the parents as well informing them that the teacher marked for theirs sons the last {the specified number of classes} {the subject of the group} classes as paid
                                                                 - then closes the popup 
 
                                                     - for the grouped action : "unmark payment", the popup contains 
@@ -859,12 +871,16 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - Dynamics : 
                                                             - clicking on the "Cancel" button, closes the the popup 
                                                             - clicking on the "Mark" button : 
-                                                                - unmark the payment for {the specified number of classes} classes for each selected student
-                                                                - if a student doesn't have enough classes to unmark as paid, just unmark the payment for the classes that the student has
-                                                                - then closes the popup  
+                                                                - for each selected students : 
+                                                                    - unmark the payment for his last {the specified number of classes} paid classes in this group
+                                                                    - if the last paid classes of the student in this group are less than the {the specified number of classes}, just unmark the payment for the last paid classes of the student in this group
+                                                                    - if the student had an overflow of unnecessary class batches resulted, delete them
+                                                                    - send a notification to the student informing him that the teacher unmarked his last {the specified number of classes or his last number of paid classes if <the last paid classes of the student in this group are less than the specified number of classes>} classes as paid in his {subject of the group} subject
+                                                                    - if the student has parents, send a notification to the parents as well informing them that the teacher unmarked for their son the payment of the last {the specified number of classes or his last number of paid classes if <the last paid classes of the student in this group are less than the specified number of classes>} {the subject of the group} classes
+                                                                - then closes the popup
 
                                         - clicking anywhere on the a student card item aside from the checkbox routes to the Student detail screen, which i will describe next 
-                            - when the user reaches the bottom scrolling , load the next 30 groups that match the filters (the group name text input and all of the selects and the selector of the filter popup form) until there is no more groups to load
+                            - when the user reaches the bottom scrolling , load the next 30 groups that match the filters (the group name text input and all of the maintained value of the inputs of the filter popup form) until there is no more groups to load
 
             - the students screen : 
                 - the title of the App Bar is : "Students"
