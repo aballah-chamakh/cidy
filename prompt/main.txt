@@ -805,10 +805,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - clicking on the "Cancel" button, closes the the popup 
                                                             - clicking on the "Yes" button : 
                                                                 for each selected student :
-                                                                    - unmark the attendance for his last {the specified number of classes} classes in this group 
-                                                                    - if a student had an overflow of unnecessary class batches, delete them
-                                                                    - send a notification to the student informing him that the teacher unmarked his attendance in his last {the specified number of classes} 
-                                                                    - if the student has parents send a notification to them informing them that the teacher unmarked the attendance for their son in his last {the specified number of classes} {subject of the group} class(es)
+                                                                    - unmark the attendance of his last {the specified number of classes} attended classes in this group through returning the status of the classes to "Future"
+                                                                    - if the number of the last attended classes of this student in this group is less than the {the specified number of classes}, just unmark the last attended ones only through 
+                                                                      returning their status to "Future"
+                                                                    - if a student had an overflow of unnecessary class batches resulted from unmarking, delete them (unecessary class batch means : a class batch with only future classes)
+                                                                    - send a notification to the student informing him that the teacher unmarked the attendance of his last {the number of unmarked classes} {subject of the group} class(es)
+                                                                    - if the student has parents send a notification to them informing them that the teacher unmarked the attendance for their son in his last {the number of unmarked classes} {subject of the group} class(es)
                                                                 - then closes the popup 
                                                     # STOPPED HERE  
                                                     - for the grouped action : "mark payment", the popup contains 
@@ -841,11 +843,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - clicking on the "Cancel" button, closes the the popup 
                                                             - clicking on the "Mark" button : 
                                                                 - for each selected students : 
-                                                                    - mark his last {the specified number of classes} non marked as paid classes in this group as paid 
-                                                                    - if the student doesn't have enough classes non marked a paid, create new class batches until he has enough then mark 
+                                                                    - mark his oldest {the specified number of classes} unpaid classes in this group as paid (theses classes can be future or attended)
+                                                                    - if the student doesn't have enough classes, non marked a paid, create new class batches until he has enough then mark 
                                                                       the missed ones as paid 
-                                                                    - send a notification to the student informing him that the teacher marked his last {the specified number of classes} classes as paid in his {subject of the group} subject
-                                                                    - if the student has parents, send a notification to the parents as well informing them that the teacher marked for theirs sons the last {the specified number of classes} {the subject of the group} classes as paid
+                                                                    - send a notification to the student informing him that the teacher marked his last {the specified number of classes} {subject of the group} class(es) as paid 
+                                                                    - if the student has parents, send a notification to the parents as well informing them that the teacher marked for their son the last {the specified number of classes} {the subject of the group} classes as paid
                                                                 - then closes the popup 
 
                                                     - for the grouped action : "unmark payment", the popup contains 
@@ -872,11 +874,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - clicking on the "Cancel" button, closes the the popup 
                                                             - clicking on the "Mark" button : 
                                                                 - for each selected students : 
-                                                                    - unmark the payment for his last {the specified number of classes} paid classes in this group
-                                                                    - if the last paid classes of the student in this group are less than the {the specified number of classes}, just unmark the payment for the last paid classes of the student in this group
-                                                                    - if the student had an overflow of unnecessary class batches resulted, delete them
-                                                                    - send a notification to the student informing him that the teacher unmarked his last {the specified number of classes or his last number of paid classes if <the last paid classes of the student in this group are less than the specified number of classes>} classes as paid in his {subject of the group} subject
-                                                                    - if the student has parents, send a notification to the parents as well informing them that the teacher unmarked for their son the payment of the last {the specified number of classes or his last number of paid classes if <the last paid classes of the student in this group are less than the specified number of classes>} {the subject of the group} classes
+                                                                    - unmark the payment for his last {the specified number of classes} paid classes in this group throught returning their status to the previous ones which is either attended or future 
+                                                                    - if the number of the last paid classes of the student in this group are less than the {the specified number of classes}, just unmark the payment for the last paid classes of the student in this group
+                                                                      throught returning their status to the previous ones which is either attended or future
+                                                                    - if the student had an overflow of unnecessary class batches resulted from unmarking, delete them (unecessary class batch means : a class batch with only future classes)
+                                                                    - send a notification to the student informing him that the teacher unmarked the payment for his last {the number of unmarked classes} {subject of the group} classes
+                                                                    - if the student has parents, send a notification to the parents as well informing them that the teacher unmarked for their son the payment of {the number of unmarked classes} {subject of the group} classes
                                                                 - then closes the popup
 
                                         - clicking anywhere on the a student card item aside from the checkbox routes to the Student detail screen, which i will describe next 
