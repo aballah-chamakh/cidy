@@ -238,7 +238,6 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - UI :
                             - col : 
                                 - row 1 :
-
                                     - col 1 : this takes the majority of the width 
                                             - a text input to search by the name of the group 
                                     - col 2 : 
@@ -268,7 +267,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - row 2 : 
                                                     - the total non paid amount in dinars of this group,in the red color and abbreviate using K (for 1000) or M (for 1 000 000)
                         Dynamics : 
-                            - changing the value of the group name text input updates the group list by loading the first 30 groups that matches its value and the persisted values of the filters of the filter popup form 
+                            - changing the value of the group name text input updates the group list by replacing it with the first 30 groups that matches its value and the persisted values of the filters of the filter popup form 
                             - clicking on the filter square button opens up a filter popup form which contains  : 
                                 UI : 
                                     - col : 
@@ -406,9 +405,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - checking any checkbox of a card, slides up a sticy block in the bottom of the screen that contains :                         
                                 UI : 
                                     - row : 
-                                        - a button with the name format:  "Detele {the number of the checked checkboxes}"
+                                        - a button with the name format:  "Delete {the number of the checked groups}"
                                 Dynamics :
-                                    - clicking on the "Delete {the number of the checked checkboxes}" button, opens up a popup which contains : 
+                                    - clicking on the "Delete {the number of the checked groups}" button, opens up a popup which contains : 
                                         - UI : 
                                             - col : 
                                                 - row 1 : the header of the popup
@@ -418,7 +417,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - row 1 : 
                                                             - at the center of the row,a trash icon 
                                                         - row 2 : 
-                                                            - at the center of the row, the text format : "Are you sure you want to selected the {number of selected groups} groups ?"
+                                                            - at the center of the row, the text format : "Are you sure you want to delete the selected {number of selected groups} groups ?"
                                                 - row 3 : the footer of the popup
                                                     - col 1 : 
                                                         - a button with the name "No"
@@ -429,12 +428,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - clicking on the "Yes" button : 
                                                 - deletes the selected groups which leads to : 
                                                      - deleting the association records linking the students to these groups without deleting the students themselves, which leads to : 
-                                                        - deleting the paid and unpaid amounts kpis related to the deleted the association records linking the groups and students.
-                                                        - deleting the class batches and their associated classes that were related to the deleted the association records linking the groups and students.
+                                                        - deleting the paid and unpaid amounts kpis related to the deleted association records records.
+                                                        - deleting the class batches that were related to the deleted association records records with their associated classes.
                                                 - sends a notification to the students that were in the deleted groups informing them that the teacher deleted their {the subject of group} group 
                                                   and if they have parents sends a notification to them informing them that the teacher deleted the {the subject of group} group of their son
                                                 - then closes popup 
-                                                - finally it updates the groups list with the first 30 groups that match the filters (name text input and all of the selects and the selectors of the filter popup form)
+                                                - finally it updates the groups list by replacing it with the first 30 groups that match the filters (name text input and all of the selects and the selectors of the filter popup form)
 
                             - clicking on a group card item anywhere aside from the checkbox routes to the group detail screen : 
                                 - the title of the App Bar is : "Group : {the name of the group}"
@@ -444,10 +443,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - row 1  : a card that contains the details of the group 
                                                 - col : 
                                                     - row 1 : the header of the card 
-                                                        - col :
-                                                            - in the most left the title : "Group Details"
-                                                        - col : 
-                                                            - in the most right of the card  : an "Edit" button 
+                                                        - col : in the most left
+                                                            - the title : "Group Details"
+                                                        - col : in the most right 
+                                                            - row :
+                                                                - col 1 : 
+                                                                    - a square button which contains an edit icon
+                                                                - col 2 : 
+                                                                    - a square button which contains a trash icon
                                                     - row 2 : the content area of the card 
                                                         - col : 
                                                             - row 1 : 
@@ -526,7 +529,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                                 - the text format : "{the amount unpaid by this student} unpaid" in the red color 
                                                                     
                                     - Dynamics : 
-                                        - clicking on the "Edit" button of the group details, opens up a popup form which contains : 
+                                        - clicking on the edit square button of the group details header, opens up a popup form which contains : 
                                             - UI :
                                                 - col : 
                                                     - row 1 : the header of the popup form 
@@ -579,6 +582,33 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - next if the teacher changed the schedule of the group send a notification to the students of this groups and to their parents if they have ones informing
                                                           them about the change of the schedule
                                                         - finally closes the edit popup form and update the group detail screen with the new updates
+
+                                        - clicking on the trash square button of the group details header, opens up a popup which contains :
+                                            - UI : 
+                                                - col : 
+                                                    - row 1 : the header of the popup
+                                                        - at center of the row, the title of the popup : "Confirm Delete"
+                                                    - row 2 : the content area of the group 
+                                                        - col : 
+                                                            - row 1 : 
+                                                                - at the center of the row,a trash icon 
+                                                            - row 2 : 
+                                                                - at the center of the row, the text format : "Are you sure you want to delete the group :{group name} ?"
+                                                    - row 3 : the footer of the popup
+                                                        - col 1 : 
+                                                            - a button with the name "No"
+                                                        - col 2 : 
+                                                            - a highlighted button with the name "Yes"
+                                            - Dynamics : 
+                                                - clicking on the "No" button closes the popup
+                                                - clicking on the "Yes" button : 
+                                                    - deletes the group which leads to : 
+                                                            - deleting the association records linking the students to this group without deleting the students themselves, which leads to : 
+                                                                - deleting the paid and unpaid amounts kpis related to the deleted association records records.
+                                                                - deleting the class batches that were related to the deleted association records records with their associated classes.
+                                                    - sends a notification to the students that were in the deleted group informing them that the teacher deleted their {the subject of group} group 
+                                                        and if they have parents sends a notification to them informing them that the teacher deleted the {the subject of group} group of their son
+                                                    - then closes popup and redirects to the groups screen 
 
                                         - clicking on the "Add" button of the student list card header,opens up a popup form which contains : 
                                             - UI : 
@@ -657,7 +687,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                 - then adds the selected students to the group, 
                                                                 - next sends a notification to the select student(s) informing them that the teacher has changed the group of their {subject} subject
                                                                   and if the selected student(s) have parents sends a notification to them informing them that the teacher has changed the group of their son in his {subject} subject
-                                                                - finally closes the popup form and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
+                                                                - finally closes the popup form and updates the student list by replacing it with the first 30 students that match the filters (name text input and the sort select input)
                                                     - for selecting "create a new student", replaces the UI of the popup to :    
                                                         - UI : 
                                                             - col : 
@@ -690,7 +720,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - Dynamics : 
                                                             - clicking on the "Back" button returns the UI of popup form to the previous one 
                                                             - clicking on the "Add" button , creates the student with the specified profile image, full name, phone number and gender in the popup form and with the level and section of the group 
-                                                              to add to or only with the level of the group if the group doesn't have a section, then adds this student to the group, closes the popup form and updates the student list with the first 30 students that match the filters (name text input and the sort select input)
+                                                              to add to or only with the level of the group if the group doesn't have a section, then adds this student to the group, closes the popup form and updates the student list by replacing it with the first 30 students that match the filters (name text input and the sort select input)
 
                                         - changing the value of fullname text input or the sort select input updates the student list in real time
 
@@ -729,10 +759,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - clicking on the "Yes" button :
                                                                 - removes the selected students from the group which means :
                                                                     - deleting the association records linking the selected students and the group without deleting the students themselves which leads to :
-                                                                        - deleting the class batches and their associated classes that were related to the association records that were linking the selected students with the group.
+                                                                        - deleting the class batches that were related to the deleted association records records with their associated classes.
                                                                 - then sends a notification to the selected student(s) informing them that the teacher removed them from the {subject of the group} classes
                                                                   and if the selected student(s) have parents, sends a notification to them informing them that the teacher removed their sons from the {subject of the group} classes
-                                                                - finally closes the popup and updates the student list with the first 30 students that match the filters ( the fullname text input and the sort select input)
+                                                                - finally closes the popup and updates the student list by replacing it with the first 30 students that match the filters ( the fullname text input and the sort select input)
                                                     - for the grouped action : "mark attendance", the popup contains 
                                                         - UI : 
                                                             - col : 
@@ -776,7 +806,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                     - if the last class of the last class batch of the student in this group is marked as attended or paid : 
                                                                         - create a new class batch for the student in this group and mark the first class of the new batch as attended in the the date option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
                                                                     - otherwise : 
-                                                                        - mark as attended the first class that is not marked as attended nor as paid in the last class batch of the student in this group, in the date and the time range option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
+                                                                        - mark as attended the oldest class that is not marked as attended nor as paid in the last class batch of the student in this group, in the date and the time range option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
                                                                     - send a notification to the student informing him that the teacher marked him as attended in his last {subject of the group} class
                                                                     - if the student has parents send a notification to them informing them that the teacher marked their son as attended in his last {subject of the group} class
                                                                 - then closes the popup  
@@ -806,13 +836,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - clicking on the "Yes" button : 
                                                                 for each selected student :
                                                                     - unmark the attendance of his last {the specified number of classes} attended classes in this group through returning the status of the classes to "Future"
-                                                                    - if the number of the last attended classes of this student in this group is less than the {the specified number of classes}, just unmark the last attended ones only through 
+                                                                    - if the number of the last attended classes of this student in this group is less than the {the specified number of classes}, just unmark the last attended ones only, through 
                                                                       returning their status to "Future"
                                                                     - if a student had an overflow of unnecessary class batches resulted from unmarking, delete them (unecessary class batch means : a class batch with only future classes)
-                                                                    - send a notification to the student informing him that the teacher unmarked the attendance of his last {the number of unmarked classes} {subject of the group} class(es)
-                                                                    - if the student has parents send a notification to them informing them that the teacher unmarked the attendance for their son in his last {the number of unmarked classes} {subject of the group} class(es)
+                                                                    - send a notification to the student informing him that the teacher unmarked for him the attendance of {the number of unmarked classes} {subject of the group} class(es)
+                                                                    - if the student has parents send a notification to them informing them that the teacher unmarked for their son the attendance of {the number of unmarked classes} {subject of the group} class(es)
                                                                 - then closes the popup 
-                                                    # STOPPED HERE  
                                                     - for the grouped action : "mark payment", the popup contains 
                                                         - UI : 
                                                             - col : 
@@ -844,10 +873,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - clicking on the "Mark" button : 
                                                                 - for each selected students : 
                                                                     - mark his oldest {the specified number of classes} unpaid classes in this group as paid (theses classes can be future or attended)
-                                                                    - if the student doesn't have enough classes, non marked a paid, create new class batches until he has enough then mark 
+                                                                    - if the student doesn't have enough classes to mark them as paid  create new class batches until he has enough then mark 
                                                                       the missed ones as paid 
-                                                                    - send a notification to the student informing him that the teacher marked his last {the specified number of classes} {subject of the group} class(es) as paid 
-                                                                    - if the student has parents, send a notification to the parents as well informing them that the teacher marked for their son the last {the specified number of classes} {the subject of the group} classes as paid
+                                                                    - send a notification to the student informing him that the teacher marked for him {the specified number of classes} {subject of the group} class(es) as paid 
+                                                                    - if the student has parents, send a notification to the parents as well informing them that the teacher marked for their son {the specified number of classes} {the subject of the group} classes as paid
                                                                 - then closes the popup 
 
                                                     - for the grouped action : "unmark payment", the popup contains 
@@ -883,7 +912,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                 - then closes the popup
 
                                         - clicking anywhere on the a student card item aside from the checkbox routes to the Student detail screen, which i will describe next 
-                            - when the user reaches the bottom scrolling , load the next 30 groups that match the filters (the group name text input and all of the maintained value of the inputs of the filter popup form) until there is no more groups to load
+                            - when the user reaches the bottom scrolling , load the next 30 groups that match the filters (the group name text input and all of the maintained value of the inputs of the filter popup form) and append them to the end of the list of groups
 
             - the students screen : 
                 - the title of the App Bar is : "Students"
@@ -901,10 +930,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - Dynamics :
                             - clicking on the "Create a student"  : 
                               - sends a request to the server that checks if the teacher has the ability to create a new student throught ensuring that 
-                                the teacher as at least one of the following : 
-                                    - a level that has no sections
-                                    - a level that has sections with at least one section
-
+                                the teacher has at least one of the following in his prices screen data : 
+                                    - a level that has no sections (according to the tunisian education system)
+                                    - a level that has sections (according to the tunisian education system) with at least one section
                                 - if the teacher doesn't have the ability to create a new student, opens up a popup that inform the teacher about that and about the minimum requirements to create a new student
                                 - if the teacher has the ability to create a new student, opens up a popup form which the same as the one open when clicking on the "Add" button in the students screen when the teacher has students (see below)
                     - if the teacher has students :
@@ -918,28 +946,30 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - row 2 : 
                                     - row 1 : 
                                         - col 1 : 
-                                            - the header of the student list with the title : "{number of students after filtering and without pagination} Students"
+                                            - the header of the student list with the title : "{number of students after filtering with the fullname text input and the maintained values of the filters of the filter popup form, and without pagination} Students"
                                         - col 2 : 
                                             - an "Add" button 
                                     - col : the list of first 30 students of the teacher , the ones that belongs to the groups and the ones that don't, and each student must be in a clickable card wich contains : 
                                         - row 1 : 
                                             - col 1 : 
-                                                - the profile of the student rounded 
+                                                - a checkbox 
                                             - col 2 : 
+                                                - the profile of the student rounded 
+                                            - col 3 : 
                                                 - row 1 : 
                                                     - the fullname of the student 
                                                 - row 2 :
                                                     - the level and the section of the student (include the section if it exists)
                                                 - row 3 : 
-                                                    - the subjects of the groups that the student belongs to, each subject must in a badge (include maximum 2 subjects and if the student belongs to more than 2 groups, show a badge with the content : "and {the number of the rest of the requested subjects} more" )
-                                            - col 3 :
-                                                - the paid amount by this student in the green color and abbreviated, example : turn 1125 to 1.125k
-                                            - col 4 :
-                                                - the unpaid amount by this student in the red color and abbreviated
-                                            - col 5 : 
-                                                - a checkbox 
+                                                    - the subjects of the groups that the student belongs to, each subject must in a badge 
+                                            - col 4 : 
+                                                - row 1 :
+                                                    - the paid amount by this student in the green color and abbreviated, example : turn 1125 to 1.125k
+                                                - row 2 :
+                                                    - the unpaid amount by this student in the red color and abbreviated
                         - Dynamics : 
-                            - changing the value of the student fullname text input updates the student list by loading the first 30 students that matches its value and the persisted values of the filters of the filter popup form 
+                            - when the the teachers reaches the bottom of the screen scrolling,load the next 30 students that match the fullname text input and the maintained values of the filters of the filter popup form and append them to the end of the list of students
+                            - changing the value of the student fullname text input updates the student list by replacing it with the first 30 students that matches the fullname text input value and the persisted values of the filters of the filter popup form 
                             - clicking on the filter square button opens up a popup form which contains : 
                                 - UI : 
                                     - col : 
@@ -948,34 +978,35 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - in the most left the title : "Filter"
                                             - col 2 : 
                                                 - in the most right the close icon
-                                        - row 2 : the content area of the popup 
-                                            - row 1 : 
-                                                - col : 
-                                                    - row 1 
-                                                        - the label: Level
-                                                    - row 2
-                                                        - a select input for the level of the student which contains as options, all the levels that the teachers teaches (the ones includes in the prices screen) (not required)
-
-                                            - row 2 : 
-                                                - col : 
-                                                    - row 1
-                                                        - the label : Section 
-                                                    - row 2 
-                                                        - a select input for the section of the student which contains as options, all of the sections of the selected level (not required)
-                                                        notes :
-                                                            - if the user didn't select a level, keep section select disabled 
-                                                            - if the selected level doesn't have sections according to the prices screen , make the select section disabled otherwise re-enable it
-                                            
-                                            - row 2 : 
-                                                - col : 
-                                                    - row 1
-                                                        - the label : Subject 
-                                                    - row 2 
-                                                        - a select input which contains as options, all of the subjects of the selected section or of the selected level if the selected level doesn't have sections (not required)
-                                                            notes :
-                                                                - make the subject select disabled : 
-                                                                    - if the teacher didn't select a level yet 
-                                                                    - if the selected level has sections and the user still didn't select a section 
+                                        - row 2 : in the content area of the popup
+                                            - col : 
+                                                - row 1 : 
+                                                    - a select input to filter by a level  : 
+                                                        - the options : a blank option and the levels that the teachers teaches, the ones included in the prices screen
+                                                        - the value can be blank 
+                                                - row 2 : 
+                                                    - a select input to filter by a section : 
+                                                        - the option : a blank option and the sections of the selected level, the ones included in the prices screen
+                                                        - make this select disabled if one of the following is true: 
+                                                            - if the user didn't select a level yet 
+                                                            - if the selected level doesn't have sections according to the data of the prices screen 
+                                                        - validations : the value can be blank 
+                                
+                                                - row 3 : 
+                                                    - a select input to filter by a subject : 
+                                                        - the options : 
+                                                            - a blank option and : 
+                                                                - if the selected level has sections according to the tunisian education system : 
+                                                                    the subjects of the selected section of the selected level according to the data of the prices screen 
+                                                                - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system : 
+                                                                    the subjects of the selected level according to the data of prices screen
+                                                        - disable this select in the following cases : 
+                                                            - if the user didn't select a level yet 
+                                                            - if section select input isn't disabled and the user didn't select a section yet 
+                                                            - if the selected section doesn't have subjects according to the data of the prices screen 
+                                                            - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system
+                                                              and that level doesn't have subjects according to the data of the prices screen
+                                                        validations : the value can be blank
                                                                 
                                         - row 3 : the footer of the popup 
                                             - row  : 
@@ -1012,19 +1043,19 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - "Male"
                                                     - "Female"
                                             - row 5 :
-                                                - a select input for the level of the student which contains as options all the levels that the teacher teaches (the ones includes in the prices screen) (required)
+                                                - a select input for the level of the student which contains as options all the levels that the teacher teaches, the ones includes in the prices screen (required)
                                             - row 6 : 
-                                                - a select input for the section of the student which contains as options all the sections of the selected level (required if isn't disable)
+                                                - a select input for the section of the student which contains as options all the sections of the selected level (required if it isn't disabled)
                                                     notes :
-                                                        - if the teacher didn't select a level, keep section select disabled 
-                                                        - if the selected level doesn't have sections according to the prices screen , make the select section disabled otherwise re-enable it
+                                                        - if the teacher didn't select a level, keep section select disabled otherwise re-enable it
+                                                        - if the selected level doesn't have sections according to the tunisian education system , make the select section disabled otherwise re-enable it
 
                                             - row 7 : the footer of the popup form
                                                 - a button with the name : "Add Student"
                             - Dynamics : 
                                 - clicking on the close icon of the header, closes the popup form without creating a new student
                                 - clicking on the "Add Student" button : 
-                                    - creates a new student with the specified profile image, full name, phone number, gender, level, and section
+                                    - creates a new student with the specified profile image, full name, phone number, gender, level, and section (include the section if it's required)
                                     - closes the popup form
                                     - updates the student list with the first 30 students that match the filters (fullname text input and the selects of the filter popup form)
 
@@ -1033,7 +1064,50 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - row : 
                                         - a button with the name : "Delete ({the number of checked students})"
                                 - Dynamics : 
-                                    - clicking on the the delete button, deletes these student even if they are part of groups 
+                                    - clicking on the "Delete {the number of the checked students}" button, opens up a popup which contains : 
+                                        - UI : 
+                                            - col : 
+                                                - row 1 : the header of the popup
+                                                    - at center of the row, the title of the popup : "Confirm Delete"
+                                                - row 2 : the content area of the group 
+                                                    - col : 
+                                                        - row 1 : 
+                                                            - at the center of the row,a trash icon 
+                                                        - row 2 : 
+                                                            - at the center of the row, the text format : "Are you sure you want to delete the selected {number of selected students} students ?"
+                                                - row 3 : the footer of the popup
+                                                    - col 1 : 
+                                                        - a button with the name "No"
+                                                    - col 2 : 
+                                                        - a highlighted button with the name "Yes"
+                                        - Dynamics : 
+                                            - clicking on the "No" button, closes the the popup 
+                                            - clicking on the "Yes" button : 
+                                                - for each selected student : 
+                                                    - if the student was created by the teacher 
+                                                        - deletes the student which leads to : 
+                                                            - deleting the association records linking the student to his groups, which leads to : 
+                                                                - deleting the paid and unpaid amounts kpis related to the deleted association records records.
+                                                                - deleting the class batches that were related to the deleted association records records with their associated classes.
+                                        
+                                                    - if the student was added by a student request
+                                                        - deletes the association record linking the student with the teacher without deleting the student itself, which leads to :
+                                                            - deleting the association records linking the student to his groups, which leads to :
+                                                                - deleting the paid and unpaid amounts kpis related to the deleted association records records.
+                                                                - deleting the class batches that were related to the deleted association records records with their associated classes.
+
+                                                    - sends a notification to the student if he was added by a student request informing him that the teacher ended the relationship between them 
+                                                    - if the student has a parents :
+                                                        for each parent :  
+                                                            if the parent is the parent of one student for this teacher
+                                                                - deletes the accociation record linking the parent with the teacher 
+                                                                - sends a notification to him informing him that the teacher ended the relationship with his son and with him 
+
+                                                            if the parent is the parent of many students for this teacher
+                                                                sends a notification to him informing him that the teacher ended the relationship with his sons
+
+                                                    - then closes popup 
+                                                    - finally it updates the groups list by replacing it with the first 30 students that match the filters (name text input and all of the selects and the selectors of the filter popup form) 
 
                             - clicking on any part of a student card aside from the checkbox routes to the student detail screen : 
                                 - the title of the App Bar is : "Student"
@@ -1086,7 +1160,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - row 5 : 
                                                 - col : 
                                                     - row 1 : 
-                                                        - a header with the text : "Class Batches"
+                                                        - a header with the text : "{the number of class batches after filtering with the date range picker,and without pagination} Class Batches"
                                                     - row 2 :
                                                         - a date range picker 
                                                     - row 2 : the list of latest 30 class batches of the selected group and each class batch must be in a clickable card which contains : 
@@ -1112,9 +1186,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                     - green stroke : the batch contains 4 classes that the student attended and he did pay for them (status : paid)
                                                                     - orange stroke : the batch contains at least one class paid and the rest for the classes are due and not paid (status : partially_paid)
                                                                     - gray stroke : the rest of the situation (status : not_due)
-                                            - row 6 : a sticky overlayblock at the bottom of the screen that doesn't hide the last element in the screen, which contains  : 
+                                            - row 6 : a sticky overlayblock at the bottom of the screen that doesn't hide the last element in the screen, which contains : 
                                                 - row : 
-                                                    - col 1 : which takes the double with of the next col 
+                                                    - col 1 : which takes the double width of the next col 
                                                         - a select input for actions, with the following options : 
                                                             - mark attendance 
                                                             - unmark attendance 
@@ -1122,11 +1196,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - unmark payment 
                                                             - edit (add this options only if the student was created by the teacher and not added by a student request)
                                                             - delete 
-                                                    - col 2 : which takes the half of the with of the first column
+                                                    - col 2 : which takes the half of the width of the first column
                                                         - a button with the name start 
                                     - Dynamics : 
                                         - picking a date range , updates the list of class batches by replacing it with the first 30 class batches that match the selected date range
                                           in a descendant order by date time (start from the latest one to the oldest one)
+                                        - when the user reaches the bottom scrolling, load the next 30 class batches that match the selected date range and append them to the existing list
                                         - clicking on any batch card, opens up a popup which contains  : 
                                             - UI : 
                                                 - col : 
@@ -1134,7 +1209,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - col 1 : 
                                                             - at the most left, the title of the popup : "Class batch details"
                                                         - col 2 : 
-                                                                - at the most right, the close icon 
+                                                            - at the most right, the close icon 
                                                     - row 2 : the content area of the popup 
                                                         - col : 
                                                             - row 1 : 
@@ -1142,18 +1217,19 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                 and his background color colored according to the status of the batch
                                                             - row 2 : 
                                                                 - a vertical line with 4 circles in top of it and spaced, each circle : 
-                                                                    - represents a class of the batch 
+                                                                    - represents a class in the batch 
                                                                     - colored according to the status of the class (status : future, paid, not_due, not_paid) 
                                                                 next to each circle there is the details of the class which contains : 
-                                                                    - if the status of the class is attended then the datetime of attendance , if it's paid the datetime of the payment, otherwise skip this part 
                                                                     - the status of the class (status : future, paid, not_due, not_paid) , replacing the underscore with a space
+                                                                    - if the status of the class is attended then the datetime of attendance , if it's paid the datetime of the payment, otherwise skip this part 
+                                                                    
                                                     - row 3 : the footer of the popup 
                                                         - col 1 : 
                                                             - a button with the name "Close"
                                             - Dynamics : 
                                                 - clicking on the close icon of the header, closes the popup form 
                                                 - clicking on the close button of the footer, closes the popup form 
-
+                                        STOPPED HERE 
                                         - clicking on the "start" button opens up a different popup type depending to the selected action
                                             - for the action : "mark attendance", the popup contains 
                                                 - UI : 
@@ -1656,7 +1732,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                     - row 2 :  
                                                                         - a select input which contains as options : 
                                                                             - "reject this son/daugther" which the default one 
-                                                                            -  and the list of students of the teacher (created by teacher or they have their own login) that have the same level, section (if exist), gender as the son / daugther
+                                                                            -  and the list of students of the teacher (created by teacher or added throught a student request) that have the same level, section (if exist), gender as the son / daugther
 
                                                     - row 3 : the footer of the popup
                                                         - col 1 : 
@@ -2414,9 +2490,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - clicking on the "request parenting" button of the popup form sends a parenting request for the selected son/student to the teacher of the card,
                                   if the parent has already sent a parenting request for this teacher and son/student and the teacher still didn't respond back by accepting or declining
                                   it informs the user that he has already sent a parenting request for this teacher and son/student in the popup without closing it 
-                        - if the user reaches the bottom of the screen scrolling, loads the next 30 teachers that matches fullname of the text input and the and the selects of the filter popup 
-                          and adds them to the bottom of the list
-                      
+                        - if the user reaches the bottom of the screen scrolling, loads the next 30 teachers that matches fullname of the text input and the and the selects of the filter popup and append them to the end of the list
+
             - the sons screen :
                 - the title of the App Bar is : "Sons"
                 - the content of the screen : 
