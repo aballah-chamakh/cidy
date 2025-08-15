@@ -139,9 +139,10 @@ private classes, which will allow them to :
 
             new notifications types : 
                 - for the student and the teacher : 
-                    - the teacher changed the group of your subject 
+                    - the teacher changed the group of your subject, 
+                        in which case : the user added a student to a group with a subject that he is already in, in another group.
                     - the teacher deleted the group of your subject (don't make this notification part of the teacher remove you from a subject classes notificationtion)
-
+                    - the teacher ended the relationship with the student (in the case of teacher deleted a student from his account)
 
 
 
