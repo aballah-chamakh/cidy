@@ -1703,29 +1703,28 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                 - col 2 :
                                                                     - radio buttons group with two options (only one can be selected at a time, default is first,required):
                                                                         - "Add it as new student"
-                                                                        - "Replace it by an existing student"
+                                                                        - "Replace an existing student by it"
 
-                                                            - row 3 : make this visible if the option "replace it by an existing student" is checked
+                                                            - row 3 : make this visible if the option "Replace an existing student by it" is checked
                                                                 - col : 
                                                                     - row 1 : 
                                                                         - the label : "select the student to replace by"
                                                                     - row 2 :
-                                                                        - a select input that contains as options, the list of the students created by the teacher (the ones that don't have their own login) that have the same level,section and gender or only the same level and gender (if the level of the requesting student doesn't have sections) as the requesting student (required)
+                                                                        - a select input that contains as options, the list of the students created by the teacher that have the same level,section and gender or only the same level and gender (if the level of the requesting student doesn't have a section) as the requesting student (required)
                                                             - for each subject the student asked for :
-                                                                - row 4 : 
+                                                                - row : 
                                                                     - col : 
                                                                         - row 1 : 
-                                                                            - the label : "for the subject {the subject name}, select a group"
+                                                                            - the label : "for the subject {the subject name}, select the group"
                                                                         - row 2 :
-                                                                            - a select input that contains as options :
+                                                                            - a select input that contains as options (required):
                                                                                 - the option : "decline this subject" which is the default 
                                                                                 - the rest of the options : 
-                                                                                    the list of groups that have the same level and section of the requesting student and the asked subject 
-                                                                                    or only the same level (if the level of the student doesn't have section) as the requesting student and the asked subject , 
+                                                                                    the list of groups that have the same level and section of the requesting student and teach this subject 
+                                                                                    or only the same level (if the requesting student doesn't have a section) as the requesting student and teach this subject , 
                                                                                     the label of each option is the name of the group and the value is the id of the group
                                                                                 - note :
-                                                                                    - if the teacher selected student to replace by and this student belongs to a group in the option list of this select, pre-fill the value of this select by it's group 
-                                                                
+                                                                                    - if the teacher selected a existing student to replace by and this student belongs to a group in the option list of this select, pre-fill the value of this select by it's group 
                                                                         - row 3 :
                                                                             - col 1 : 
                                                                                 - a button with the name "Cancel"
@@ -1734,17 +1733,28 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 
                                             - Dynamics :
                                                 - before openning the popup bring from the server,
-                                                    - the list of students that have the same level and section or only the same level (if the level of the requesting student doesn't have sections) as the requesting student and each one with the groups that he belongs to that teaches the requested subjects, this groups
-                                                      will be used to prefill the subject group selects when the teacher chooses to replace by an existing student
-                                                    - the groups that have the same level,section and subject or only the same level and subject (if the level of the requesting student doesn't have sections) as the requesting student 
+                                                    - the list of students created by the teacher that have the same level and section or only the same level (if the level of the requesting student doesn't have a section) as the requesting student and each one with the groups that he belongs to that teaches the requested subjects, this groups
+                                                      will be used if needed to prefill the subject group selects when the teacher chooses to replace an existing student by the requesting student
+                                                    - for each subject the requesting student asked for : 
+                                                        - the groups that have the same level,section of the requesting student and teaches the subject or only the same level and subject (if the level of the requesting student doesn't have a section) as the requesting student and teaches the subject 
                                                 - clicking on the close icon closes the popup 
                                                 - clicking on the "Accept" button : 
-                                                    - if the teacher selected a group for the requested subject :
-                                                        - adds this student as a new student or replaces it by an existing one based on what the teacher choose then adds him to the selected group(s)
-                                                        - then closes the popup
-                                                        - finally updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
+                                                    - if the teacher selected at least one group for the requested subject :
+                                                        - adds the requesting student as a new student or replaces an existing student by the requesting student, based on what the teacher choose 
+                                                            - if the teacher choose to replace an existing by the requesting student :  
+                                                                - delete that existing student 
+                                                                - attach the relationships that the deleted student had with the requesting student (groups ...)
+                                                        - then for all of the selected groups of the requested subjects : 
+                                                            - if the requesting student has a group with the same subject : 
+                                                                - remove the requesting student from that group 
+                                                            - add the requesting student to the selected group of the requested subject
+                                                        - next :
+                                                            - send a notification to the student informing them that the teacher accepted their enrollment request for the subjects that the teacher selected for them a group 
+                                                            - if the student has parents, send a notification to each parent informing them that the teacher accepted their son's enrollment request for the subjects that the teacher selected for them a group
+                                                        - finally closes the popup and updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
                                                     - otherwise :
-                                                        - shows an error message : "You must select a group for the requested subject" in the same popup without closing it
+                                                        - shows an error message : "You must select a group for the at least one requested subject" in the same popup without closing it
+                                                    
                                                 - clicking on the "Cancel" button closes the popup without any action
 
                                         - clicking on the "Decline" button of a student request card, opens a confirmation popup which contains : 
@@ -1767,6 +1777,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - clicking on the "No" button, closes the popup 
                                                 - clicking on the "Yes" button : 
                                                     - declines this student request 
+                                                    - sends a notification to the student informing them that their request has been declined.
                                                     - then closes the popup  
                                                     - finally updates the card of this student request by replacing the "Accept" and "Decline" buttons with the badge "Declined"            
                                 - for parent request notifications : 
@@ -1776,7 +1787,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col 1
                                                     - the profile image of the parent rounded
                                                 - col 2  :
-                                                    - the text format : "the parent {the full name of the parent} requested parenting for his/her son(s)/daughter(s) : {the full name of the son/daughter}, {the level of the son/daughter} {the section of the son/daughter if exists}"
+                                                    - the text format : "the parent {the full name of the parent} requested parenting for his/her son(s)/daughter(s) : 
+                                                    - col : for each son/daughter in the request :
+                                                        row :
+                                                          - {the full name of the son/daughter}, {the level of the son/daughter} {the section of the son/daughter if exists}"
                                                 - col 3 :
                                                     if the parent request was accepted : 
                                                         - a badge with the content : "Accepted"
@@ -1809,7 +1823,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - at the center of the row, the fullname of the parent 
                                                                     - row 3 :
                                                                         - at the center of the row, the phone number of the parent 
-                                                            - row 2 : 
+                                                            - row 2 : for each selected son/daughter in the request
                                                                 - col : 
                                                                     - row 1 : 
                                                                         - the label : "assign a student for to the son / daughter : {the fullname of the son/daughter}, {the level and the section if exists}"
@@ -1817,7 +1831,6 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - a select input which contains as options : 
                                                                             - "reject this son/daugther" which the default one 
                                                                             -  and the list of students of the teacher (created by teacher or added throught a student request) that have the same level, section (if exist), gender as the son / daugther
-
                                                     - row 3 : the footer of the popup
                                                         - col 1 : 
                                                             - a button with the name "Cancel"
@@ -1827,9 +1840,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - clicking on the close icons, closes the popup form
                                                 - clicking on the "Cancel" button, closes the popup form
                                                 - clicking on the "Accept" button : 
-                                                    if the teacher assigned at least the son/daughter to a student : 
-                                                        - assigns the son/daughter of the parent in the request to the selected student and assigns the parent as a parent 
-                                                        for the selected student
+                                                    if the teacher assigned at least one son/daughter to a student : 
+                                                        - assigns the son(s)/daughter(s) of the parent in the request to the selected student(s) and assigns the parent as a parent 
+                                                          for the selected student(s)
+                                                        ## STOPPED HERE
+                                                        - send a notification to parent making the request informing him about the assignment
                                                         - finally updates the card of this parent request by replacing the "Accept" and "Decline" buttons with the badge "Accepted"
                                                     otherwise :
                                                         - shows an error message : "You must assign the son/daughter to a student" in the same popup without closing it
@@ -1880,7 +1895,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - row 2 : 
                                     - col : 
                                         - row 1 :
-                                            - the profile image of the teacher rounded, in the right bottom corner of it a rounded circle that contains an edit icon 
+                                            - the profile image of the teacher rounded,in top of it in the right bottom corner of it a rounded circle that contains an edit icon 
                                         - row 2 :
                                             - col :
                                                 - row 1 : 
@@ -1898,7 +1913,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - row 1 : 
                                                     - the label : "Phone number"
                                                 - row 2 : 
-                                                    - a text input for the phone number of teacher, pre-filled with the current phone number of the teacher (accepts only integer character,min length=max length = 8,required)
+                                                    - a text input for the phone number of teacher, pre-filled with the current phone number of the teacher (accepts only integer character,min length = max length = 8,required)
                                         - row 5 :
                                             - col : 
                                                 - row 1 : 
@@ -2052,11 +2067,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - row 1 : 
                                         - a text input to search on the fullname of the teacher
                                     - row 2 : 
-                                        - a select input for the subjects, which contains as options all of the possible subjects that the student can study in his level and section or only in his level if the level of the student doesn't have sections according to the tunisian education system
+                                        - a select input for the subjects, which contains as options all of the possible subjects that the student can study in his level and section or only in his level if the student doesn't have a section 
                                             - note : make this select in a way that allows the student to select many subjects
-                                    - row 3 : 
-                                        - a "Filter" button 
-                            - row 2 : list of the first 30 teachers that only teaches the level and the section or only the level (if the level of the student doesn't have sections according to the tunisian education system) of the currently logged student, each teacher must be in a clickable card which contains : 
+                            - row 2 : list of the first 30 teachers that only teaches the level and the section or only the level (if the student doesn't have a section) of the currently logged student and they have subjects in them according to their prices data, each teacher must be in a clickable card which contains : 
                                 - row : 
                                     - col 1 : 
                                         - the profile image of the teacher
@@ -2066,7 +2079,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - col 3 : 
                                         - an "enroll" button 
                     Dynamics : 
-                        - clicking on the "filter" button update the update the list of teachers by loading the first 30 teachers that match the filter criteria
+                        - changing the value of the fullname text input or subject select input updates the list of teachers by replacing it with the first 30 teachers that match the text input and the select input values
+                            - the filter algo must be like this : bring the teacher that contains the in their fullname the value of the fullname text input and in they teach the subjects that are selected in the subject select input
                         - clicking on the "enroll" button of a teacher card item  opens up a popup form which contains : 
                             - UI : 
                                 - row 1 : the header of the popup 
@@ -2085,13 +2099,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - row 2 :
                                     - col : 
                                         - row 1 : 
-                                            - a select input for the subjects the student wants to enroll in, make this select in a way that allows the student to select many subjects, the options must be only the subjects that the teacher teaches in the level and the section or only the level (if the level of the logged student does have sections according to the tunisian education system) of the logged student
+                                            - a select input for the subjects the student wants to enroll in, make this select in a way that allows the student to select many subjects, the options must be only the subjects that the teacher teaches in the level and the section or only the level (if the level of the logged student does have sections according to the tunisian education system) of the logged student (required)
                                         - row 2 : 
                                             - an "enroll" button 
                             - Dynamics : 
-                                - clicking on the "enroll" button of the popup form, sends an enroll request to the teacher
+                                - clicking on the "enroll" button of the popup form, sends an enroll request notification to the teacher
                                   of the card and closes the popup form
-                        - reaching the bottom of the list, loads the next 30 teachers that match the filter criteria and appends them to the list at the bottom of it  
+                        - reaching the bottom of the list, loads the next 30 teachers that match the the full name text input and the subject select input and appends them to the teacher list at the bottom of it  
 
             - the subjects screen : 
                 - the title of the App Bar is : "Subjects"
