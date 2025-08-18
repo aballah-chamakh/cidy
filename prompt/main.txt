@@ -1871,6 +1871,25 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - sends a notification to the parent informing them that their request has been declined.
                                                     - then closes the popup form
                                                     - finally updates the card of this parent request by replacing the "Accept" and "Decline" buttons with the badge "Declined"
+                                
+                                - for the student changing his level or section which made him out of some groups notification:
+                                    - UI :
+                                        - col:
+                                            - row 1:
+                                                - col:
+                                                    - the profile image of the student 
+                                                - col:
+                                                    - the text format:
+                                                        "The student {student full name} changed his level and section (include the section if the new section exists) to {new level} {new section if exist}, which made him leave the following group(s):"
+                                                    - col:
+                                                        - for each group the student left:
+                                                            - row:
+                                                                - {group name} -- {group subject}
+                                            - row 2:
+                                                - at the most right: the datetime this notification was created at
+                                    - Dynamics:
+                                        - clicking on this notification card routes to the detail screen of the student.
+                                         
 
                     - Dynamics : 
                         - the number of unread notifications in the app title when the user opens the notifications screen : is the number of the new notifications that happened 
@@ -2151,7 +2170,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - row 3 : 
                                             - the header for the class batches list which contains the text "Class Batches"
                                         - row 4 : 
-                                            - the list of class batches of this subject with its header and date range picker which must be similar to the one in the student detail screen of the teacher 
+                                            - the list of class batches of this subject (the class batches of the student attached to this son, in his group of this subject) with its header and date range picker which must be similar to the one in the student detail screen of the teacher 
                                               profile with no ability to make any action on them
             - parents screen : 
                 - the title of the App Bar is : "Parent(s)"
@@ -2189,7 +2208,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - col 1 : 
                                                 - the profile image of the teacher rounded
                                             - col 2 :
-                                                - the following dynamic text : "the teacher {Teacher fullname} marked your attentence in a {Subject} class at  : {date of the attendance} {the time range of the attendence, example from 18h to 21h}."
+                                                - the following dynamic text : "the teacher {Teacher fullname} marked your attentence in a {Subject} class attended at : {date of the attendance} {the time range of the attendence, example from 18h to 21h}."
                                         - row 2 :
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
@@ -2234,20 +2253,23 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - Dynamics : 
                                     - the click on this item card routes to the detail screen of the subject
 
-                            - for the teacher accepting your enrollment request 
+                            - for the teacher accepting your enrollment request : 
                                 - UI : 
                                     - col : 
                                         - row 1 : 
                                             - col 1 : 
                                                 - the profile image of the teacher rounded
-                                            - col 2 : 
-                                                - the following dynamic text : the teacher {Teacher fullname} accepted your enrollment request for the subject(s) : {the names of the accepted subjects} and declined theses subjects : {the names the declined subjects}
+                                            - col 2 :
+                                                - if the teacher accepted all the subjects the student asked for :
+                                                    - the following dynamic text : "the teacher {Teacher fullname} accepted your enrollment request for all of the subjects you asked for."   
+                                                - if the teacher some and rejected some :
+                                                    - the following dynamic text : "the teacher {Teacher fullname} accepted your enrollment request for the subject(s) : {the names of the accepted subjects} and declined theses subjects : {the names the declined subjects}"
                                         - row 2 (the footer of the card) : 
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
                                     - the click on this item card routes to the Subjects screen 
 
-                            - for the teacher rejecting your enrollment request for the subject(s) you asked for :
+                            - for the teacher rejecting your enrollment request :
                                 - UI : 
                                     - col : 
                                         - row 1 : 
@@ -2337,6 +2359,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - in the most right of the row: the datetime that notification was created at
                                 - Dynamics:
                                     - the click on this item card routes to the Teachers screen
+                            
                         - Dynamics : 
                             - the number of unread notifications in the app title when the user opens the notifications screen : is the number of the new notifications that happened 
                               after the user last opened the notifications screen
@@ -2481,7 +2504,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - it removes the student from these groups  
                                                     - it sends a notification to the teachers of these groups informing them that the student {student fullname} was automatically removed from the {the level of the groups} {the section of the groups, include the section if it the groups have it} groups : {names of the groups with their subjects}, because he updated his level and section (include the section if the student has it) to  : {the new level and section of the student, include the section the student has it} 
                                                       updates his level and section (include the section if the student has it)
-                                      # STOP        - if the student has parents sends to them a notification which informs them that their son/ daughter was removed from {the level of the groups} {the section of the groups, include the section if groups have it} groups : {the names of the groups with their subjects} because he updated his level and section (include the section if the student has it) to : {the new level and section of the student, include the section the student has it}
+                                                - if the student has parents sends to them a notification which informs them that their son/ daughter was removed from {the level of the groups} {the section of the groups, include the section if groups have it} groups : {the names of the groups with their subjects} because he updated his level and section (include the section if the student has it) to : {the new level and section of the student, include the section the student has it}
                                                 - it updates the account info of the student with form data of the "Accout info" and closes the popup form.
                                             otherwise : 
                                                 it informs the user that the given password is incorrect in the popup without closing it 
@@ -2513,7 +2536,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - clicking on the "Cancel" button, close the popup form
                                 - clicking on the "Confirm & change" button , checks if the given password is correct , if it's correct it updates the password and closes the popup form, otherwise it informs the user that the given password is incorrect in the popup without closing it
 
-    - For the parent profile (THE WHOLE PROFILE IS CONFIRMED) : 
+    - For the parent profile : 
 
         - all of the screens of the teacher profile have an app bar which contains : 
             - in the most left a the tree line icons which opens the sidebar 
@@ -2568,7 +2591,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - col : 
                             - row 1 : a filter for the teacher list which contains
                                 col (represents the majority of the width of the row) : 
-                                    - a text input to search by the  fullname of the teacher (the filtering of the list must be on changing the value of this input)
+                                    - a text input to search by the  fullname of the teacher
                                 col : 
                                     - a square button which contains a filter icon 
                             - row 2 : 
@@ -2587,7 +2610,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - a "request parenting" button
 
                     - Dynamics : 
-                        - clicking on the filter square button opens up a popup form for advanced filtering which contains :
+                        - if the user reaches the bottom of the screen scrolling, loads the next 30 teachers that matches fullname of the text input and the and the selects of the filter popup and append them to the end of the list
+                        - if the user changes the value fullname text input of the teacher, replace the current list of teachers with the first 30 teachers that matches the value of fullname text and maintained values in the popup filter form
+                        - clicking on the filter square button opens up a filter popup form which contains :
                             - UI : 
                                 - col : 
                                     - row 1 : the header of the popup 
@@ -2598,19 +2623,24 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - row 2 : the content area of the popup
                                         - col : 
                                             - row 1 : 
-                                                - a select input for the level of the student (the options must be the list of all of the levels that the student can study in according to the tunisian education system)
+                                                - a select input to filter by the level that teacher teaches  : 
+                                                    - the options are all of the levels in the tunisian education system
+                                                    - the filter algo works like this : bring the teachers who teaches the selected level according to their prices data
                                             - row 2 : 
-                                                - a select input for the section of the student (the options must be the list of sections of the selected level that the student can study in according to the tunisian education system)
+                                                - a select input filter by the one of the sections of the selected level that the teacher teaches 
+                                                    - the options : the list of sections of the selected level , accoding to the tunisian education system
+                                                    - the filter algo works like this : bring the teachers who teaches the selected section of the selected level according to their prices data
                                                     - disable this select if either : 
-                                                        - the user didn't select a level yet 
+                                                        - the parent didn't select a level yet 
                                                         - the selected level doesn't have sections according to the tunisian education system
                                             - row 3 : 
-                                                - a select input for the subject (the options must be the list of subjects that are taught in the selected level and section or only in the selected level if it doesn't have sections according to the tunisian education system)
-                                                    - allowing the user to select multiple subjects
+                                                - a select input to filter by one of subjects of the selected section of the selected level or one of the subjects of the selected level if the selected level doesn't have sections according to tunisian education system
+                                                    - the options : the list of subjects of the selected section or  the list of subjects of the selected level if the selected level doesn't have sections, all that according to the tunisian education system
+                                                    - allow the parent to select multiple subjects
+                                                    - the filter algo works like this : bring the teachers who teaches the selected subjects of the selected section of the selected level or only of the selected level if the selected level doesn't have sections, according to their prices data
                                                     - disable this select if either : 
-                                                        - the user didn't select a level yet 
-                                                        - the selected level doesn't have sections according to the tunisian education system
-                                                        - the selected level has sections and the user didn't select a section yet
+                                                        - the parent didn't select a level yet 
+                                                        - the selected level has sections and the parent didn't select a section yet
                                     - row 3 : 
                                         - col 1 : 
                                             - a button with the name : "Reset ({the number of selected options})"     
@@ -2639,7 +2669,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - row 2 : the content area of the popup
                                         - col :
                                             - row 1 : 
-                                                - a select input to select a son that contains as an option list, the list of the sons of the parent (required,allow multi choice)
+                                                - a select input to select son(s) that contains as options, the list of the sons of the parent (required,allow multi choice)
                                     - row 3 : the footer of the popup 
                                         - col 1 : 
                                             - a "Cancel" button
@@ -2649,25 +2679,34 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - clicking on the "Cancel" button of the popup form closes the popup form without sending any parenting request
                                 - clicking on the "request parenting" button of the popup form sends a parenting request for the selected son/student to the teacher of the card,
                                   if the parent has already sent a parenting request for this teacher and son/student and the teacher still didn't respond back by accepting or declining
-                                  it informs the user that he has already sent a parenting request for this teacher and son/student in the popup without closing it 
-                        - if the user reaches the bottom of the screen scrolling, loads the next 30 teachers that matches fullname of the text input and the and the selects of the filter popup and append them to the end of the list
+                                  it informs the user that he has already sent a parenting request for this teacher and son/student in the same popup without closing it 
+                        
 
             - the sons screen :
                 - the title of the App Bar is : "Sons"
                 - the content of the screen : 
                     - UI : 
                         - col : 
-                            - row 1 :  
-                                - list of the sons of the parent and each son must be a clickable card which contains :
+                            - row 1 : 
+                                - col 1 : 
+                                    - a header with the name : "Son(s)"
+                                - col 2 : 
+                                    - a button with the name "Add a son"
+                            - row 2 :  
+                                - list of the sons of the parent and each son must in a card which contains :
                                     - row :
                                         - col 1 : 
                                             - the profile image of the son 
                                         - col 2 : 
                                             - the fullname of the son 
                                             - the level and section (include the section if the son has it) of the son 
-                            - a sticky button at the bottom with the name "add a son" that doesn't hide the last card of the son list
+                                        - col 3 : 
+                                            - row 1 : 
+                                                - a button with the name "detail"
+                                            - row 2 : include the edit button if this son wasn't attached to any student (through an accepted parenting request)
+                                                - a button with the name "edit"
                     - Dynamics : 
-                        - clicking on a son card routes to the son detail screen which contains : 
+                        - clicking on the "detail" son card routes to the son detail screen which contains : 
                             - the title of the App Bar is : "{fullname of the son}"
                             - the content of the screen : 
                                 - UI : 
@@ -2676,27 +2715,27 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - the student profile identity which contains : 
                                                 - col 
                                                     - row 1 : 
-                                                        - at the center of the row,the student profile image rounded 
+                                                        - at the center of the row,the profile image of the son/daughter rounded 
                                                     - row 2 :
-                                                        - at the center of the row,the student's fullname 
+                                                        - at the center of the row,the son's/daughter's fullname 
                                                     - row 3 : 
-                                                        - at the center of the row,the level and the section of the student
+                                                        - at the center of the row,the level and the section (include the section if he/she has it) of the son/daughter
                                         - row 2 : 
                                             - the subjects header which contains the text "Subjects" in the left
                                         - row 3 : 
                                             - col 1 : 
-                                                - in a kpi card the total paid amount in DT across all of the subjects of the son 
+                                                - in a kpi card the total paid amount in DT across all of the subjects of the son/daughter
                                             - col 2 : 
-                                                - in a kpi card the total non paid amount in DT across all of the subjects of the son  
+                                                - in a kpi card the total non paid amount in DT across all of the subjects of the son/daughter
                                         - row 4 :  
                                             - col : 
-                                                - the list of the subjects that the son study in his groups with his teachers and each subjects must be in a clickable card which contains 
+                                                - the list of the subjects that the son/daughter study in his/her groups with his/her teachers and each subjects must be in a clickable card which contains 
                                                     - row 1
                                                         - col 1 : 
                                                             - the default image of the subject rounded
                                                         - col 2 : 
                                                             - the name of subject
-                                                            - the week day and the time range of it's class session in the following fomat  : "{week day} - {start time} to {end time}"
+                                                            - the week day and the time range of the class of the group of this subject in the following fomat  : "{week day} - {start time} to {end time}"
                                                         - col 3 : 
                                                             - row 1 : 
                                                                 - the total paid amount on this subject 
@@ -2717,11 +2756,61 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - in a kpi card the total paid amount in DT in this subject 
                                                         - col 2 : 
                                                             - in a kpi card the total non paid amount in DT in this subject 
-                                                    - row 3 : 
-                                                        - the header for the class session batches list which contains the text "Class Session Batches"
                                                     - row 4 : 
-                                                        - the list of class batches of this subject with its date range picker which must be similar to the one in the student detail screen of the teacher 
+                                                        - the list of class batches of this subject (the class batches of the student attached to this son, in his group of this subject) with its header and date range picker which must be similar to the one in the student detail screen of the teacher 
                                                           profile with no ability to make any action on them
+
+                        - clicking on the "edit" button of a son card opens up a popup form which contains:
+                            - UI:
+                                - col:
+                                    - row 1: the header of the popup
+                                        - col:
+                                            - at the most left, the text: "Edit a son"
+                                        - col:
+                                            - at the most right, a close icon
+                                    - row 2: the content area of the popup
+                                        - col:
+                                            - row 1: in the middle of the row
+                                                - the profile image of the son rounded, and on top of it in the bottom right a small circle that contains the edit icon which conveys that you can upload a new profile image (not required)
+                                            - row 2:
+                                                - col:
+                                                    - row 1:
+                                                        - the label: "Full name"
+                                                    - row 2:
+                                                        - a text input for the fullname of the son, pre-filled with the current fullname of the son (required)
+                                            - row 3:
+                                                - col:
+                                                    - row 1:
+                                                        - the label: "Gender"
+                                                    - row 2:
+                                                        - two radio buttons, pre-selected with the current gender of the son (required):
+                                                            - "Male"
+                                                            - "Female"
+                                            - row 4:
+                                                - col:
+                                                    - row 1:
+                                                        - the label: "Level"
+                                                    - row 2:
+                                                        - a select input for the level of the son, pre-filled with the current level of the son, which contains as options the list of all of the levels according to the Tunisian education system (required)
+                                            - row 5:
+                                                - col:
+                                                    - row 1:
+                                                        - the label: "Section"
+                                                    - row 2:
+                                                        - a select input for the section of the son, pre-filled with the current section of the son (required if the selected level has sections according to the Tunisian education system)
+                                                        - notes:
+                                                            - disable it in the following cases:
+                                                                - if the parent didn't select a level yet
+                                                                - if the selected level doesn't have sections according to the Tunisian education system
+                                    - row 3: the footer of the popup
+                                        - col 1:
+                                            - a "Cancel" button
+                                        - col 2:
+                                            - a highlighted button with the name "edit"
+                            - Dynamics:
+                                - clicking on the close icon, closes the popup form
+                                - clicking on the "Cancel" button of the popup form closes the popup form without editing the son 
+                                - clicking on the "edit" button of the popup form edits the son's data with the new values, closes the popup form, and updates the son card in the list
 
                         - clicking on the "Add a son" button opens up a popup form : 
                             - UI : 
@@ -2733,6 +2822,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - at the most right, a close icon
                                     - row 2 : the content area of the popup
                                         - col :
+                                            - row 1 : in the middle of the row
+                                                - the default profile image of a son rounded and on top of it in the bottom right a small circle that contains the edit icon which conveys that you can upload your profile image (not required)
+                                            
                                             - row 1 : 
                                                 - col :
                                                     - row 1 : 
@@ -2745,7 +2837,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - row 1 : 
                                                         - the label : "Gender"
                                                     - row 2 :
-                                                        - two radio buttons :
+                                                        - two radio buttons : (required)
                                                             - "Male"
                                                             - "Female"
                                             - row 2 : 
@@ -2761,7 +2853,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - row 2 : 
                                                         - a select input for the section of the son which contains as options : the sections of the selected level according to the tunisian education system (required if the selected level has sections according to the tunisian education system)
                                                         - notes:
-                                                            - disable this select if the level doesn't have sections according to the tunisian education system 
+                                                            - disable it in the following case : 
+                                                                - if parent didn't select a level yet 
+                                                                - if the selected level doesn't have sections according to the tunisian education system 
                                     - row 3 : the footer of the popup 
                                         - col 1 : 
                                             - a "Cancel" button
@@ -2785,19 +2879,20 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col 1 : 
                                                     - a rounded red filled dollar icon
                                                 - col2 : 
-                                                    - the following dynamic text : you have to pay the teacher {Teacher fullname} {The non paid amount} since your son {Son name} reached 4 unpaid {Subject} classes  
+                                                    - the following dynamic text : you son/daughter {son/daughter name} have to pay the teacher {Teacher fullname} {The non paid amount} since he reached 4 unpaid {Subject} classes  
                                             - row 2 (the footer of the card) : 
                                                 - in the most right of the row : the datetime that notification was created at
                                     - Dynamics : 
                                         - the click on this item card routes to the Subject detail screen of the mentionned Son and Subject 
-                                - for the teacher marking the attendance of a student in a class of a subjectnotification : 
+                                
+                                - for the teacher marking the attendance of a student in a class of a subject notification : 
                                     - UI : 
                                         - col : 
                                             - row 1 : 
                                                 - col 1 : 
                                                     - the profile image of the teacher rounded
                                                 - col 2 : 
-                                                    - the following dynamic text : the teacher {Teacher fullname} marked for your son {son fullname} the attendance in his last attended {Subject}'s class(es)
+                                                    - the following dynamic text : the teacher {Teacher fullname} marked for your son {son fullname} the attendance in a {Subject} class attended at {date of the attendance} {the time range of the attendence, example from 18h to 21h}.
                                             - row 2 (the footer of the card) : 
                                                 - in the most right of the row : the datetime that notification was created at
                                     - Dynamics : 
@@ -2836,37 +2931,27 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col 1 :
                                                     - the profile image of the teacher rounded
                                                 - col 2 :
-                                                    - the following dynamic text : "the teacher {Teacher fullname} unmarked the payment of  {the number of classes unmarked} {Subject name}'s class(e) for your son {Son fullname}."
+                                                    - the following dynamic text : "the teacher {Teacher fullname} unmarked the payment of {the number of classes unmarked} {Subject name}'s class(e) for your son {Son fullname}."
                                             - row 2 :
                                                 - in the most right of the row : the datetime that notification was created at
                                     - Dynamics : 
                                         - the click on this item card routes to the Subject detail screen of the mentioned Son and Subject
 
-                                - for the teacher accepting the parenting request for the son(s) you asked for notification : 
+                                - for the teacher accepting the parenting request notification : 
                                     - UI : 
                                         - col : 
                                             - row 1 : 
                                                 - col 1 : 
                                                     - the profile image of the teacher rounded
                                                 - col 2 : 
-                                                    - the following dynamic text : "the teacher {Teacher fullname} accepted your parenting request for the son(s) : {son(s) fullname(s)}."
+                                                    - if the teacher accepeted the parenting request for all of the asked sons by the parent : 
+                                                        - the following dynamic text : "the teacher {Teacher fullname} accepted your parenting request for all of the asked son(s)."
+                                                    - if the teacher accepted somes and declined somes  : 
+                                                        - the following dynamic text : "the teacher {Teacher fullname} accepted your parenting request for the son(s) : {son(s) fullname(s)} and declined for the son(s) : {declined son(s) fullname(s)}."
                                             - row 2 (the footer of the card) : 
                                                 - in the most right of the row : the datetime that notification was created at
                                     - Dynamics : 
-                                        - the click on this item card routes to the sons screen 
-
-                                - for the teacher accepting the parenting request for some of the sons you asked for notification : 
-                                    - UI : 
-                                        - col : 
-                                            - row 1 : 
-                                                - col 1 : 
-                                                    - the profile image of the teacher rounded
-                                                - col 2 : 
-                                                    - the following dynamic text : "the teacher {Teacher fullname} accepted your parenting request only for the son(s) : {son(s) fullname(s)} ."
-                                            - row 2 (the footer of the card) : 
-                                                - in the most right of the row : the datetime that notification was created at
-                                    - Dynamics : 
-                                        - the click on this item card routes to the sons screen                                 
+                                        - the click on this item card routes to the sons screen                               
 
                                 - for the teacher rejecting the parenting request notification : 
                                     - UI : 
@@ -2892,7 +2977,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - row 2 : 
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
-                                    - the click on this item card routes the detail screen of the subject  
+                                    - the click on this item card routes the detail screen of the subject of the mentioned son 
 
                             - for the teacher removed your son from the classes of a subject notification
                                 - UI : 
@@ -2914,14 +2999,68 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - col 1 : 
                                                 - the profile image of the teacher rounded
                                             - col 2 : 
-                                                - the following dynamic text : "the teacher changed for your son the schedule of the {Subject name}'s class to : {week day} from {start time of the class} to {end time of the class} {only this week or permanently}."
+                                                - the following dynamic text : "the teacher changed for your son {Son fullname} the schedule of the {Subject name}'s class to : {week day} from {start time of the class} to {end time of the class} {only this week or permanently}."
                                         - row 2 : 
                                             - in the most right of the row : the datetime that notification was created at
                                 - Dynamics : 
                                     - the click on this item card routes to the detail screen of the subject 
 
-                    - Dynamics : 
-                        - the number of unread notifications in the app title when the user opens the notifications screen : is the number of the new notifications that happened 
+                            - for the teacher ending the relationship with your son/daughter notification:
+                                - UI:
+                                    - col:
+                                        - row 1:
+                                            - col 1:
+                                                - the profile image of the teacher rounded
+                                            - col 2:
+                                                - if the parent still has a son/daughter attached to a student of this teacher other than the one that the teacher ended the relationship with:
+                                                    - the following dynamic text: "the teacher {Teacher fullname} ended the relationship with your son/daughter {Son/Daughter fullname}."
+                                                - otherwise:
+                                                    - the following dynamic text: "the teacher {Teacher fullname} ended the relationship with your son/daughter {Son/Daughter fullname} and with you."
+                                        - row 2:
+                                            - in the most right of the row: the datetime that notification was created at
+                                - Dynamics:
+                                    - the click on this item card routes to the Sons screen
+
+                            - for the teacher changing the group of your son's subject notification:
+                                - UI:
+                                    - col:
+                                        - row 1:
+                                            - col 1:
+                                                - the profile image of the teacher rounded
+                                            - col 2:
+                                                - the following dynamic text: "the teacher {Teacher fullname} changed the group of your son/daughter {Son fullname} for the {Subject name} subject."
+                                        - row 2:
+                                            - in the most right of the row: the datetime that notification was created at
+                                - Dynamics:
+                                    - the click on this item card routes to the Subject detail screen of the mentioned Son and Subject
+
+                            - for the teacher deleting the group of your son's subject notification:
+                                - UI:
+                                    - col:
+                                        - row 1:
+                                            - col 1:
+                                                - the profile image of the teacher rounded
+                                            - col 2:
+                                                - the following dynamic text: "the teacher {Teacher fullname} deleted the group of the {Subject name} subject of your son/daughter {Son fullname}."
+                                        - row 2:
+                                            - in the most right of the row: the datetime that notification was created at
+                                - Dynamics:
+                                    - the click on this item card routes to the Subjects screen of the mentioned son
+                            
+                            - for the student attahched to the son/daughter of the parent changing his level or section which made him out some groups notification:
+                                - UI:
+                                    - col:
+                                        - row 1:
+                                            - col 1:
+                                                - the profile image of the student rounded
+                                            - col 2:
+                                                - the following dynamic text: "your son/daughter {Son fullname} changed his level and section (include the section if the new section exists) to {new level} {new section if exists}, which made him leave the group(s) of the following subject(s): {the list of subjects he/she left}."
+                                        - row 2:
+                                            - in the most right of the row: the datetime that notification was created at
+                                - Dynamics:
+                                    - the click on this item card routes to the Subjects screen of the mentioned son/daughter
+                    - Dynamics :
+                        - the number of unread notifications in the app title when the user opens the notifications screen : is the number of the new notifications that happened
                           after the user last opened the notifications screen
                         - the notification item card must be highlighted until the user clicks on it 
                         - when the user reaches the bottom scrolling ,load the next latest 30 notifications and append them to the list at the bottom of the list
@@ -2929,6 +3068,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - add the new notifications to the top of the list
                             - update the number of unread notifications in the App Bar title by adding to it the number of new notifications
                                 that happened during opening this screen
+
             - the Account screen : 
                 - the title of the App Bar is : "Account"
                 - the content of the screen :   
@@ -2941,7 +3081,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - row 2 : 
                                         - col : 
                                             - row 1 :
-                                                - the profile image of the parent rounded, in the right bottom corner of it a circle that contains an edit icon 
+                                                - the profile image of the parent rounded, in top of it in the right bottom corner of it a circle that contains an edit icon 
                                             - row 2 :
                                                 - col :
                                                     - row 1 : 

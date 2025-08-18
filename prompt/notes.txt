@@ -145,7 +145,9 @@ private classes, which will allow them to :
                     - the teacher ended the relationship with the student (in the case of teacher deleted a student from his account)
                     - in one notification the accepted and the declined subjects for an accepted student request 
                     - in one notification the accepted and the declined subjects for an accepted parent request
-
+                - for the parent and the teacher  : 
+                    - the student changed his level or section which made him out of some of his group, because his new level and section doesn't match the the level and the section 
+                      of his old groups
 
 
         - define in a json format  : 
