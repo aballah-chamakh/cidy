@@ -1889,7 +1889,20 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - at the most right: the datetime this notification was created at
                                     - Dynamics:
                                         - clicking on this notification card routes to the detail screen of the student.
-                                         
+
+                                    - for the student left a group of a subject notification:
+                                        - UI:
+                                            - col:
+                                                - row 1:
+                                                    - col:
+                                                        - the profile image of the student
+                                                    - col:
+                                                        - the text format:
+                                                            "The student {the level of the student} {the section of the student, include it the student has it} {student full name} left the group {group name} of the subject {subject name}."
+                                                - row 2:
+                                                    - at the most right: the datetime this notification was created at
+                                        - Dynamics:
+                                            - clicking on this notification card routes to the detail screen of the student.
 
                     - Dynamics : 
                         - the number of unread notifications in the app title when the user opens the notifications screen : is the number of the new notifications that happened 
@@ -2119,11 +2132,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - col : 
                                         - row 1 : 
                                             - a select input for the subjects the student wants to enroll in, make this select in a way that allows the student to select many subjects, the options must be only the subjects that the teacher teaches in the level and the section or only the level (if the level of the logged student does have sections according to the tunisian education system) of the logged student (required)
+                                                note : don't include in the option the subject that the student is already studying with this teacher
                                         - row 2 : 
                                             - an "enroll" button 
                             - Dynamics : 
-                                - clicking on the "enroll" button of the popup form, sends an enroll request notification to the teacher
-                                  of the card and closes the popup form
+                                - clicking on the "enroll" button of the popup form sends an enroll request notification to the teacher
+                                  of the card then closes the popup form
                         - reaching the bottom of the list, loads the next 30 teachers that match the the full name text input and the subject select input and appends them to the teacher list at the bottom of it  
 
             - the subjects screen : 
@@ -2172,6 +2186,18 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - row 4 : 
                                             - the list of class batches of this subject (the class batches of the student attached to this son, in his group of this subject) with its header and date range picker which must be similar to the one in the student detail screen of the teacher 
                                               profile with no ability to make any action on them
+                                        - row 5 : 
+                                            - a button with the name "Leave the subject group"
+                                - Dynamics :
+                                    - clicking on the "Leave the subject group" button  : 
+                                        - close opens a confirmation popup with the text "Are you sure you want to leave this subject group?"
+                                          and two buttons : 
+                                            - "No" which closes the dialog
+                                            - "Yes" which : 
+                                                - remove the student from the group of this subject 
+                                                - send a notification to the teacher of this subject informing him that the student left the group of this subject
+                                                - if the student has parents, send a notification to them informing them the their son/daughter left the group of this subject
+
             - parents screen : 
                 - the title of the App Bar is : "Parent(s)"
                 - the content of the screen :  
@@ -3047,7 +3073,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - Dynamics:
                                     - the click on this item card routes to the Subjects screen of the mentioned son
                             
-                            - for the student attahched to the son/daughter of the parent changing his level or section which made him out some groups notification:
+                            - for the student attahched to the son/daughter of the parent changing his level or section which made him out some groups notification :
                                 - UI:
                                     - col:
                                         - row 1:
@@ -3055,6 +3081,19 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - the profile image of the student rounded
                                             - col 2:
                                                 - the following dynamic text: "your son/daughter {Son fullname} changed his level and section (include the section if the new section exists) to {new level} {new section if exists}, which made him leave the group(s) of the following subject(s): {the list of subjects he/she left}."
+                                        - row 2:
+                                            - in the most right of the row: the datetime that notification was created at
+                                - Dynamics:
+                                    - the click on this item card routes to the Subjects screen of the mentioned son/daughter
+
+                            - for the son/daughter leaving the group of a subject notification:
+                                - UI:
+                                    - col:
+                                        - row 1:
+                                            - col 1:
+                                                - the profile image of the son/daughter rounded
+                                            - col 2:
+                                                - the following dynamic text: "Your son/daughter {Son/Daughter fullname} left the group of the {Subject name} subject."
                                         - row 2:
                                             - in the most right of the row: the datetime that notification was created at
                                 - Dynamics:
@@ -3184,17 +3223,480 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - clicking on the "Cancel" button, close the popup form
                                 - clicking on the "Confirm & change" button , checks if the given password is correct , if it's correct it updates the password and closes the popup form, otherwise it informs the user that the given password is incorrect in the popup without closing it
 
+the tunisian education system to use,which includes levels from the 1st year of the primary school to the 4th year of the secondary : 
+{
+    "Première année primaire" : {
+        "subjects" : [
+            "Éveil scientifique",
+            "Mathématiques",
+            "Arabe",
+            "Lecture",
+            "Dessin",
+            "Musique",
+            "Éducation physique",
+            "Éducation technologique",
+            "Éducation islamique",
+            "Sport"
+        ]
+    },
+    "Deuxième année primaire" : {
+        "subjects" : [
+            "Éveil scientifique",
+            "Mathématiques",
+            "Arabe",
+            "Lecture",
+            "Dessin",
+            "Musique",
+            "Éducation physique",
+            "Éducation technologique",
+            "Éducation islamique",
+            "Sport"
+        ]
+    },
+    "Troisième année primaire" : {
+        "subjects" : [
+            "Éveil scientifique",
+            "Mathématiques",
+            "Arabe",
+            "Français",
+            "Dessin",
+            "Musique",
+            "Éducation technologique",
+            "Éducation infomatique",
+            "Éducation physique",
+            "Éducation islamique",
+            "Lecture",
+            "Sport"
+        ]
+    },
+    "Quatrième année primaire" : {
+        "subjects" : [
+            "Éveil scientifique",
+            "Mathématiques",
+            "Arabe",
+            "Français",
+            "Dessin",
+            "Musique",
+            "Éducation technologique",
+            "Éducation infomatique",
+            "Éducation physique",
+            "Éducation islamique",
+            "Lecture",
+            "Sport"
+        ]
+    },
+    "Cinquième année primaire" : {
+        "subjects" :  [
+            "Éveil scientifique",
+            "Mathématiques",
+            "Arabe",
+            "Français",
+            "Dessin",
+            "Musique",
+            "Éducation technologique",
+            "Éducation infomatique",
+            "Éducation physique",
+            "Histoire et géographie",
+            "Éducation civique",
+            "Éducation islamique",
+            "Sport"
+        ]
+    },
+    "Sixième année primaire" : {
+        "subjects" : [
+            "Anglais",
+            "Éducation infomatique",
+            "Éducation technologique",
+            "Éducation physique",
+            "Éducation islamique",
+            "Histoire et géographie",
+            "Éducation civique",
+            "Mathématiques",
+            "Éveil scientifique",
+            "Français",
+            "Arabe",
+            "Sport"
+        ]
+    },
+    "Septième année de base" : {
+        "subjects" : [
+            "Arabe",
+            "Mathématiques",
+            "Sciences de la vie et de la Terre",
+            "Physique",
+            "Histoire et géographie",
+            "Éducation islamique",
+            "Éducation technologique",
+            "Anglais",
+            "Français"
+        ]
+    },
+    "Huitième année de base" : {
+        "subjects" : [
+            "Arabe",
+            "Mathématiques",
+            "Sciences de la vie et de la Terre",
+            "Physique",
+            "Histoire et géographie",
+            "Éducation islamique",
+            "Éducation technologique",
+            "Anglais",
+            "Français"
+        ]
+    },
+    "Neuvième année de base" : {
+        "subjects" : [
+            "Arabe",
+            "Mathématiques",
+            "Sciences de la vie et de la Terre",
+            "Physique",
+            "Histoire et géographie",
+            "Éducation islamique",
+            "Éducation technologique",
+            "Anglais",
+            "Français"
+        ]
+    },
+    "Première année secondaire" : {
+        "sections" : {
+            "Commun" : {
+                "subjects" : [
+                    "Arabe",
+                    "Histoire et géographie",
+                    "La pensée islamique",
+                    "Éducation civique",
+                    "Français",
+                    "Anglais",
+                    "Mathématiques",
+                    "Physique",
+                    "Sciences de la vie et de la Terre",
+                    "Technologie"
+                ]
+            },
+            "Sport" : {
+                "subjects" : [
+                    "Arabe",
+                    "Mathématiques",
+                    "Sciences biologiques"
+                ]
+            }
+
+        }
+    },
+    "Deuxième année secondaire" : {
+        "sections" : {
+            "Lettre" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "La pensée islamique",
+                    "Éducation civique",
+                    "Mathématiques",
+                    "Sciences de la vie et de la Terre"
+                ]
+            },
+            "Science" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "Éducation civique",
+                    "La pensée islamique",
+                    "Mathématiques",
+                    "Physique",
+                    "Sciences de la vie et de la Terre",
+                    "Technologie",
+                    "Informatique"
+                ]
+            },
+            "Economie" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "Éducation civique",
+                    "La pensée islamique",
+                    "Mathématiques",
+                    "Gestion",
+                    "Economie",
+                    "Informatique"
+                ]
+            },
+           "Informatique" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "Éducation civique",
+                    "La pensée islamique",
+                    "Mathématiques",
+                    "Physique",
+                    "Technologie",
+                    "Informatique"
+                ]
+            },
+            "Sport" : {
+                "subjects" : [
+                    "Arabe",
+                    "Mathématiques",
+                    "Sciences biologiques"
+                ]
+            }
+        }
+    },
+    "Troisième année secondaire" : {
+        "sections" : {
+            "Lettre" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "Éducation civique",
+                    "La pensée islamique",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Informatique",
+                    "Sciences de la vie et de la Terre",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+            "Economie" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Gestion",
+                    "Economie",
+                    "Informatique",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+            "Mathématiques" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "La pensée islamique",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Sciences de la vie et de la Terre",
+                    "Physique",
+                    "Informatique",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+            "Science experimentale" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "La pensée islamique",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Sciences de la vie et de la Terre",
+                    "Physique",
+                    "Informatique",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+           "Technique" : {
+               "subjects" : [
+                   "Arabe",
+                   "Français",
+                   "Anglais",
+                   "Histoire et géographie",
+                   "Philosophie",
+                   "Mathématiques",
+                   "Physique",
+                   "Mécanique",
+                   "Electrique",
+                   "Informatique"
+               ]
+           },
+           "Informatique" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Physique",
+                    "Algorithmique et Programmation",
+                    "Technologies de l'information et de la communication",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+            "Sport" : {
+                "subjects" : [
+                    "Arabe",
+                    "Mathématiques",
+                    "Sciences biologiques"
+                ]
+            }
+        }
+    },
+    "Quatrième année secondaire" : {
+        "sections" : {
+            "Lettre" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "La pensée islamique",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Informatique",
+                    "Sciences de la vie et de la Terre",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+            "Economie" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Economie",
+                    "Gestion",
+                    "Informatique",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+            "Mathématiques" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Physique",
+                    "Sciences de la vie et de la Terre",
+                    "Informatique",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+            "Science experimentale" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Histoire et géographie",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Physique",
+                    "Sciences de la vie et de la Terre",
+                    "Informatique",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+           "Technique" : { 
+               "subjects" : [
+                   "Arabe",
+                   "Français",
+                   "Anglais",
+                   "Philosophie",
+                   "Mathématiques",
+                   "Physique",
+                   "Mécanique",
+                   "Electrique",
+                   "Informatique"
+               ]
+           },
+           "Informatique" : {
+                "subjects" : [
+                    "Arabe",
+                    "Français",
+                    "Anglais",
+                    "Philosophie",
+                    "Mathématiques",
+                    "Physique",
+                    "Algorithmique et Programmation",
+                    "Technologies de l'information et de la communication",
+                    "Italien",
+                    "Allemand",
+                    "Espagnol",
+                    "Russe",
+                    "Chinois"
+                ]
+            },
+            "Sport" : {
+                "subjects" : [
+                    "Arabe",
+                    "Mathématiques",
+                    "Sciences biologiques"
+                ]
+            }
+        }
+    }
+}
+
+
+
 tech requirements 
-    - the mobile app must be built with kotlin multiplatform mobile (KMM)
-    - the backend with Django rest framework (DRF) and the database with postgresql
-    - the app must be responsive and support both light and dark themes
+    - the mobile app must be built using Flutter 
+    - the backend with Django and Django rest framework (DRF) 
+    - the Authorization with JWT (JSON Web Tokens)
+    - the database sqlite3 for dev and postgresql for production
 
 UI / UX notes :
-    - the app must be responsive and support both light and dark themes
     - the app must be user friendly and easy to use
     - the app must have a modern design and follow the latest design trends
     - the app must have a consistent design across all screens
     - the app must have a good performance and be fast
     - the app must have a good user experience and be easy to navigate 
-    - You are free to change the UI design of the screens as you like, as long as you keep all the stated content and functionalities and don't add new ones.                        - row 1 : 
+    - You are free to change the UI design of the app as you like, as long as you keep all the stated content and functionalities of the app without adding new ones.                        - row 1 : 
                             
+software design notes : 
+    - design the app like a FANG engineering team will do it 
+    - achieve realtime notification through polling the notification api endpoint(s) periodically
