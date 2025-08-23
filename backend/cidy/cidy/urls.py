@@ -17,8 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from account import urls as account_urls
+from student import urls as student_urls
+from teacher import urls as teacher_urls
+from parent import urls as parent_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(account_urls)),
+    path('api/student/', include(student_urls)),
+    path('api/teacher/', include(teacher_urls)),
+    path('api/parent/', include(parent_urls)),
 ]

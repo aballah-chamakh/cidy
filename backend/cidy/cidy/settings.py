@@ -39,9 +39,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'account',  # Custom user app 
     'corsheaders',
-    'rest_framework'
+    'rest_framework',
+    'common',
+    'account',
+    'student',
+    'parent',
+    'teacher'
 ]
 
 AUTH_USER_MODEL = 'account.User'
@@ -104,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    }
 ]
 
 

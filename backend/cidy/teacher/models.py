@@ -4,7 +4,7 @@ from student.models import Student
 from common.models import Level, Section,Subject
 
 class Teacher(models.Model):
-    image = models.ImageField(upload_to='teacher_images/', null=True, blank=True)
+    image = models.ImageField(default='defaults/teacher.png',upload_to='teacher_images/')
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     fullname = models.CharField(max_length=255)
     gender = models.CharField(max_length=10, choices=(('M', 'Male'), ('F', 'Female')), default='M')
@@ -20,7 +20,7 @@ class Group(models.Model):
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
     section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True,blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    week_days = models.CharField(
+    week_day = models.CharField(
         max_length=50,
         choices=[
             ('Monday', 'Monday'),
@@ -33,8 +33,21 @@ class Group(models.Model):
         ],
         default='Monday'
     )
-    time_range = models.CharField(max_length=50)
-    students = models.ManyToManyField(Student,through="Enrollment",related_name="groups",null=True, blank=True)
+    start_time_range = models.DecimalField(max_digits=4, decimal_places=2) # format : HH:MM
+    end_time_range = models.DecimalField(max_digits=4, decimal_places=2) # format : HH:MM
+    temporary_week_day = models.CharField(max_length=50, choices=[
+        ('Monday', 'Monday'),
+        ('Tuesday', 'Tuesday'),
+        ('Wednesday', 'Wednesday'),
+        ('Thursday', 'Thursday'),
+        ('Friday', 'Friday'),
+        ('Saturday', 'Saturday'),
+        ('Sunday', 'Sunday'),
+    ], null=True)
+    temporary_start_time_range = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True) # format : HH:MM
+    temporary_end_time_range = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True) # format : HH:MM
+    clear_temporary_schedule_at = models.DateTimeField(null=True, blank=True)
+    students = models.ManyToManyField(Student,through="Enrollment",related_name="groups")
 
 
     def __str__(self):
@@ -43,7 +56,7 @@ class Group(models.Model):
 class Enrollment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
-    enrollment_date = models.DateField(auto_now_add=True)
+    date = models.DateField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.student.fullname} enrolled in {self.group.name}"
@@ -78,7 +91,7 @@ class ClassBatch(models.Model):
 class Class(models.Model):
     batch = models.ForeignKey(ClassBatch, on_delete=models.CASCADE)
     status = models.CharField(
-        max_length=20,
+        max_length=50,
         choices=(
             ('future', 'Future'),
             ('attended_and_paid', 'Attended & paid'),     
@@ -105,11 +118,11 @@ class TeacherSubject(models.Model):
 
 class TeacherNotification(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='teacher_notifications/', null=True, blank=True)
+    image = models.ImageField(default='defaults/due_payment_notification.png')
     message = models.TextField()
     meta_data = models.JSONField(null=True, blank=True)
-    type_ = models.CharField(max_length=20, choices=[
-        ('payment', 'Payment'),
+    type = models.CharField(max_length=50, choices=[
+        ('due_payment', 'Due payment'),
         ('student', 'Student'),
         ('parent', 'Parent'),
     ])
