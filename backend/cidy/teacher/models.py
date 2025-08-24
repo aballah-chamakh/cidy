@@ -53,7 +53,7 @@ class Group(models.Model):
 
     def __str__(self):
         return f"{self.subject.name} group : {self.name}"
-
+    
 class Enrollment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
@@ -98,7 +98,8 @@ class Class(models.Model):
             ('attended_and_paid', 'Attended & paid'),     
             ('attended_and_the_payment_not_due', 'Attended & the payment not due'), 
             ('attended_and_the_payment_due', 'Attended & the payment due')
-        )
+        ),
+        default='future'
     )
     last_status_update = models.DateTimeField(auto_now=True)
 

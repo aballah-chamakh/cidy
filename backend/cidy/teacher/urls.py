@@ -24,5 +24,9 @@ urlpatterns = [
     path('groups/<int:group_id>/unmark_attendance/', views.unmark_attendance, name='unmark_attendance'),
     path('groups/<int:group_id>/mark_payment/', views.mark_payment, name='mark_payment'),
     path('groups/<int:group_id>/unmark_payment/', views.unmark_payment, name='unmark_payment'),
+    
+    # Students list endpoint
+    path('groups/<int:group_id>/students/', views.get_group_students, name='group_students'),
+    path('groups/<int:group_id>/students/create/', views.create_group_student, name='create_group_student')
 ]
 

@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from ..models import Group
 from student.models import StudentNotification
 from parent.models import ParentNotification
-from datetime import datetime, timedelta
+from ..serializers import GroupCreateUpdateSerializer
 from django.db.models import Q
 
 
@@ -52,63 +52,29 @@ def update_group_schedule(request, group_id):
     Update a group's schedule - handles both permanent and temporary changes
     """
 
-    # check if the teacher has groups
     teacher = request.user.teacher
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
         return JsonResponse({'error': 'Group not found'}, status=404)
     
-    new_day = request.data.get('week_day')
-    new_start_time_range = float(request.data.get('start_time_range'))
-    new_end_time_range = float(request.data.get('end_time_range'))
-    change_type = request.data.get('change_type')  # 'permanent' or 'temporary'
-
-    if not new_day or not new_start_time_range or not new_end_time_range or not change_type:
-        return JsonResponse({'error': 'Missing required fields'}, status=400)
+    # pass the data to update the serializer
+    serializer = GroupCreateUpdateSerializer(group,data=request.data, context={'request': request}, partial=True)
     
-    if change_type not in ['permanent', 'temporary']:
-        return JsonResponse({'error': 'Invalid change type'}, status=400)
+    # Validate the data
+    if not serializer.is_valid():
+        return JsonResponse({'error': serializer.errors}, status=400)
     
-    # Check for schedule conflicts with other groups
-    # Exclude current group from check
-    conflicting_groups = Group.objects.filter(
-        teacher=teacher,
-        week_day=new_day
-    ).exclude(id=group.id).filter(
-        (Q(start_time_range__lte=new_start_time_range) & Q(end_time_range__gte=new_start_time_range)) |
-        (Q(start_time_range__lte=new_end_time_range) & Q(end_time_range__gte=new_end_time_range)) |
-        (Q(start_time_range__gte=new_start_time_range) & Q(end_time_range__lte=new_end_time_range))
-    )
-    
-    if conflicting_groups.exists():
-        return JsonResponse({
-            'error': 'Schedule conflict detected',
-        }, status=400)
-
-    # Update the group schedule
-    if change_type == 'permanent':
-        group.week_day = new_day
-        group.start_time_range = new_start_time_range
-        group.end_time_range = new_end_time_range
-        group.save()
-    else:
-        group.temporary_week_day = new_day
-        group.temporary_start_time_range = new_start_time_range
-        group.temporary_end_time_range = new_end_time_range
-        # Set the clear_temporary_schedule_at to the end of the current week
-        today = datetime.now()
-        end_of_week = today + timedelta(days=(6 - today.weekday()))
-        end_of_week = datetime(end_of_week.year, end_of_week.month, end_of_week.day, 23, 59, 59)
-        group.clear_temporary_schedule_at = end_of_week
-        group.save()
+    # update the group
+    group = serializer.save()
     
     # Send notifications to students and their parents
-    students = group.students.all()
-    
-    for student in students:
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    for student in group.students.all():
         # Create notification for each student
-        student_message = f"Le professeur {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} à : {group.week_day} de {group.start_time_range} à {group.end_time_range} {'seulement cette semaine' if change_type == 'temporary' else 'de façon permanente'}."
+        student_message = f"{student_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} à : {group.week_day} de {group.start_time_range} à {group.end_time_range} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
         StudentNotification.objects.create(
             student=student,
             image=teacher.image,
@@ -117,10 +83,10 @@ def update_group_schedule(request, group_id):
 
 
         # If student has parents, notify them too
+        child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
         for son in student.sons.all() :
             # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
-            child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
-            parent_message = f"Le professeur {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time_range} à {group.end_time_range} {'seulement cette semaine' if change_type == 'temporary' else 'de façon permanente'}."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time_range} à {group.end_time_range} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
