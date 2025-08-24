@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 
+
 urlpatterns = [
     path('notifications/get_unread_notifications_count/', views.get_unread_notifications_count, name='teacher_get_unread_notifications_count'),
     path('notifications/reset_notification_count/', views.reset_notification_count, name='teacher_reset_notification_count'),
@@ -9,5 +10,19 @@ urlpatterns = [
     # Week schedule endpoints
     path('week_schedule/', views.get_week_schedule, name='teacher_week_schedule'),
     path('update_group_schedule/<int:group_id>/', views.update_group_schedule, name='update_group_schedule'),
+    
+    # Groups endpoints
+    path('can_create_group/', views.can_create_group, name='can_create_group'),
+    path('groups/', views.get_groups, name='get_groups'),
+    path('groups/create/', views.create_group, name='create_group'),
+    path('groups/delete/', views.delete_groups, name='delete_groups'),
+    path('groups/<int:group_id>/', views.get_group_details, name='get_group_details'),
+    path('groups/<int:group_id>/edit/', views.edit_group, name='edit_group'),
+    path('groups/<int:group_id>/add_students/', views.add_students_to_group, name='add_students_to_group'),
+    path('groups/<int:group_id>/remove_students/', views.remove_students_from_group, name='remove_students_from_group'),
+    path('groups/<int:group_id>/mark_attendance/', views.mark_attendance, name='mark_attendance'),
+    path('groups/<int:group_id>/unmark_attendance/', views.unmark_attendance, name='unmark_attendance'),
+    path('groups/<int:group_id>/mark_payment/', views.mark_payment, name='mark_payment'),
+    path('groups/<int:group_id>/unmark_payment/', views.unmark_payment, name='unmark_payment'),
 ]
 
