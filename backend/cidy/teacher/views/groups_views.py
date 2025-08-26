@@ -1,5 +1,6 @@
 from datetime import datetime
 from django.http import JsonResponse
+from django.db import models
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from ..models import Group, TeacherSubject,Enrollment,ClassBatch,Class
@@ -490,28 +491,24 @@ def mark_attendance(request, group_id):
 
     for student in students:
         student_enrollment = Enrollment.objects.get(student=student, group=group)
-        last_batch = student_enrollment.classbatch_set.order_by('-id').first()
-        last_batch_classes = last_batch.class_set
-        # if all of the classes of the last class batch are either paid or attended 
-        if last_batch_classes.filter(status__in=['attended_and_paid', 'attended_and_the_payment_not_due', 'attended_and_the_payment_due']).count() == 4 :
-            # Create a new batch and mark the first class as attended
-            new_batch = ClassBatch.objects.create(enrollment=student_enrollment)
-            # create 4 classes for this new batch and mark the attendance of only the first one
-            for i in range(4):
-                if i == 0:
-                    Class.objects.create(batch=new_batch,
-                                         attendance_date=attendance_date,
-                                         attendance_start_time=attendance_start_time,
-                                         attendance_end_time=attendance_end_time,
-                                         status = 'attended_and_the_payment_not_due'
-                                        )
-                else : 
-                    Class.objects.create(batch=new_batch)
-        else:
-            # mark the attendance of the oldest class "future" class of the batch
-            last_batch_classes.filter(status = 'future').update(status='attended_and_the_payment_not_due')
-
-
+        if student_enrollment.attended_non_paid_classes >= 3 : 
+            # only when i have 3 non paid classes, mark them as attended_and_the_payment_due  because since then we will mark the next class as attended_and_the_payment_due
+            if student_enrollment.attended_non_paid_classes == 3 :
+                Class.objects.filter(enrollment=student_enrollment, status='attended_and_the_payment_not_due').update(status='attended_and_the_payment_due')
+            # create the next class as attended_and_the_payment_due
+            Class.objects.create(enrollement=student_enrollment,
+                                attendance_date=attendance_date,
+                                attendance_start_time=attendance_start_time,
+                                attendance_end_time=attendance_end_time,
+                                status = 'attended_and_the_payment_due')
+        else : 
+            Class.objects.create(enrollement=student_enrollment,
+                                attendance_date=attendance_date,
+                                attendance_start_time=attendance_start_time,
+                                attendance_end_time=attendance_end_time,
+                                status = 'attended_and_the_payment_not_due')
+        student_enrollment.attended_non_paid_classes += 1
+        student_enrollment.save()
         # Notify the student
         if student.user:
             student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans le cours de {group.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
@@ -538,6 +535,133 @@ def mark_attendance(request, group_id):
         'message': 'Attendance marked successfully'
     })
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def unmark_attendance(request, group_id):
+    """Unmark attendance for selected students in a group"""
+    teacher = request.user.teacher
 
+    try:
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+
+    student_ids = request.data.get('student_ids', [])
+    if not student_ids:
+        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+
+    num_classes_to_unmark = request.data.get('num_classes_to_unmark')
+    if not num_classes_to_unmark or not isinstance(num_classes_to_unmark, int) or num_classes_to_unmark < 1:
+        return JsonResponse({'error': 'Invalid number of classes to unmark'}, status=400)
+
+    students = Student.objects.filter(id__in=student_ids)
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    for student in students:
+        student_enrollment = Enrollment.objects.get(student=student, group=group)
+        attended_classes = Class.objects.filter(
+            enrollment=student_enrollment,
+            status__in=['attended_and_the_payment_not_due', 'attended_and_the_payment_due']
+        ).order_by('-id')[:num_classes_to_unmark]
+
+        for attended_class in attended_classes:
+            attended_class.delete()
+
+        attended_classes_count = len(attended_classes)
+        # Notify the student
+        if student.user:
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé votre présence pour {attended_classes_count} séances de {group.subject.name}."
+            StudentNotification.objects.create(
+                student=student,
+                image=teacher.image,
+                message=student_message,
+                meta_data={"group_id": group.id}
+            )
+
+        # Notify the parents
+        child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+        for son in student.sons.all():
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé la présence de {child_pronoun} {son.fullname} pour {attended_classes_count} séances de {group.subject.name}."
+            ParentNotification.objects.create(
+                parent=son.parent,
+                image=son.image,
+                message=parent_message,
+                meta_data={"son_id": son.id, "group_id": group.id}
+            )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Attendance unmarked successfully'
+    })
         
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_payment(request, group_id):
+    """Mark payment for selected students in a group"""
+    teacher = request.user.teacher
+
+    try:
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+
+    student_ids = request.data.get('student_ids', [])
+    if not student_ids:
+        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+
+    num_classes_to_mark = request.data.get('num_classes_to_mark')
+    payment_datetime = request.data.get('payment_datetime')
+
+    if not num_classes_to_mark or not isinstance(num_classes_to_mark, int) or num_classes_to_mark < 1:
+        return JsonResponse({'error': 'Invalid number of classes to mark as paid'}, status=400)
+
+    if not payment_datetime:
+        return JsonResponse({'error': 'Payment datetime is required'}, status=400)
+
+    payment_datetime = datetime.strptime(payment_datetime, "%H:%M:%S-%d/%m/%Y")
+
+    students = Student.objects.filter(id__in=student_ids)
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    for student in students:
+        student_enrollment = Enrollment.objects.get(student=student, group=group)
+        unpaid_classes = Class.objects.filter(
+            enrollment=student_enrollment,
+            status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due']
+        ).order_by('id')[:num_classes_to_mark]
+
+        # Mark the specified number of classes as paid
+        for unpaid_class in unpaid_classes:
+            unpaid_class.status = 'attended_and_paid'
+            unpaid_class.paid_at = payment_datetime
+            unpaid_class.save()
+
+        unpaid_classes_count = len(unpaid_classes)
+        # Notify the student
+        if student.user:
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.subject.name} comme payée(s)."
+            StudentNotification.objects.create(
+                student=student,
+                image=teacher.image,
+                message=student_message,
+                meta_data={"group_id": group.id}
+            )
+
+        # Notify the parents
+        child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+        for son in student.sons.all():
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
+            ParentNotification.objects.create(
+                parent=son.parent,
+                image=son.image,
+                message=parent_message,
+                meta_data={"son_id": son.id, "group_id": group.id}
+            )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Payment marked successfully'
+    })

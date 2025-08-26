@@ -62,7 +62,9 @@ class Enrollment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
-
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    unpaid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    attended_non_paid_classes = models.IntegerField(default=0)
     def __str__(self):
         return f"{self.student.fullname} enrolled in {self.group.name}"
     
@@ -71,34 +73,17 @@ class Enrollment(models.Model):
 
 class Finance(models.Model):
     enrollment = models.OneToOneField(Enrollment, on_delete=models.CASCADE)
-    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    unpaid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
 
     def __str__(self):
         return f"Finance record for {self.enrollment.student.fullname} in {self.enrollment.group.name}"
 
-class ClassBatch(models.Model):
-    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
-    status = models.CharField(
-        max_length=20,
-        choices=(
-            ('paid', 'Paid'),
-            ('not_due', 'Not Due'),
-            ('not_paid', 'Not Paid'),
-            ('partially_paid', 'Partially Paid'),
-        ),
-        default='not_due'
-    )
-
-    def __str__(self):
-        return f"Class Batch for {self.enrollment.student.fullname} in {self.enrollment.group.name} - {self.status}"
 
 class Class(models.Model):
-    batch = models.ForeignKey(ClassBatch, on_delete=models.CASCADE)
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
     status = models.CharField(
         max_length=50,
         choices=(
-            ('future', 'Future'),
             ('attended_and_paid', 'Attended & paid'),     
             ('attended_and_the_payment_not_due', 'Attended & the payment not due'), 
             ('attended_and_the_payment_due', 'Attended & the payment due')
