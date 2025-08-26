@@ -49,7 +49,7 @@ class Group(models.Model):
         ('Sunday', 'Sunday'),
     ], null=True)
     temporary_start_time = models.TimeField(null=True, blank=True)
-    temporary_end_time = models.TimeField(null=True, blank=True)
+    temporary_start_time = models.TimeField(null=True, blank=True)
     clear_temporary_schedule_at = models.DateTimeField(null=True, blank=True)
     students = models.ManyToManyField(Student,through="Enrollment",related_name="groups")
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
