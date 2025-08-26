@@ -1,12 +1,10 @@
+from datetime import datetime
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum, Q, F
-from ..models import Group, TeacherSubject, Enrollment, Finance, ClassBatch, Class
+from ..models import Group, TeacherSubject,Enrollment,ClassBatch,Class
 from student.models import Student, StudentNotification
 from parent.models import ParentNotification
-from common.models import Level, Section, Subject
-from datetime import datetime, timedelta
 from django.core.paginator import Paginator
 from ..serializers import (GroupCreateStudentSerializer,GroupStudentListSerializer,
                            GroupListSerializer, TeacherLevelsSectionsSubjectsHierarchySerializer,
@@ -71,17 +69,23 @@ def get_groups(request):
         groups = groups.filter(week_day=week_day)
     
     # Apply time range filter
-    start_time_range = request.GET.get('start_time_range')
-    end_time_range = request.GET.get('end_time_range')
-    if start_time_range and end_time_range and week_day:
-        start_time_float = float(start_time_range)
-        end_time_float = float(end_time_range)
+    start_time = request.GET.get('start_time')
+
+    if start_time :
+        start_time = datetime.strptime(start_time, "%H:%M").time()
         groups = groups.filter(
-            start_time_range__lte=start_time_float,
-            end_time_range__gte=end_time_float
+            start_time__gte=start_time
         )
 
-    
+    end_time = request.GET.get('end_time')
+
+    if end_time : 
+        end_time = datetime.strptime(end_time, "%H:%M").time()
+        groups = groups.filter(
+            end_time__lte=end_time
+        )
+
+
     # Apply sorting
     sort_by = request.GET.get('sort_by')
     if sort_by:
@@ -157,20 +161,22 @@ def delete_groups(request):
     for group in groups:
         students = group.students.all()
         for student in students:
-            # send a notification to the students of the groups
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a supprimé le groupe {group.subject.name} dans lequel vous étiez inscrit."
-            StudentNotification.objects.create(
-                student = student,
-                image = teacher.image,
-                message = student_message)
+            # send a notification to each student with an independant account
+            if student.user :
+                student_message = f"{student_teacher_pronoun} {teacher.fullname} a supprimé le groupe {group.subject.name} dans lequel vous étiez inscrit."
+                StudentNotification.objects.create(
+                    student = student,
+                    image = teacher.image,
+                    message = student_message)
             # send a notification to the parent of the sons attached to each student belongs to the group
+            child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.subject.name} dans lequel {child_pronoun} était inscrit."
             for son in student.sons : 
-                child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
-                parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.subject.name} dans lequel {child_pronoun} était inscrit."
                 ParentNotification.objects.create(
                     parent=son.parent,
                     image=son.image,
-                    message=parent_message
+                    message=parent_message,
+                    meta_data = {"son_id":son.id}
                 )
         group.delete()    
     
@@ -226,23 +232,24 @@ def edit_group(request, group_id):
 
         for student in group.students.all() :
             # Create notification for each student
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} à : {group.week_day} de {group.start_time_range} à {group.end_time_range} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} à : {group.week_day} de {group.start_time.strftime('%H:%M')} à {group.end_time.strftime('%H:%M')} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
-                message=student_message
+                message=student_message,
+                meta_data = {'group_id': group.id}
             )
-
 
             # If student has parents, notify them too
             child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
             for son in student.sons.all() :
                 # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
-                parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time_range} à {group.end_time_range} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
+                parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time.strftime('%H:%M')} à {group.end_time.strftime('%H:%M')} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
                 ParentNotification.objects.create(
                     parent=son.parent,
                     image=son.image,
                     message=parent_message,
+                    meta_data = {"son_id":son.id,'group_id':group.id}
                 )
     
     return JsonResponse({
@@ -314,16 +321,223 @@ def create_group_student(request, group_id):
 
     # Add the student to the group
     group.students.add(student)
-    enrollment_obj = Enrollment.objects.get(student=student,group=group)
-    # create the fiance 
-    Finance.objects.create(enrollment = enrollment_obj)
-    # create a class batch 
-    class_batch_obj = ClassBatch.objects.create(enrollment = enrollment_obj)
-    # create 4 classes for this batch 
-    for i in range(4) : 
-        Class.objects.create(batch=class_batch_obj, status='future')
+
     
     return JsonResponse({
         'success': True,
         'message': 'Student created and added to the group successfully'
     })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def add_students_to_group(request,group_id):
+
+    student_ids = request.data.get('student_ids',[])
+    teacher = request.user.teacher
+    try:
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+    
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    # add the students to the group 
+    students_qs = Student.objects.filter(id__in=student_ids)
+    for student in students_qs :
+        # Check if the student is already in a group with the same level, section, and subject
+        student_groups = Group.objects.filter(
+            students=student,
+            level=group.level,
+            section=group.section,
+            subject=group.subject
+        )
+        if student_groups.exists():
+            student_group = student_groups.first()
+            student_group.students.remove(student)
+            group.students.add(student)
+
+            for student in group.students.all() :
+                # Create notification for each student that has an independant account
+                if student.user : 
+                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a changé votre groupe de {group.subject.name}."
+                    StudentNotification.objects.create(
+                        student=student,
+                        image=teacher.image,
+                        message=student_message,
+                        meta_data = {'group_id': group.id}
+                    )
+                # If student has parents, notify them too
+                child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+                for son in student.sons.all() :
+                    # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
+                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a changé le groupe de {group.subject.name} de {child_pronoun} {son.fullname}."
+                    ParentNotification.objects.create(
+                        parent=son.parent,
+                        image=son.image,
+                        message=parent_message,
+                        meta_data = {"son_id":son.id,'group_id':group.id}
+                    )
+        else : 
+            group.students.add(student)
+            for student in group.students.all() :
+                # Create notification for each student that has an independant account
+                if student.user : 
+                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a ajouté vous à un groupe de {group.subject.name}."
+                    StudentNotification.objects.create(
+                        student=student,
+                        image=teacher.image,
+                        message=student_message,
+                        meta_data = {'group_id': group.id}
+                    )
+                # If student has parents, notify them too
+                child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+                for son in student.sons.all() :
+                    # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
+                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a ajouté {child_pronoun} {son.fullname} à un groupe de {group.subject.name}."
+                    ParentNotification.objects.create(
+                        parent=son.parent,
+                        image=son.image,
+                        message=parent_message,
+                        meta_data = {"son_id":son.id,'group_id':group.id}
+                    )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Students added to the group successfully'
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def remove_students_from_group(request, group_id):
+    """Remove students from a specific group"""
+    teacher = request.user.teacher
+
+    try:
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+
+    student_ids = request.data.get('student_ids', [])
+    if not student_ids:
+        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+
+    students_to_remove = group.students.filter(id__in=student_ids)
+    if not students_to_remove.exists():
+        return JsonResponse({'error': 'No matching students found in the group'}, status=404)
+
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    for student in students_to_remove:
+        # Notify the student if they have an independent account
+        if student.user:
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a retiré du groupe de {group.subject.name}."
+            StudentNotification.objects.create(
+                student=student,
+                image=teacher.image,
+                message=student_message
+            )
+
+        # Notify the parents of the student
+        child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+        for son in student.sons.all():
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a retiré {child_pronoun} {son.fullname} du groupe de {group.subject.name}."
+            ParentNotification.objects.create(
+                parent=son.parent,
+                image=son.image,
+                message=parent_message,
+                meta_data={"son_id": son.id}
+            )
+
+        # Remove the student from the group
+        group.students.remove(student)
+
+    return JsonResponse({
+        'success': True,
+        'message': f'{students_to_remove.count()} students removed from the group successfully'
+    })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def mark_attendance(request, group_id):
+    """Mark attendance for selected students in a group"""
+    teacher = request.user.teacher
+
+    try:
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+
+    student_ids = request.data.get('student_ids', [])
+    if not student_ids:
+        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+
+    attendance_date = request.data.get('attendance_date')
+    attendance_start_time = request.data.get('attendance_start_time')
+    attendance_end_time = request.data.get('attendance_end_time')
+
+    if not attendance_date or not attendance_start_time or not attendance_end_time:
+        return JsonResponse({'error': 'Date and time range are required for the "specify" option'}, status=400)
+
+    attendance_date = datetime.strptime(attendance_date, "%d/%m/%Y").date()
+    attendance_start_time = datetime.strptime(attendance_start_time, "%H:%M").time()
+    attendance_end_time = datetime.strptime(attendance_end_time, "%H:%M").time()
+
+    students = Student.objects.filter(id__in=student_ids)
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    for student in students:
+        student_enrollment = Enrollment.objects.get(student=student, group=group)
+        last_batch = student_enrollment.classbatch_set.order_by('-id').first()
+        last_batch_classes = last_batch.class_set
+        # if all of the classes of the last class batch are either paid or attended 
+        if last_batch_classes.filter(status__in=['attended_and_paid', 'attended_and_the_payment_not_due', 'attended_and_the_payment_due']).count() == 4 :
+            # Create a new batch and mark the first class as attended
+            new_batch = ClassBatch.objects.create(enrollment=student_enrollment)
+            # create 4 classes for this new batch and mark the attendance of only the first one
+            for i in range(4):
+                if i == 0:
+                    Class.objects.create(batch=new_batch,
+                                         attendance_date=attendance_date,
+                                         attendance_start_time=attendance_start_time,
+                                         attendance_end_time=attendance_end_time,
+                                         status = 'attended_and_the_payment_not_due'
+                                        )
+                else : 
+                    Class.objects.create(batch=new_batch)
+        else:
+            # mark the attendance of the oldest class "future" class of the batch
+            last_batch_classes.filter(status = 'future').update(status='attended_and_the_payment_not_due')
+
+
+        # Notify the student
+        if student.user:
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans le cours de {group.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+            StudentNotification.objects.create(
+                student=student,
+                image=teacher.image,
+                message=student_message,
+                meta_data={"group_id": group.id}
+            )
+
+        # Notify the parents
+        child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+        for son in student.sons.all():
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {child_pronoun} {son.fullname} comme présent(e) dans le cours de {group.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+            ParentNotification.objects.create(
+                parent=son.parent,
+                image=son.image,
+                message=parent_message,
+                meta_data={"son_id": son.id,"group_id": group.id}
+            )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Attendance marked successfully'
+    })
+
+
+        
+

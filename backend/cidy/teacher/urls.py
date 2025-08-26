@@ -3,8 +3,11 @@ from . import views
 
 
 urlpatterns = [
+    # Notifications endpoints
     path('notifications/get_unread_notifications_count/', views.get_unread_notifications_count, name='teacher_get_unread_notifications_count'),
     path('notifications/reset_notification_count/', views.reset_notification_count, name='teacher_reset_notification_count'),
+    
+    # Dasboard enpoints
     path('get_dashboard_data/', views.get_dashboard_data, name='teacher_get_dashboard_data'),
     
     # Week schedule endpoints
@@ -18,15 +21,10 @@ urlpatterns = [
     path('groups/delete/', views.delete_groups, name='delete_groups'),
     path('groups/<int:group_id>/', views.get_group_details, name='get_group_details'),
     path('groups/<int:group_id>/edit/', views.edit_group, name='edit_group'),
-    path('groups/<int:group_id>/add_students/', views.add_students_to_group, name='add_students_to_group'),
-    path('groups/<int:group_id>/remove_students/', views.remove_students_from_group, name='remove_students_from_group'),
-    path('groups/<int:group_id>/mark_attendance/', views.mark_attendance, name='mark_attendance'),
-    path('groups/<int:group_id>/unmark_attendance/', views.unmark_attendance, name='unmark_attendance'),
-    path('groups/<int:group_id>/mark_payment/', views.mark_payment, name='mark_payment'),
-    path('groups/<int:group_id>/unmark_payment/', views.unmark_payment, name='unmark_payment'),
     
     # Students list endpoint
     path('groups/<int:group_id>/students/', views.get_group_students, name='group_students'),
-    path('groups/<int:group_id>/students/create/', views.create_group_student, name='create_group_student')
+    path('groups/<int:group_id>/students/create/', views.create_group_student, name='create_group_student'),
+    path('groups/<int:group_id>/students/add/', views.add_students_to_group, name='add_students_to_group'),
 ]
 

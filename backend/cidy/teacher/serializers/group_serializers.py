@@ -31,13 +31,22 @@ class GroupStudentListSerializer(serializers.Serializer):
 class GroupDetailsSerializer(serializers.ModelSerializer):
     level = LevelSerializer(read_only=True)
     section = SectionSerializer(read_only=True)
-    subject = SubjectSerializer(read_only=True)
+    subject = SubjectSerializer(read_only=True)    
+    start_time = serializers.TimeField(
+        format="%H:%M", 
+        input_formats=["%H:%M", "%H:%M:%S"]
+    )
+    end_time = serializers.TimeField(
+        format="%H:%M", 
+        input_formats=["%H:%M", "%H:%M:%S"]
+    )
     students = serializers.SerializerMethodField()
+
     class Meta:
         model = Group
         fields = [
             'id', 'name', 'level', 'section', 'subject', 
-            'week_day', 'start_time_range', 'end_time_range',
+            'week_day', 'start_time', 'end_time',
             'total_paid', 'total_unpaid','students'
         ]
 
@@ -89,11 +98,19 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
     
 class GroupCreateUpdateSerializer(serializers.ModelSerializer):
     schedule_change_type = serializers.ChoiceField(choices=['permanent', 'temporary'], write_only=True, required=False)
+    start_time = serializers.TimeField(
+        format="%H:%M", 
+        input_formats=["%H:%M", "%H:%M:%S"]
+    )
+    end_time = serializers.TimeField(
+        format="%H:%M", 
+        input_formats=["%H:%M", "%H:%M:%S"]
+    )
     class Meta:
         model = Group
         fields = [
             'name', 'level', 'section', 'subject', 
-            'week_day', 'start_time_range', 'end_time_range'
+            'week_day', 'start_time', 'end_time'
         ]
 
     def validate(self, data):
@@ -131,16 +148,16 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         
         # check for schdule conflict 
         week_day = data.get('week_day')
-        start_time_range = data.get('start_time_range')
-        end_time_range = data.get('end_time_range')
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
         
         conflicting_groups = Group.objects.filter(
             teacher=teacher,
             week_day=week_day
         ).filter(
-            (Q(start_time_range__lte=start_time_range) & Q(end_time_range__gte=start_time_range)) |
-            (Q(start_time_range__lte=end_time_range) & Q(end_time_range__gte=end_time_range)) |
-            (Q(start_time_range__gte=start_time_range) & Q(end_time_range__lte=end_time_range))
+            (Q(start_time__lte=start_time) & Q(end_time__gte=start_time)) |
+            (Q(start_time__lte=end_time) & Q(end_time__gte=end_time)) |
+            (Q(start_time__gte=start_time) & Q(end_time__lte=end_time))
         )
         # in the case of the edit, exclude the group 
         if self.instance : 
@@ -155,8 +172,8 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         schedule_change_type = validate_data.get('schedule_change_type')
         if schedule_change_type == 'temporary':
             validate_data['temporary_week_day'] = validate_data['week_day']
-            validate_data['temporary_start_time_range'] = validate_data['start_time_range'] 
-            validate_data['temporary_end_time_range'] = validate_data['end_time_range']
+            validate_data['temporary_start_time'] = validate_data['start_time'] 
+            validate_data['temporary_end_time'] = validate_data['end_time']
             # Set the clear_temporary_schedule_at to the end of the current week
             today = datetime.now()
             end_of_week = today + timedelta(days=(6 - today.weekday()))
@@ -164,8 +181,8 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
             validate_data['clear_temporary_schedule_at'] = end_of_week
         elif schedule_change_type == 'permanent':
             validate_data['temporary_week_day'] = None 
-            validate_data['temporary_start_time_range'] = None
-            validate_data['temporary_end_time_range'] = None
+            validate_data['temporary_start_time'] = None
+            validate_data['temporary_end_time'] = None
             validate_data['clear_temporary_schedule_at'] = None 
 
         super().update(instance,validate_data)
@@ -176,7 +193,6 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class GroupCreateStudentSerializer(serializers.ModelSerializer):
-    
     class Meta : 
         model = Student
         fields = ['id', 'image', 'fullname','phone_number','gender','level','section']

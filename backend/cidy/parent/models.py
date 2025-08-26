@@ -32,6 +32,7 @@ class ParentNotification(models.Model):
     image = models.ImageField(default='defaults/due_payment_notification.png')
     message = models.TextField()
     is_read = models.BooleanField(default=False)
+    meta_data = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
