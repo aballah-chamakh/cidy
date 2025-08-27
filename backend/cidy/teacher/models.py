@@ -4,7 +4,6 @@ from student.models import Student
 from common.models import Level, Section,Subject
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
-from .models import Group, Enrollment
 
 class Teacher(models.Model):
     image = models.ImageField(default='defaults/teacher.png',upload_to='teacher_images/')
@@ -51,14 +50,14 @@ class Group(models.Model):
     temporary_start_time = models.TimeField(null=True, blank=True)
     temporary_start_time = models.TimeField(null=True, blank=True)
     clear_temporary_schedule_at = models.DateTimeField(null=True, blank=True)
-    students = models.ManyToManyField(Student,through="Enrollment",related_name="groups")
+    students = models.ManyToManyField(Student,through="GroupEnrollment",related_name="groups")
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_unpaid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return f"{self.subject.name} group : {self.name}"
     
-class Enrollment(models.Model):
+class GroupEnrollment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
@@ -73,7 +72,7 @@ class Enrollment(models.Model):
 
 
 class Class(models.Model):
-    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
+    group_enrollment = models.ForeignKey(GroupEnrollment, on_delete=models.CASCADE)
     status = models.CharField(
         max_length=50,
         choices=(
@@ -89,7 +88,7 @@ class Class(models.Model):
     paid_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"Class for {self.batch.enrollment.group.name} - {self.status}"
+        return f"Class for {self.group_enrollment.group.name} - {self.status}"
 
 
 class TeacherSubject(models.Model): 
