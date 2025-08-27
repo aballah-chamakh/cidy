@@ -6,4 +6,7 @@ from .groups_views import (
     create_group, delete_groups, 
     get_group_details, edit_group,get_group_students,
     create_group_student,add_students_to_group,
+    mark_attendance,unmark_attendance,
+    mark_payment,unmark_payment
+
 )

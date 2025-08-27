@@ -26,5 +26,9 @@ urlpatterns = [
     path('groups/<int:group_id>/students/', views.get_group_students, name='group_students'),
     path('groups/<int:group_id>/students/create/', views.create_group_student, name='create_group_student'),
     path('groups/<int:group_id>/students/add/', views.add_students_to_group, name='add_students_to_group'),
+    path('groups/<int:group_id>/students/mark_attendance/', views.mark_attendance, name='mark_attendance'),
+    path('groups/<int:group_id>/students/unmark_attendance/', views.unmark_attendance, name='unmark_attendance'),
+    path('groups/<int:group_id>/students/mark_payment/', views.mark_payment, name='mark_payment'),
+    path('groups/<int:group_id>/students/unmark_payment/', views.unmark_payment, name='unmark_payment'),
 ]
 

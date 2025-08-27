@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from rest_framework import serializers
 from django.db.models import Sum, Q
-from ..models import Group, Enrollment, Finance
+from ..models import Group
 from student.models import Student
 from common.serializers import LevelSerializer, SectionSerializer, SubjectSerializer
 from django.core.paginator import Paginator
@@ -65,19 +65,19 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
         if sort_by:
             if sort_by == 'paid_amount_desc':
                 students = students.annotate(
-                    paid=Sum('enrollment__finance__paid_amount', filter=Q(enrollment__group=group_obj))
+                    paid=Sum('enrollment__paid_amount', filter=Q(enrollment__group=group_obj))
                 ).order_by('-paid')
             elif sort_by == 'paid_amount_asc':
                 students = students.annotate(
-                    paid=Sum('enrollment__finance__paid_amount', filter=Q(enrollment__group=group_obj))
+                    paid=Sum('enrollment__paid_amount', filter=Q(enrollment__group=group_obj))
                 ).order_by('paid')
             elif sort_by == 'unpaid_amount_desc':
                 students = students.annotate(
-                    unpaid=Sum('enrollment__finance__unpaid_amount', filter=Q(enrollment__group=group_obj))
+                    unpaid=Sum('enrollment__unpaid_amount', filter=Q(enrollment__group=group_obj))
                 ).order_by('-unpaid')
             elif sort_by == 'unpaid_amount_asc':
                 students = students.annotate(
-                    unpaid=Sum('enrollment__finance__unpaid_amount', filter=Q(enrollment__group=group_obj))
+                    unpaid=Sum('enrollment__unpaid_amount', filter=Q(enrollment__group=group_obj))
                 ).order_by('unpaid')
 
         page = request.GET.get('page', 1)

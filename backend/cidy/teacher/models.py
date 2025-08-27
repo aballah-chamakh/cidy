@@ -4,7 +4,7 @@ from student.models import Student
 from common.models import Level, Section,Subject
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
-from .models import Group, Enrollment, Finance, ClassBatch, Class
+from .models import Group, Enrollment
 
 class Teacher(models.Model):
     image = models.ImageField(default='defaults/teacher.png',upload_to='teacher_images/')
@@ -71,13 +71,6 @@ class Enrollment(models.Model):
     class Meta:
         unique_together = ('student', 'group')
 
-class Finance(models.Model):
-    enrollment = models.OneToOneField(Enrollment, on_delete=models.CASCADE)
-
-
-    def __str__(self):
-        return f"Finance record for {self.enrollment.student.fullname} in {self.enrollment.group.name}"
-
 
 class Class(models.Model):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
@@ -104,7 +97,7 @@ class TeacherSubject(models.Model):
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
     section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True,blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    price_per_class = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return f"{self.teacher.fullname} teaches {self.subject.name}"
@@ -126,28 +119,3 @@ class TeacherNotification(models.Model):
     def __str__(self):
         return f"Notification for {self.teacher.fullname} - {self.created_at}"
     
-
-@receiver(m2m_changed, sender=Group.students.through)
-def create_enrollment_related_records(sender, instance, action, reverse, pk_set, **kwargs):
-    """
-    Trigger whenever students are added to a Group.
-    instance = the Group object
-    pk_set = set of student primary keys being added
-    """
-    if action == "post_add":  # run after .add() completes
-        for student_id in pk_set:
-            enrollment_obj, created = Enrollment.objects.get_or_create(
-                student_id=student_id,
-                group=instance
-            )
-
-            # Create finance record if not exists
-            Finance.objects.get_or_create(enrollment=enrollment_obj)
-
-            # Create class batch if not exists
-            class_batch_obj, created = ClassBatch.objects.get_or_create(enrollment=enrollment_obj)
-
-            # If it's a new batch, create 4 future classes
-            if created:
-                for i in range(4):
-                    Class.objects.create(batch=class_batch_obj, status='future')

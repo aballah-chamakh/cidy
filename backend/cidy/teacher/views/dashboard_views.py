@@ -70,7 +70,7 @@ def get_dashboard_data(request):
     for enrollment in enrollments:
         group = enrollment.group
         paid_classes_of_this_enrollment = Class.objects.filter(
-            batch__enrollment=enrollment,
+            enrollment=enrollment,
             status='attended_and_paid'
         )
         if start_date:
@@ -87,7 +87,7 @@ def get_dashboard_data(request):
                                                         subject=group.subject)
         class_price = teacher_subject.price
         dashboard['total_paid_amount'] += paid_classes_of_this_enrollment.count() * class_price
-        dashboard['total_unpaid_amount'] += enrollment.finance.unpaid_amount
+        dashboard['total_unpaid_amount'] += enrollment.unpaid_amount
 
         dashboard['levels'][group.level.name] = dashboard['levels'].get(group.level.name, {
             'total_paid_amount': 0,
@@ -95,7 +95,7 @@ def get_dashboard_data(request):
             'total_active_students': 0
         })
         dashboard['levels'][group.level.name]['total_paid_amount'] += paid_classes_of_this_enrollment.count() * class_price
-        dashboard['levels'][group.level.name]['total_unpaid_amount'] += enrollment.finance.unpaid_amount
+        dashboard['levels'][group.level.name]['total_unpaid_amount'] += enrollment.unpaid_amount
         dashboard['levels'][group.level.name]['total_active_students'] += 1
         if group.section :
             dashboard['levels'][group.level.name]['sections'] = dashboard['levels'][group.level.name].get('sections', {})
@@ -105,7 +105,7 @@ def get_dashboard_data(request):
                 'total_active_students': 0
             })
             dashboard['levels'][group.level.name]['sections'][group.section.name]['total_paid_amount'] += paid_classes_of_this_enrollment.count() * class_price
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['total_unpaid_amount'] += enrollment.finance.unpaid_amount
+            dashboard['levels'][group.level.name]['sections'][group.section.name]['total_unpaid_amount'] += enrollment.unpaid_amount
             dashboard['levels'][group.level.name]['sections'][group.section.name]['total_active_students'] += 1
 
             dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'] = dashboard['levels'][group.level.name]['sections'][group.section.name].get('subjects', {})
@@ -115,7 +115,7 @@ def get_dashboard_data(request):
                 'total_active_students': 0
             })
             dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_paid_amount'] += paid_classes_of_this_enrollment.count() * class_price
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_unpaid_amount'] += enrollment.finance.unpaid_amount
+            dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_unpaid_amount'] += enrollment.unpaid_amount
             dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_active_students'] += 1
 
     return JsonResponse({
