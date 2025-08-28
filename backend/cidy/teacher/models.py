@@ -16,6 +16,13 @@ class Teacher(models.Model):
         return f"{self.fullname} -- {self.user.email}"
     
 
+class TeacherEnrollment(models.Model):
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    unpaid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    date = models.DateField(auto_now_add=True)
+
 class Group(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)

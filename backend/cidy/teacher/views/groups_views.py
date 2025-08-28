@@ -171,7 +171,7 @@ def delete_groups(request):
                     message = student_message)
             # send a notification to the parent of the sons attached to each student belongs to the group
             child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.subject.name} dans lequel {child_pronoun} était inscrit."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.subject.name} dans lequel {child_pronoun} {son.fullname} était inscrit."
             for son in student.sons : 
                 ParentNotification.objects.create(
                     parent=son.parent,

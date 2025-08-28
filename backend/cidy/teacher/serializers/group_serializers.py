@@ -20,13 +20,13 @@ class GroupListSerializer(serializers.ModelSerializer):
 
 class GroupStudentListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
-    image_url = serializers.ImageField(source='image.url')
+    image = serializers.CharField(source='image.url')
     fullname = serializers.CharField()
     paid_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
     unpaid_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
     
     class Meta : 
-        fields = ['id','image_url','fullname','paid_amount','unpaid_amount']
+        fields = ['id','image','fullname','paid_amount','unpaid_amount']
 
 class GroupDetailsSerializer(serializers.ModelSerializer):
     level = LevelSerializer(read_only=True)
@@ -52,6 +52,7 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
 
     def get_students(self, group_obj):
         request = self.context['request']
+        teacher = request.user.teacher
         search_term = request.GET.get('search', '')
         sort_by = request.GET.get('sort_by', '')
 
@@ -65,19 +66,19 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
         if sort_by:
             if sort_by == 'paid_amount_desc':
                 students = students.annotate(
-                    paid=Sum('enrollment__paid_amount', filter=Q(enrollment__group=group_obj))
+                    paid=Sum('teacherenrollment_set__paid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
                 ).order_by('-paid')
             elif sort_by == 'paid_amount_asc':
                 students = students.annotate(
-                    paid=Sum('enrollment__paid_amount', filter=Q(enrollment__group=group_obj))
+                    paid=Sum('teacherenrollment_set__paid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
                 ).order_by('paid')
             elif sort_by == 'unpaid_amount_desc':
                 students = students.annotate(
-                    unpaid=Sum('enrollment__unpaid_amount', filter=Q(enrollment__group=group_obj))
+                    unpaid=Sum('teacherenrollment_set__unpaid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
                 ).order_by('-unpaid')
             elif sort_by == 'unpaid_amount_asc':
                 students = students.annotate(
-                    unpaid=Sum('enrollment__unpaid_amount', filter=Q(enrollment__group=group_obj))
+                    unpaid=Sum('teacherenrollment_set__unpaid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
                 ).order_by('unpaid')
 
         page = request.GET.get('page', 1)
@@ -193,6 +194,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class GroupCreateStudentSerializer(serializers.ModelSerializer):
+    image = serializers.CharField(source='image.url')
     class Meta : 
         model = Student
         fields = ['id', 'image', 'fullname','phone_number','gender','level','section']
