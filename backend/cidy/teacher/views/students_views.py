@@ -8,7 +8,10 @@ from django.core.paginator import Paginator
 from ..models import Group, GroupEnrollment, TeacherSubject,TeacherEnrollment,Class
 from student.models import Student, StudentNotification
 from parent.models import ParentNotification
-from ..serializers import TeacherLevelsSectionsSubjectsHierarchySerializer,TeacherStudentListSerializer,TeacherStudentCreateSerializer
+from ..serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
+                           TeacherStudentListSerializer,
+                           TeacherStudentCreateSerializer,
+                           TeacherStudentDetailSerializer,)
 from rest_framework import serializers
 
 @api_view(['GET'])
@@ -181,6 +184,25 @@ def delete_students(request):
         })
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_student_details(request, student_id):
+    """Get details of a specific student"""
+    teacher = request.user.teacher
+
+    try:
+        student = Student.objects.get(id=student_id)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not found'}, status=404)
+
+    # Check if the student is enrolled with the teacher
+    if not TeacherEnrollment.objects.filter(teacher=teacher, student=student).exists():
+        return JsonResponse({'error': 'You are not authorized to view this student\'s details'}, status=403)
+
+    serializer = TeacherStudentDetailSerializer(student, context={'request': request})
+    return JsonResponse({
+        'student_detail': serializer.data
+    })
 
 
 @api_view(['PUT'])
@@ -202,18 +224,30 @@ def mark_attendance_of_a_student(request,student_id,group_id):
     teacher = request.user.teacher
 
     try:
+        # to ensure the group belongs to the teacher
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
         return JsonResponse({'error': 'Group not found'}, status=404)
     try : 
+        # to ensure that the student exists
         student = Student.objects.get(id=student_id)
     except Student.DoesNotExist:
         return JsonResponse({'error': 'Student not enrolled in this group'}, status=404)
     
     try:
+        # to ensure that the student is enrolled in the group
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
     except GroupEnrollment.DoesNotExist:
         return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
+
+    # check that there is not class that has the same attendance date
+    existing_classes_with_the_same_attendance_date = student_group_enrollment.class_set.filter(attendance_date=attendance_date)
+    if existing_classes_with_the_same_attendance_date.exists():
+        existing_class = existing_classes_with_the_same_attendance_date.first()
+        if existing_class.status == 'absent':
+            existing_class.delete()
+        else : 
+            return JsonResponse({'error': 'Attendance for this date has already been marked'}, status=400)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
 
@@ -264,3 +298,406 @@ def mark_attendance_of_a_student(request,student_id,group_id):
         'success': True,
         'message': 'Attendance marked successfully'
     })
+
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def unmark_attendance_of_a_student(request, group_id, student_id):
+
+    """Unmark attendance for a students in a group"""
+
+    num_classes_to_unmark = request.data.get('num_classes_to_unmark')
+
+    if not num_classes_to_unmark or not isinstance(num_classes_to_unmark, int) or num_classes_to_unmark <= 0:
+        return JsonResponse({'error': 'Invalid number of classes to unmark'}, status=400)
+
+    teacher = request.user.teacher
+
+    try:
+        # to ensure the group belongs to the teacher
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+    try : 
+        # to ensure that the student exists
+        student = Student.objects.get(id=student_id)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not enrolled in this group'}, status=404)
+    
+    try:
+        # to ensure that the student is enrolled in the group
+        student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+    except GroupEnrollment.DoesNotExist:
+        return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
+
+    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+    
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    attended_classes_to_delete = Class.objects.filter(
+        group_enrollment=student_group_enrollment,
+        status__in=['attended_and_the_payment_not_due', 'attended_and_the_payment_due']
+    ).order_by('-attendance_date')[:num_classes_to_unmark]
+
+    if not attended_classes_to_delete.exists():
+        return JsonResponse({'error': 'No attended classes found to unmark'}, status=404)
+
+    attended_classes_to_delete_count = attended_classes_to_delete.count()
+
+    for attended_class in attended_classes_to_delete :
+        attended_class.delete()
+
+    # check if all of the attended classes of the student are due 
+    if student_group_enrollment.attended_non_paid_classes >= 4 :
+        # since all of the the attended non paid classes of the student are due, remove the decrease the unpaid amount 
+        # by the the number of classes to delete * price per class 
+        student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_classes_to_delete_count
+        # if we still have less than 4 classes attended and their payment are due after deleting the classes
+        # convert their status to attended and their payment not due 
+        classes_to_not_delete_count = student_group_enrollment.attended_non_paid_classes - attended_classes_to_delete_count 
+        if classes_to_not_delete_count > 0 and classes_to_not_delete_count < 4 : 
+            Class.objects.filter(group_enrollment=student_group_enrollment, status='attended_and_the_payment_due').update(status='attended_and_the_payment_not_due')
+    # remove the number of deleted classes from the attended non paid classes ones 
+    student_group_enrollment.attended_non_paid_classes -= attended_classes_to_delete_count 
+    student_group_enrollment.save()
+
+    # Notify the student
+    if student.user:
+        student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé votre présence pour {attended_classes_to_delete_count} séances de {group.subject.name}."
+        StudentNotification.objects.create(
+            student=student,
+            image=teacher.image,
+            message=student_message,
+            meta_data={"group_id": group.id}
+        )
+
+    # Notify the parents
+    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    for son in student.sons.all():
+        parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé la présence de {child_pronoun} {son.fullname} pour {attended_classes_to_delete_count} séances de {group.subject.name}."
+        ParentNotification.objects.create(
+            parent=son.parent,
+            image=son.image,
+            message=parent_message,
+            meta_data={"son_id": son.id, "group_id": group.id}
+        )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Attendance unmarked successfully'
+    })
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def mark_absence_of_a_student(request,student_id,group_id):
+    """Mark absence for a student in a group"""
+
+    absence_date = request.data.get('absence_date')
+    absence_start_time = request.data.get('absence_start_time')
+    absence_end_time = request.data.get('absence_end_time')
+
+    if not absence_date or not absence_start_time or not absence_end_time:
+        return JsonResponse({'error': 'Date and time range are required for the "specify" option'}, status=400)
+
+    absence_date = datetime.strptime(absence_date, "%d/%m/%Y").date()
+    absence_start_time = datetime.strptime(absence_start_time, "%H:%M").time()
+    absence_end_time = datetime.strptime(absence_end_time, "%H:%M").time()
+
+    teacher = request.user.teacher
+
+    try:
+        # to ensure the group belongs to the teacher
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+    try : 
+        # to ensure that the student exists
+        student = Student.objects.get(id=student_id)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not enrolled in this group'}, status=404)
+    
+    try:
+        # to ensure that the student is enrolled in the group
+        student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+    except GroupEnrollment.DoesNotExist:
+        return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
+
+    # check that there is not class that has the same attendance date
+    existing_classes = student_group_enrollment.class_set.filter(Q(attendance_date=absence_date) | Q(absence_date=absence_date))
+    if  existing_classes.exists():
+        existing_class = existing_classes.first()
+        if existing_class.status == 'absent':
+            return JsonResponse({'error': 'Absence for this date has already been marked'}, status=400)
+        else : 
+            return JsonResponse({'error': 'Attendance for this date has already been marked'}, status=400)
+
+    Class.objects.create(group_enrollment=student_group_enrollment,
+                         absence_date=absence_date,
+                         absence_start_time=absence_start_time,
+                         absence_end_time=absence_end_time,
+                         status='absent')
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Absence marked successfully'
+    })
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def unmark_absence_of_a_student(request,student_id,group_id):
+    """Mark absence for a student in a group"""
+
+    absence_date = request.data.get('absence_date')
+    absence_start_time = request.data.get('absence_start_time')
+    absence_end_time = request.data.get('absence_end_time')
+
+    if not absence_date or not absence_start_time or not absence_end_time:
+        return JsonResponse({'error': 'Date and time range are required for the "specify" option'}, status=400)
+
+    number_of_classes_to_unmark = request.data.get('number_of_classes_to_unmark')
+
+    if not number_of_classes_to_unmark or not isinstance(number_of_classes_to_unmark, int) or number_of_classes_to_unmark <= 0:
+        return JsonResponse({'error': 'Invalid number of classes to unmark'}, status=400)
+
+    absence_date = datetime.strptime(absence_date, "%d/%m/%Y").date()
+    absence_start_time = datetime.strptime(absence_start_time, "%H:%M").time()
+    absence_end_time = datetime.strptime(absence_end_time, "%H:%M").time()
+
+    teacher = request.user.teacher
+
+    try:
+        # to ensure the group belongs to the teacher
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+    try : 
+        # to ensure that the student exists
+        student = Student.objects.get(id=student_id)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not enrolled in this group'}, status=404)
+    
+    try:
+        # to ensure that the student is enrolled in the group
+        student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+    except GroupEnrollment.DoesNotExist:
+        return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
+
+    # check that there is no class that has the same attendance date
+    existing_classes = student_group_enrollment.class_set.filter(status='absent').order_by('-absence_date')[:number_of_classes_to_unmark]
+    if not existing_classes.exists():
+        return JsonResponse({'error': 'No absence found to unmark'}, status=404)
+    classes_to_unmark_their_absence_count = existing_classes.count()
+    existing_classes.delete()
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    # Notify the student
+    if student.user:
+        student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé pour vous l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.subject.name}."
+        StudentNotification.objects.create(
+            student=student,
+            image=teacher.image,
+            message=student_message,
+            meta_data={"group_id": group.id}
+        )
+
+    # Notify the parents
+    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    for son in student.sons.all():
+        parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé pour {child_pronoun} {son.fullname} l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.subject.name}."
+        ParentNotification.objects.create(
+            parent=son.parent,
+            image=son.image,
+            message=parent_message,
+            meta_data={"son_id": son.id, "group_id": group.id}
+        )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'unmarked Absence successfully'
+    })
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def mark_payment(request, group_id, student_id):
+
+    """Mark payment for a students in a group"""
+
+    num_classes_to_mark = request.data.get('num_classes_to_mark')
+    if not num_classes_to_mark or not isinstance(num_classes_to_mark, int) or num_classes_to_mark <= 0:
+        return JsonResponse({'error': 'Invalid number of classes to mark'}, status=400)
+
+    payment_datetime = request.data.get('payment_datetime')
+    if not payment_datetime:
+        return JsonResponse({'error': 'Invalid payment datetime'}, status=400)
+
+    payment_datetime = datetime.strptime(payment_datetime, "%H:%M:%S-%d/%m/%Y")
+
+    teacher = request.user.teacher
+
+    try:
+        # to ensure the group belongs to the teacher
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+    try : 
+        # to ensure that the student exists
+        student = Student.objects.get(id=student_id)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not enrolled in this group'}, status=404)
+    
+    try:
+        # to ensure that the student is enrolled in the group
+        student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+    except GroupEnrollment.DoesNotExist:
+        return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
+
+    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+    classes_to_mark_as_paid = Class.objects.filter(
+        group_enrollment=student_group_enrollment,
+        status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due']
+    ).order_by('attendance_date')[:num_classes_to_mark]
+    classes_to_mark_as_paid_count = classes_to_mark_as_paid.count()
+
+    # Mark the payment for the class to mark as paid 
+    for unpaid_class in classes_to_mark_as_paid:
+        unpaid_class.status = 'attended_and_paid'
+        unpaid_class.paid_at = payment_datetime
+        unpaid_class.save()
+
+    ## handle the finances 
+    # if we have only attended and due payment classes 
+    if student_group_enrollment.attended_non_paid_classes >= 4 : 
+        # remove the unpaid amount of theses classes 
+        student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * classes_to_mark_as_paid_count
+        # if we still have due payment classes after marking the payment, convert them to not due payment classes
+        attended_class_non_marked_as_paid_cnt = student_group_enrollment.attended_non_paid_classes - classes_to_mark_as_paid_count
+        if attended_class_non_marked_as_paid_cnt > 0 and attended_class_non_marked_as_paid_cnt < 4 : 
+            Class.objects.filter(group_enrollment=student_group_enrollment, status='attended_and_the_payment_due').update(status='attended_and_the_payment_not_due')
+
+    student_group_enrollment.paid_amount += classes_to_mark_as_paid_count * teacher_subject.price_per_class
+    student_group_enrollment.attended_non_paid_classes -= classes_to_mark_as_paid_count
+    # Notify the student
+    if student.user:
+        student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.subject.name} comme payée(s)."
+        StudentNotification.objects.create(
+            student=student,
+            image=teacher.image,
+            message=student_message,
+            meta_data={"group_id": group.id}
+        )
+
+    # Notify the parents
+    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    for son in student.sons.all():
+        parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
+        ParentNotification.objects.create(
+            parent=son.parent,
+            image=son.image,
+            message=parent_message,
+            meta_data={"son_id": son.id, "group_id": group.id}
+        )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Payment marked successfully'
+    })
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def unmark_payment(request,group_id, student_id):
+
+    """Unmark payment for a students in a group"""
+
+    num_classes_to_unmark = request.data.get('num_classes_to_unmark')
+    if not num_classes_to_unmark or not isinstance(num_classes_to_unmark, int) or num_classes_to_unmark <= 0:
+        return JsonResponse({'error': 'Invalid number of classes to unmark'}, status=400)
+
+    teacher = request.user.teacher
+
+    try:
+        # to ensure the group belongs to the teacher
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return JsonResponse({'error': 'Group not found'}, status=404)
+    try : 
+        # to ensure that the student exists
+        student = Student.objects.get(id=student_id)
+    except Student.DoesNotExist:
+        return JsonResponse({'error': 'Student not enrolled in this group'}, status=404)
+    
+    try:
+        # to ensure that the student is enrolled in the group
+        student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+    except GroupEnrollment.DoesNotExist:
+        return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
+
+    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+    paid_classes = Class.objects.filter(
+        group_enrollment=student_group_enrollment,
+        status__in=['attended_and_paid']
+    ).order_by('-attendance_date')[:num_classes_to_unmark]
+
+    unpaid_classes_count = paid_classes.count()
+
+    # Unmark the payment of the specified number of classes 
+    for unpaid_class in paid_classes:
+        # handle the finances
+        student_group_enrollment.attended_non_paid_classes += 1
+
+        if student_group_enrollment.attended_non_paid_classes >= 4 : 
+            # once we reach 4 attended and non paid classes, mark the previous 3 as due
+            if student_group_enrollment.attended_non_paid_classes == 4 : 
+                student_group_enrollment.unpaid_amount += teacher_subject.price_per_class * 3
+                Class.objects.filter(group_enrollment=student_group_enrollment, status='attended_and_the_payment_not_due').update(status='attended_and_the_payment_due')
+            # mark the new one as due too 
+            unpaid_class.status = 'attended_and_the_payment_due'
+
+        student_group_enrollment.paid_amount -= teacher_subject.price_per_class
+        student_group_enrollment.unpaid_amount += teacher_subject.price_per_class
+        unpaid_class.paid_at = None
+        unpaid_class.save()
+
+    
+    # Notify the student
+    if student.user:
+        student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.subject.name} comme payée(s)."
+        StudentNotification.objects.create(
+            student=student,
+            image=teacher.image,
+            message=student_message,
+            meta_data={"group_id": group.id}
+        )
+
+    # Notify the parents
+    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    for son in student.sons.all():
+        parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
+        ParentNotification.objects.create(
+            parent=son.parent,
+            image=son.image,
+            message=parent_message,
+            meta_data={"son_id": son.id, "group_id": group.id}
+        )
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Payment marked successfully'
+    })
+

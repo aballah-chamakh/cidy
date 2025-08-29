@@ -23,6 +23,9 @@ class TeacherEnrollment(models.Model):
     unpaid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     date = models.DateField(auto_now_add=True)
 
+    class Meta:
+        unique_together = ('teacher', 'student')
+
 class Group(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
@@ -85,13 +88,16 @@ class Class(models.Model):
         choices=(
             ('attended_and_paid', 'Attended & paid'),     
             ('attended_and_the_payment_not_due', 'Attended & the payment not due'), 
-            ('attended_and_the_payment_due', 'Attended & the payment due')
+            ('attended_and_the_payment_due', 'Attended & the payment due'),
+            ('absent', 'Absent')
         ),
-        default='future'
     )
     attendance_date = models.DateField(null=True, blank=True)
     attendance_start_time = models.TimeField(null=True, blank=True)
-    attendance_start_time = models.TimeField(null=True, blank=True)
+    attendance_end_time = models.TimeField(null=True, blank=True)
+    absence_date = models.DateField(null=True, blank=True)
+    absence_start_time = models.TimeField(null=True, blank=True)
+    absence_end_time = models.TimeField(null=True, blank=True)
     paid_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
