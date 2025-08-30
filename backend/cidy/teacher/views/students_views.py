@@ -108,8 +108,8 @@ def create_student(request):
 
     serializer = TeacherStudentCreateSerializer(data=request.data)
     if serializer.is_valid():
-        student = serializer.save()
         teacher = request.user.teacher
+        student = serializer.save(teacher=teacher)
         TeacherEnrollment.objects.create(
             student=student,
             teacher=teacher,
@@ -138,7 +138,7 @@ def delete_students(request):
             'message': 'No students selected for deletion.'
         }, status=400)
 
-    students = Student.objects.filter(id__in=student_ids)
+    students = Student.objects.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
     if not students.exists():
         return JsonResponse({
             'success': False,
@@ -191,13 +191,9 @@ def get_student_details(request, student_id):
     teacher = request.user.teacher
 
     try:
-        student = Student.objects.get(id=student_id)
+        student = Student.objects.get(id=student_id, teacherenrollment_set__teacher=teacher)
     except Student.DoesNotExist:
         return JsonResponse({'error': 'Student not found'}, status=404)
-
-    # Check if the student is enrolled with the teacher
-    if not TeacherEnrollment.objects.filter(teacher=teacher, student=student).exists():
-        return JsonResponse({'error': 'You are not authorized to view this student\'s details'}, status=403)
 
     serializer = TeacherStudentDetailSerializer(student, context={'request': request})
     return JsonResponse({
@@ -250,12 +246,14 @@ def mark_attendance_of_a_student(request,student_id,group_id):
             return JsonResponse({'error': 'Attendance for this date has already been marked'}, status=400)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+    student_teacher_enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student).first()
 
     if student_group_enrollment.attended_non_paid_classes >= 3 : 
         # only when i have 3 non paid classes, mark them as attended_and_the_payment_due  because since then we will mark the next class as attended_and_the_payment_due
         if student_group_enrollment.attended_non_paid_classes == 3 :
             Class.objects.filter(group_enrollment=student_group_enrollment, status='attended_and_the_payment_not_due').update(status='attended_and_the_payment_due')
             student_group_enrollment.unpaid_amount += teacher_subject.price_per_class * 3
+            student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class * 3
         # create the next class as attended_and_the_payment_due
         Class.objects.create(enrollement=student_group_enrollment,
                             attendance_date=attendance_date,
@@ -263,6 +261,7 @@ def mark_attendance_of_a_student(request,student_id,group_id):
                             attendance_end_time=attendance_end_time,
                             status = 'attended_and_the_payment_due')
         student_group_enrollment.unpaid_amount += teacher_subject.price_per_class
+        student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class
     else : 
         Class.objects.create(enrollement=student_group_enrollment,
                             attendance_date=attendance_date,
@@ -274,7 +273,7 @@ def mark_attendance_of_a_student(request,student_id,group_id):
     # Notify the student
     if student.user:
         student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-        student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans le cours de {group.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+        student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans la séance de {group.subject.name} qui a eu lieu le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
         StudentNotification.objects.create(
             student=student,
             image=teacher.image,
@@ -286,7 +285,7 @@ def mark_attendance_of_a_student(request,student_id,group_id):
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
     child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
     for son in student.sons.all():
-        parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {child_pronoun} {son.fullname} comme présent(e) dans le cours de {group.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+        parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {child_pronoun} {son.fullname} comme présent(e) dans la séance de {group.subject.name} qui a eu lieu le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
         ParentNotification.objects.create(
             parent=son.parent,
             image=son.image,
@@ -332,7 +331,9 @@ def unmark_attendance_of_a_student(request, group_id, student_id):
         return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
-    
+    student_teacher_enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student).first()
+
+
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
 
@@ -354,6 +355,7 @@ def unmark_attendance_of_a_student(request, group_id, student_id):
         # since all of the the attended non paid classes of the student are due, remove the decrease the unpaid amount 
         # by the the number of classes to delete * price per class 
         student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_classes_to_delete_count
+        student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_classes_to_delete_count
         # if we still have less than 4 classes attended and their payment are due after deleting the classes
         # convert their status to attended and their payment not due 
         classes_to_not_delete_count = student_group_enrollment.attended_non_paid_classes - attended_classes_to_delete_count 
@@ -439,6 +441,30 @@ def mark_absence_of_a_student(request,student_id,group_id):
                          absence_start_time=absence_start_time,
                          absence_end_time=absence_end_time,
                          status='absent')
+    
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+
+    # Notify the student
+    if student.user:
+        student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué votre absence dans la séance de {group.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
+        StudentNotification.objects.create(
+            student=student,
+            image=teacher.image,
+            message=student_message,
+            meta_data={"group_id": group.id}
+        )
+
+    # Notify the parents
+    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    for son in student.sons.all():
+        parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué l'absence de {child_pronoun} {son.fullname} dans la séance de {group.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
+        ParentNotification.objects.create(
+            parent=son.parent,
+            image=son.image,
+            message=parent_message,
+            meta_data={"son_id": son.id, "group_id": group.id}
+        )
 
     return JsonResponse({
         'success': True,
@@ -486,12 +512,14 @@ def unmark_absence_of_a_student(request,student_id,group_id):
     except GroupEnrollment.DoesNotExist:
         return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
 
-    # check that there is no class that has the same attendance date
+    # get the absent classes
     existing_classes = student_group_enrollment.class_set.filter(status='absent').order_by('-absence_date')[:number_of_classes_to_unmark]
     if not existing_classes.exists():
-        return JsonResponse({'error': 'No absence found to unmark'}, status=404)
+        return JsonResponse({'error': 'No absent classes found to unmark'}, status=404)
+    
     classes_to_unmark_their_absence_count = existing_classes.count()
     existing_classes.delete()
+
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
 
@@ -524,7 +552,7 @@ def unmark_absence_of_a_student(request,student_id,group_id):
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def mark_payment(request, group_id, student_id):
+def mark_payment_of_a_student(request, group_id, student_id):
 
     """Mark payment for a students in a group"""
 
@@ -558,6 +586,7 @@ def mark_payment(request, group_id, student_id):
         return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+    student_teacher_enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student).first()
 
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
@@ -567,6 +596,10 @@ def mark_payment(request, group_id, student_id):
         group_enrollment=student_group_enrollment,
         status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due']
     ).order_by('attendance_date')[:num_classes_to_mark]
+
+    if not classes_to_mark_as_paid.exists():
+        return JsonResponse({'error': 'No attended classes found to mark as paid'}, status=404)
+
     classes_to_mark_as_paid_count = classes_to_mark_as_paid.count()
 
     # Mark the payment for the class to mark as paid 
@@ -580,12 +613,14 @@ def mark_payment(request, group_id, student_id):
     if student_group_enrollment.attended_non_paid_classes >= 4 : 
         # remove the unpaid amount of theses classes 
         student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * classes_to_mark_as_paid_count
+        student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class * classes_to_mark_as_paid_count
         # if we still have due payment classes after marking the payment, convert them to not due payment classes
         attended_class_non_marked_as_paid_cnt = student_group_enrollment.attended_non_paid_classes - classes_to_mark_as_paid_count
         if attended_class_non_marked_as_paid_cnt > 0 and attended_class_non_marked_as_paid_cnt < 4 : 
             Class.objects.filter(group_enrollment=student_group_enrollment, status='attended_and_the_payment_due').update(status='attended_and_the_payment_not_due')
 
     student_group_enrollment.paid_amount += classes_to_mark_as_paid_count * teacher_subject.price_per_class
+    student_teacher_enrollment.paid_amount += classes_to_mark_as_paid_count * teacher_subject.price_per_class
     student_group_enrollment.attended_non_paid_classes -= classes_to_mark_as_paid_count
     # Notify the student
     if student.user:
@@ -616,7 +651,7 @@ def mark_payment(request, group_id, student_id):
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def unmark_payment(request,group_id, student_id):
+def unmark_payment_of_a_student(request, group_id, student_id):
 
     """Unmark payment for a students in a group"""
 
@@ -644,6 +679,7 @@ def unmark_payment(request,group_id, student_id):
         return JsonResponse({'error': 'Student is not enrolled in this group'}, status=404)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+    student_teacher_enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student).first()
 
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
@@ -654,6 +690,9 @@ def unmark_payment(request,group_id, student_id):
         status__in=['attended_and_paid']
     ).order_by('-attendance_date')[:num_classes_to_unmark]
 
+    if not paid_classes.exists():
+        return JsonResponse({'error': 'No paid classes found to unmark'}, status=404)
+
     unpaid_classes_count = paid_classes.count()
 
     # Unmark the payment of the specified number of classes 
@@ -662,15 +701,19 @@ def unmark_payment(request,group_id, student_id):
         student_group_enrollment.attended_non_paid_classes += 1
 
         if student_group_enrollment.attended_non_paid_classes >= 4 : 
-            # once we reach 4 attended and non paid classes, mark the previous 3 as due
+            # once we reach 4 attended and non paid classes, mark the previous 4 as due
             if student_group_enrollment.attended_non_paid_classes == 4 : 
                 student_group_enrollment.unpaid_amount += teacher_subject.price_per_class * 3
+                student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class * 3
                 Class.objects.filter(group_enrollment=student_group_enrollment, status='attended_and_the_payment_not_due').update(status='attended_and_the_payment_due')
             # mark the new one as due too 
             unpaid_class.status = 'attended_and_the_payment_due'
+            student_group_enrollment.unpaid_amount += teacher_subject.price_per_class
+            student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class
 
         student_group_enrollment.paid_amount -= teacher_subject.price_per_class
-        student_group_enrollment.unpaid_amount += teacher_subject.price_per_class
+        student_teacher_enrollment.paid_amount -= teacher_subject.price_per_class
+
         unpaid_class.paid_at = None
         unpaid_class.save()
 

@@ -7,6 +7,19 @@ from .groups_views import (
     get_group_details, edit_group,get_group_students,
     create_group_student,add_students_to_group,
     mark_attendance,unmark_attendance,
-    mark_payment,unmark_payment
-
+    mark_absence,unmark_absence,
+    mark_payment,unmark_payment,
+)
+from .students_views import (
+    can_create_student,
+    get_students,
+    create_student,
+    delete_students,
+    get_student_details,
+    mark_attendance_of_a_student,
+    unmark_attendance_of_a_student,
+    mark_absence_of_a_student,
+    unmark_absence_of_a_student,
+    mark_payment_of_a_student,
+    unmark_payment_of_a_student
 )

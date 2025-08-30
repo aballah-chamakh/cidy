@@ -26,12 +26,23 @@ urlpatterns = [
     path('groups/<int:group_id>/students/add/', views.add_students_to_group, name='add_students_to_group'),
     path('groups/<int:group_id>/students/mark_attendance/', views.mark_attendance, name='mark_attendance'),
     path('groups/<int:group_id>/students/unmark_attendance/', views.unmark_attendance, name='unmark_attendance'),
+    path('groups/<int:group_id>/students/mark_absence/', views.mark_absence, name='mark_absence'),
+    path('groups/<int:group_id>/students/unmark_absence/', views.unmark_absence, name='unmark_absence'),
     path('groups/<int:group_id>/students/mark_payment/', views.mark_payment, name='mark_payment'),
     path('groups/<int:group_id>/students/unmark_payment/', views.unmark_payment, name='unmark_payment'),
 
     # Student endpoints
     path('students/can_create/', views.can_create_student, name='can_create_student'),
-    
+    path('students/', views.get_students, name='get_students'),
+    path('students/create/', views.create_student, name='create_student'),
+    path('students/delete/', views.delete_students, name='delete_students'),
+    path('students/<int:student_id>/', views.get_student_details, name='get_student_details'),
+    path('students/<int:student_id>/groups/<int:group_id>/mark_attendance/', views.mark_attendance_of_a_student, name='mark_attendance_of_a_student'),
+    path('students/<int:student_id>/groups/<int:group_id>/unmark_attendance/', views.unmark_attendance_of_a_student, name='unmark_attendance_of_a_student'),
+    path('students/<int:student_id>/groups/<int:group_id>/mark_absence/', views.mark_absence_of_a_student, name='mark_absence_of_a_student'),
+    path('students/<int:student_id>/groups/<int:group_id>/unmark_absence/', views.unmark_absence_of_a_student, name='unmark_absence_of_a_student'),
+    path('students/<int:student_id>/groups/<int:group_id>/mark_payment/', views.mark_payment_of_a_student, name='mark_payment_of_a_student'),
+    path('students/<int:student_id>/groups/<int:group_id>/unmark_payment/', views.unmark_payment_of_a_student, name='unmark_payment_of_a_student'),
 
 ]
 
