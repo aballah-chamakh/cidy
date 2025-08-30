@@ -67,6 +67,8 @@ def update_group_schedule(request, group_id):
     
     # update the group
     group = serializer.save()
+
+    schedule_change_type = request.data.get("schedule_change_type")
     
     # Send notifications to students and their parents
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"

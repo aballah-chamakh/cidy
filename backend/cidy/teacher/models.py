@@ -1,9 +1,21 @@
 from django.db import models
 from account.models import User
 from student.models import Student
-from common.models import Level, Section,Subject
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
+
+
+class Level(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+class Section(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    level = models.ForeignKey(Level, on_delete=models.CASCADE)
+
+class Subject(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    level = models.ForeignKey(Level, on_delete=models.CASCADE,null=True, blank=True)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True, blank=True)
 
 class Teacher(models.Model):
     image = models.ImageField(default='defaults/teacher.png',upload_to='teacher_images/')
@@ -14,6 +26,17 @@ class Teacher(models.Model):
 
     def __str__(self):
         return f"{self.fullname} -- {self.user.email}"
+    
+
+class TeacherSubject(models.Model): 
+    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    teacher_subject = models.ForeignKey(Level, on_delete=models.CASCADE)
+    section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True,blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    price_per_class = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    def __str__(self):
+        return f"{self.teacher.fullname} teaches {self.subject.name}"
     
 
 class TeacherEnrollment(models.Model):
@@ -29,9 +52,7 @@ class TeacherEnrollment(models.Model):
 class Group(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    level = models.ForeignKey(Level, on_delete=models.CASCADE)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True,blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    teacher_subject = models.ForeignKey(TeacherSubject, on_delete=models.CASCADE)
     week_day = models.CharField(
         max_length=50,
         choices=[
@@ -104,16 +125,6 @@ class Class(models.Model):
         return f"Class for {self.group_enrollment.group.name} - {self.status}"
 
 
-class TeacherSubject(models.Model): 
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    level = models.ForeignKey(Level, on_delete=models.CASCADE)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True,blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    price_per_class = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
-    def __str__(self):
-        return f"{self.teacher.fullname} teaches {self.subject.name}"
-    
 
 class TeacherNotification(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)

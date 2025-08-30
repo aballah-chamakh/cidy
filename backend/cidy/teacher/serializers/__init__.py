@@ -1,4 +1,5 @@
-from .common_serializers import TeacherLevelsSectionsSubjectsHierarchySerializer
+from .price_serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
+                                TeacherSubjectSerializer)
 from .group_serializers import (GroupListSerializer,GroupCreateUpdateSerializer,
                                 GroupDetailsSerializer,GroupStudentListSerializer,
                                 GroupCreateStudentSerializer,)

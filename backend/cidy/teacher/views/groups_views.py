@@ -1,12 +1,12 @@
 from datetime import datetime
 from django.http import JsonResponse
-from django.db import models
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from ..models import Group, TeacherSubject,GroupEnrollment,Class,TeacherEnrollment
 from student.models import Student, StudentNotification
 from parent.models import ParentNotification
 from django.core.paginator import Paginator
+from django.db.models import Q
 from ..serializers import (GroupCreateStudentSerializer,GroupStudentListSerializer,
                            GroupListSerializer, TeacherLevelsSectionsSubjectsHierarchySerializer,
                            GroupCreateUpdateSerializer,GroupDetailsSerializer,)
