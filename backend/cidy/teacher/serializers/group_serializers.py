@@ -8,9 +8,9 @@ from django.core.paginator import Paginator
 
 
 class GroupListSerializer(serializers.ModelSerializer):
-    level = serializers.CharField(source='level.name', read_only=True)
-    section = serializers.CharField(source='section.name', read_only=True)
-    subject = serializers.CharField(source='subject.name', read_only=True)
+    level = serializers.CharField(source='teacher_subject.level.name', read_only=True)
+    section = serializers.CharField(source='teacher_subject.section.name', read_only=True)
+    subject = serializers.CharField(source='teacher_subject.subject.name', read_only=True)
     class Meta:
         model = Group
         fields = [
@@ -29,9 +29,9 @@ class GroupStudentListSerializer(serializers.Serializer):
         fields = ['id','image','fullname','paid_amount','unpaid_amount']
 
 class GroupDetailsSerializer(serializers.ModelSerializer):
-    level = LevelSerializer(read_only=True)
-    section = SectionSerializer(read_only=True)
-    subject = SubjectSerializer(read_only=True)    
+    level = LevelSerializer(source='teacher_subject.level', read_only=True)
+    section = SectionSerializer(source='teacher_subject.section', read_only=True)
+    subject = SubjectSerializer(source='teacher_subject.subject', read_only=True)    
     start_time = serializers.TimeField(
         format="%H:%M", 
         input_formats=["%H:%M", "%H:%M:%S"]
@@ -110,7 +110,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = [
-            'name', 'level', 'section', 'subject', 
+            'name', 'teacher_subject', 
             'week_day', 'start_time', 'end_time'
         ]
 
@@ -120,29 +120,22 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         # for the edit and create case bring the name and the teacher from the request 
         name = data.get('name')
         teacher = self.context['request'].user.teacher
-        # for the edit case bring the level, section and subject from the instance
+        # for the edit case bring the teacher_subject from the instance
         if self.instance:
-            level = self.instance.level
-            section = self.instance.section
-            subject = self.instance.subject
-        # for the create case bring the level, section and subject from the request data
+            teacher_subject = self.instance.teacher_subject
+        # for the create case bring the teacher_subject from the request data
         else : 
-            level = data.get('level')
-            section = data.get('section')
-            subject = data.get('subject')
+            teacher_subject = data.get('teacher_subject')
 
         # Check for duplicate group name
         duplicate_query = Group.objects.filter(
             teacher=teacher,
             name=name,
-            level=level,
-            subject=subject
+            teacher_subject=teacher_subject
         )
         
-        if section:
-            duplicate_query = duplicate_query.filter(section=section)
-        else:
-            duplicate_query = duplicate_query.filter(section__isnull=True)
+        if self.instance:
+            duplicate_query = duplicate_query.exclude(id=self.instance.id)
         
         if duplicate_query.exists():
             raise serializers.ValidationError("ALREADY_EXISTING_GROUP_NAME_DETECTED")
@@ -194,7 +187,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class GroupCreateStudentSerializer(serializers.ModelSerializer):
-    image = serializers.CharField(source='image.url')
+    image = serializers.CharField(source='image.url', read_only=True)
     class Meta : 
         model = Student
         fields = ['id', 'image', 'fullname','phone_number','gender','level','section']

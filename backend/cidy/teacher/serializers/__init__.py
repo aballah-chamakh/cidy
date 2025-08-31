@@ -6,3 +6,4 @@ from .group_serializers import (GroupListSerializer,GroupCreateUpdateSerializer,
 from .student_serializers import (TeacherStudentListSerializer,
                                   TeacherStudentCreateSerializer,
                                   TeacherStudentDetailSerializer)
+from .notification_serializers import TeacherNotificationSerializer

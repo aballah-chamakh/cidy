@@ -86,7 +86,7 @@ class Group(models.Model):
     total_unpaid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
-        return f"{self.subject.name} group : {self.name}"
+        return f"{self.teacher_subject.subject.name} group : {self.name}"
     
 class GroupEnrollment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
@@ -124,7 +124,9 @@ class Class(models.Model):
     def __str__(self):
         return f"Class for {self.group_enrollment.group.name} - {self.status}"
 
-
+class TeacherUnreadNotification(models.Model):
+    teacher = models.OneToOneField(Teacher, on_delete=models.CASCADE)
+    unread_notifications = models.PositiveIntegerField(default=0)
 
 class TeacherNotification(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)

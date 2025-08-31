@@ -27,6 +27,10 @@ class Son(models.Model):
         return f"{self.fullname} -- {self.parent.user.email}"
 
 
+class ParentUnreadNotification(models.Model):
+    parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
+    unread_notifications = models.PositiveIntegerField(default=0)
+
 class ParentNotification(models.Model):
     parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
     image = models.ImageField(default='defaults/due_payment_notification.png')

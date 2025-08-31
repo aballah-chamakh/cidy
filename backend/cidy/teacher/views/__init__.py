@@ -23,3 +23,10 @@ from .students_views import (
     mark_payment_of_a_student,
     unmark_payment_of_a_student
 )
+
+from .prices_views import (
+    prices_list,
+    add_teacher_subject,
+    edit_teacher_subject_price,
+    delete_level_section_subject
+)

@@ -3,13 +3,25 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from ..models import Group, TeacherSubject,GroupEnrollment,Class,TeacherEnrollment
-from student.models import Student, StudentNotification
-from parent.models import ParentNotification
+from student.models import Student, StudentNotification, StudentUnreadNotification
+from parent.models import ParentNotification, ParentUnreadNotification
 from django.core.paginator import Paginator
 from django.db.models import Q
 from ..serializers import (GroupCreateStudentSerializer,GroupStudentListSerializer,
                            GroupListSerializer, TeacherLevelsSectionsSubjectsHierarchySerializer,
                            GroupCreateUpdateSerializer,GroupDetailsSerializer,)
+
+def increment_student_unread_notifications(student):
+    """Helper function to increment student unread notifications count"""
+    unread_obj, created = StudentUnreadNotification.objects.get_or_create(student=student)
+    unread_obj.unread_notifications += 1
+    unread_obj.save()
+
+def increment_parent_unread_notifications(parent):
+    """Helper function to increment parent unread notifications count"""
+    unread_obj, created = ParentUnreadNotification.objects.get_or_create(parent=parent)
+    unread_obj.unread_notifications += 1
+    unread_obj.save()
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -164,14 +176,15 @@ def delete_groups(request):
         for student in students:
             # send a notification to each student with an independant account
             if student.user :
-                student_message = f"{student_teacher_pronoun} {teacher.fullname} a supprimé le groupe {group.subject.name} dans lequel vous étiez inscrit."
+                student_message = f"{student_teacher_pronoun} {teacher.fullname} a supprimé le groupe {group.teacher_subject.subject.name} dans lequel vous étiez inscrit."
                 StudentNotification.objects.create(
                     student = student,
                     image = teacher.image,
                     message = student_message)
+                increment_student_unread_notifications(student)
             # send a notification to the parent of the sons attached to each student belongs to the group
             child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.subject.name} dans lequel {child_pronoun} {son.fullname} était inscrit."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.teacher_subject.subject.name} dans lequel {child_pronoun} {son.fullname} était inscrit."
             for son in student.sons : 
                 ParentNotification.objects.create(
                     parent=son.parent,
@@ -179,6 +192,7 @@ def delete_groups(request):
                     message=parent_message,
                     meta_data = {"son_id":son.id}
                 )
+                increment_parent_unread_notifications(son.parent)
         group.delete()    
     
     return JsonResponse({
@@ -233,25 +247,27 @@ def edit_group(request, group_id):
 
         for student in group.students.all() :
             # Create notification for each student
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} à : {group.week_day} de {group.start_time.strftime('%H:%M')} à {group.end_time.strftime('%H:%M')} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.teacher_subject.subject.name} à : {group.week_day} de {group.start_time.strftime('%H:%M')} à {group.end_time.strftime('%H:%M')} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
                 message=student_message,
                 meta_data = {'group_id': group.id}
             )
+            increment_student_unread_notifications(student)
 
             # If student has parents, notify them too
             child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
             for son in student.sons.all() :
                 # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
-                parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time.strftime('%H:%M')} à {group.end_time.strftime('%H:%M')} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
+                parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time.strftime('%H:%M')} à {group.end_time.strftime('%H:%M')} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
                 ParentNotification.objects.create(
                     parent=son.parent,
                     image=son.image,
                     message=parent_message,
                     meta_data = {"son_id":son.id,'group_id':group.id}
                 )
+                increment_parent_unread_notifications(son.parent)
     
     return JsonResponse({
         'success': True,
@@ -318,7 +334,7 @@ def create_group_student(request, group_id):
         return JsonResponse({'error': serializer.errors}, status=400)
 
     # Save the student
-    student = serializer.save(level=group.level,section=group.section)
+    student = serializer.save(level=group.teacher_subject.level,section=group.teacher_subject.section)
 
     # Add the student to the group
     group.students.add(student)
@@ -348,9 +364,7 @@ def add_students_to_group(request,group_id):
         # Check if the student is already in a group with the same level, section, and subject
         student_groups = Group.objects.filter(
             students=student,
-            level=group.level,
-            section=group.section,
-            subject=group.subject
+            teacher_subject=group.teacher_subject
         )
         if student_groups.exists():
             student_group = student_groups.first()
@@ -360,47 +374,51 @@ def add_students_to_group(request,group_id):
             for student in group.students.all() :
                 # Create notification for each student that has an independant account
                 if student.user : 
-                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a changé votre groupe de {group.subject.name}."
+                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a changé votre groupe de {group.teacher_subject.subject.name}."
                     StudentNotification.objects.create(
                         student=student,
                         image=teacher.image,
                         message=student_message,
                         meta_data = {'group_id': group.id}
                     )
+                    increment_student_unread_notifications(student)
                 # If student has parents, notify them too
                 child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
                 for son in student.sons.all() :
                     # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
-                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a changé le groupe de {group.subject.name} de {child_pronoun} {son.fullname}."
+                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a changé le groupe de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname}."
                     ParentNotification.objects.create(
                         parent=son.parent,
                         image=son.image,
                         message=parent_message,
                         meta_data = {"son_id":son.id,'group_id':group.id}
                     )
+                    increment_parent_unread_notifications(son.parent)
         else : 
             group.students.add(student)
             for student in group.students.all() :
                 # Create notification for each student that has an independant account
                 if student.user : 
-                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a ajouté vous à un groupe de {group.subject.name}."
+                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a ajouté vous à un groupe de {group.teacher_subject.subject.name}."
                     StudentNotification.objects.create(
                         student=student,
                         image=teacher.image,
                         message=student_message,
                         meta_data = {'group_id': group.id}
                     )
+                    increment_student_unread_notifications(student)
                 # If student has parents, notify them too
                 child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
                 for son in student.sons.all() :
                     # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
-                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a ajouté {child_pronoun} {son.fullname} à un groupe de {group.subject.name}."
+                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a ajouté {child_pronoun} {son.fullname} à un groupe de {group.teacher_subject.subject.name}."
                     ParentNotification.objects.create(
                         parent=son.parent,
                         image=son.image,
                         message=parent_message,
                         meta_data = {"son_id":son.id,'group_id':group.id}
                     )
+                    increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -439,6 +457,7 @@ def remove_students_from_group(request, group_id):
                 image=teacher.image,
                 message=student_message
             )
+            increment_student_unread_notifications(student)
 
         # Notify the parents of the student
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -450,6 +469,7 @@ def remove_students_from_group(request, group_id):
                 message=parent_message,
                 meta_data={"son_id": son.id}
             )
+            increment_parent_unread_notifications(son.parent)
 
         # Remove the student from the group
         group.students.remove(student)
@@ -532,6 +552,7 @@ def mark_attendance(request, group_id):
                 message=student_message,
                 meta_data={"group_id": group.id}
             )
+            increment_student_unread_notifications(student)
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -543,6 +564,7 @@ def mark_attendance(request, group_id):
                 message=parent_message,
                 meta_data={"son_id": son.id,"group_id": group.id}
             )
+            increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -610,6 +632,7 @@ def unmark_attendance(request, group_id):
                 message=student_message,
                 meta_data={"group_id": group.id}
             )
+            increment_student_unread_notifications(student)
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -621,6 +644,7 @@ def unmark_attendance(request, group_id):
                 message=parent_message,
                 meta_data={"son_id": son.id, "group_id": group.id}
             )
+            increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -705,6 +729,7 @@ def mark_absence(request,group_id):
                 message=student_message,
                 meta_data={"group_id": group.id}
             )
+            increment_student_unread_notifications(student)
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -716,6 +741,7 @@ def mark_absence(request,group_id):
                 message=parent_message,
                 meta_data={"son_id": son.id, "group_id": group.id}
             )
+            increment_parent_unread_notifications(son.parent)
 
     return JsonResponse(response)
 
@@ -770,6 +796,7 @@ def unmark_absence(request,group_id):
                 message=student_message,
                 meta_data={"group_id": group.id}
             )
+            increment_student_unread_notifications(student)
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -781,6 +808,7 @@ def unmark_absence(request,group_id):
                 message=parent_message,
                 meta_data={"son_id": son.id, "group_id": group.id}
             )
+            increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -856,6 +884,7 @@ def mark_payment(request, group_id):
                 message=student_message,
                 meta_data={"group_id": group.id}
             )
+            increment_student_unread_notifications(student)
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -867,6 +896,7 @@ def mark_payment(request, group_id):
                 message=parent_message,
                 meta_data={"son_id": son.id, "group_id": group.id}
             )
+            increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -939,6 +969,7 @@ def unmark_payment(request, group_id):
                 message=student_message,
                 meta_data={"group_id": group.id}
             )
+            increment_student_unread_notifications(student)
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -950,6 +981,7 @@ def unmark_payment(request, group_id):
                 message=parent_message,
                 meta_data={"son_id": son.id, "group_id": group.id}
             )
+            increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,

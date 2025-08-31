@@ -2,11 +2,22 @@ from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from ..models import Group
-from student.models import StudentNotification
-from parent.models import ParentNotification
+from student.models import StudentNotification, StudentUnreadNotification
+from parent.models import ParentNotification, ParentUnreadNotification
 from ..serializers import GroupCreateUpdateSerializer
 from django.db.models import Q
 
+def increment_student_unread_notifications(student):
+    """Helper function to increment student unread notifications count"""
+    unread_obj, created = StudentUnreadNotification.objects.get_or_create(student=student)
+    unread_obj.unread_notifications += 1
+    unread_obj.save()
+
+def increment_parent_unread_notifications(parent):
+    """Helper function to increment parent unread notifications count"""
+    unread_obj, created = ParentUnreadNotification.objects.get_or_create(parent=parent)
+    unread_obj.unread_notifications += 1
+    unread_obj.save()
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -82,6 +93,7 @@ def update_group_schedule(request, group_id):
             image=teacher.image,
             message=student_message
         )
+        increment_student_unread_notifications(student)
 
 
         # If student has parents, notify them too
@@ -94,6 +106,7 @@ def update_group_schedule(request, group_id):
                 image=son.image,
                 message=parent_message,
             )
+            increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'status': 'success',

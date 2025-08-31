@@ -6,13 +6,25 @@ from rest_framework.decorators import api_view, permission_classes
 from django.db.models import Q, Sum
 from django.core.paginator import Paginator
 from ..models import Group, GroupEnrollment, TeacherSubject,TeacherEnrollment,Class
-from student.models import Student, StudentNotification
-from parent.models import ParentNotification
+from student.models import Student, StudentNotification, StudentUnreadNotification
+from parent.models import ParentNotification, ParentUnreadNotification
 from ..serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
                            TeacherStudentListSerializer,
                            TeacherStudentCreateSerializer,
                            TeacherStudentDetailSerializer,)
 from rest_framework import serializers
+
+def increment_student_unread_notifications(student):
+    """Helper function to increment student unread notifications count"""
+    unread_obj, created = StudentUnreadNotification.objects.get_or_create(student=student)
+    unread_obj.unread_notifications += 1
+    unread_obj.save()
+
+def increment_parent_unread_notifications(parent):
+    """Helper function to increment parent unread notifications count"""
+    unread_obj, created = ParentUnreadNotification.objects.get_or_create(parent=parent)
+    unread_obj.unread_notifications += 1
+    unread_obj.save()
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -162,6 +174,7 @@ def delete_students(request):
                 image=teacher.image,
                 message=student_message,
             )
+            increment_student_unread_notifications(student)
 
         # send a notification to the parent of the sons attached to each student to delete
         child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
@@ -173,6 +186,7 @@ def delete_students(request):
                 message=parent_message,
                 meta_data = {"son_id":son.id}
             )
+            increment_parent_unread_notifications(son.parent)
 
         # i deleted him here because i want to get its sons before
         if not student.user:
@@ -280,6 +294,7 @@ def mark_attendance_of_a_student(request,student_id,group_id):
             message=student_message,
             meta_data={"group_id": group.id}
         )
+        increment_student_unread_notifications(student)
 
     # Notify the parents
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
@@ -292,6 +307,7 @@ def mark_attendance_of_a_student(request,student_id,group_id):
             message=parent_message,
             meta_data={"son_id": son.id,"group_id": group.id}
         )
+        increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -374,6 +390,7 @@ def unmark_attendance_of_a_student(request, group_id, student_id):
             message=student_message,
             meta_data={"group_id": group.id}
         )
+        increment_student_unread_notifications(student)
 
     # Notify the parents
     child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -385,6 +402,7 @@ def unmark_attendance_of_a_student(request, group_id, student_id):
             message=parent_message,
             meta_data={"son_id": son.id, "group_id": group.id}
         )
+        increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -454,6 +472,7 @@ def mark_absence_of_a_student(request,student_id,group_id):
             message=student_message,
             meta_data={"group_id": group.id}
         )
+        increment_student_unread_notifications(student)
 
     # Notify the parents
     child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -465,6 +484,7 @@ def mark_absence_of_a_student(request,student_id,group_id):
             message=parent_message,
             meta_data={"son_id": son.id, "group_id": group.id}
         )
+        increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -532,6 +552,7 @@ def unmark_absence_of_a_student(request,student_id,group_id):
             message=student_message,
             meta_data={"group_id": group.id}
         )
+        increment_student_unread_notifications(student)
 
     # Notify the parents
     child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -543,6 +564,7 @@ def unmark_absence_of_a_student(request,student_id,group_id):
             message=parent_message,
             meta_data={"son_id": son.id, "group_id": group.id}
         )
+        increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -631,6 +653,7 @@ def mark_payment_of_a_student(request, group_id, student_id):
             message=student_message,
             meta_data={"group_id": group.id}
         )
+        increment_student_unread_notifications(student)
 
     # Notify the parents
     child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -642,6 +665,7 @@ def mark_payment_of_a_student(request, group_id, student_id):
             message=parent_message,
             meta_data={"son_id": son.id, "group_id": group.id}
         )
+        increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -727,6 +751,7 @@ def unmark_payment_of_a_student(request, group_id, student_id):
             message=student_message,
             meta_data={"group_id": group.id}
         )
+        increment_student_unread_notifications(student)
 
     # Notify the parents
     child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
@@ -738,6 +763,7 @@ def unmark_payment_of_a_student(request, group_id, student_id):
             message=parent_message,
             meta_data={"son_id": son.id, "group_id": group.id}
         )
+        increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
