@@ -133,11 +133,6 @@ class TeacherNotification(models.Model):
     image = models.ImageField(default='defaults/due_payment_notification.png')
     message = models.TextField()
     meta_data = models.JSONField(null=True, blank=True)
-    type = models.CharField(max_length=50, choices=[
-        ('due_payment', 'Due payment'),
-        ('student', 'Student'),
-        ('parent', 'Parent'),
-    ])
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -52,15 +52,16 @@ class TeacherStudentDetailSerializer(serializers.ModelSerializer):
 
     def get_groups(self, student_obj):
         request = self.context['request']
+        teacher_obj = request.user.teacher
         group_id = request.parser_context['kwargs'].get('group_id')
         
-        groups = student_obj.groups.all()
+        groups = student_obj.groups.all(teacher=teacher_obj)
         json_groups = []
 
         for group in groups:
             json_group = {
                 'id': group.id,
-                'label': f"{group.subject.name} - {group.name}",
+                'label': f"{group.teacher_subject.subject.name} - {group.name}",
             }
             if group.id == group_id :
                 student_group_enrollment = group.groupenrollment_set.get(student=student_obj)

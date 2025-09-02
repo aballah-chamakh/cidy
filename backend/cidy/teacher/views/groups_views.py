@@ -1,27 +1,20 @@
 from datetime import datetime
+
 from django.http import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from ..models import Group, TeacherSubject,GroupEnrollment,Class,TeacherEnrollment
-from student.models import Student, StudentNotification, StudentUnreadNotification
-from parent.models import ParentNotification, ParentUnreadNotification
 from django.core.paginator import Paginator
 from django.db.models import Q
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+from student.models import Student, StudentNotification, StudentUnreadNotification
+from parent.models import ParentNotification, ParentUnreadNotification
+from common.tools import increment_student_unread_notifications, increment_parent_unread_notifications
+
+from ..models import Group, TeacherSubject,GroupEnrollment,Class,TeacherEnrollment
 from ..serializers import (GroupCreateStudentSerializer,GroupStudentListSerializer,
                            GroupListSerializer, TeacherLevelsSectionsSubjectsHierarchySerializer,
                            GroupCreateUpdateSerializer,GroupDetailsSerializer,)
 
-def increment_student_unread_notifications(student):
-    """Helper function to increment student unread notifications count"""
-    unread_obj, created = StudentUnreadNotification.objects.get_or_create(student=student)
-    unread_obj.unread_notifications += 1
-    unread_obj.save()
-
-def increment_parent_unread_notifications(parent):
-    """Helper function to increment parent unread notifications count"""
-    unread_obj, created = ParentUnreadNotification.objects.get_or_create(parent=parent)
-    unread_obj.unread_notifications += 1
-    unread_obj.save()
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

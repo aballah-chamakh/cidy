@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from ..models import Level, Section, Subject, TeacherSubject
-
+from student.models import Student
 
 class LevelSerializer(serializers.ModelSerializer):
     class Meta:
@@ -92,3 +92,26 @@ class TeacherLevelsSectionsSubjectsHierarchySerializer(serializers.Serializer):
                 })
 
         return levels
+
+class StudentListToReplaceBySerializer(serializers.ModelSerializer):
+    
+    groups = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Student
+        fields = ['id', 'fullname', 'groups']
+
+    def get_groups(self, student_obj):
+        request = self.context['request']
+        teacher_obj = request.user.teacher
+        groups = student_obj.groups.all(teacher=teacher_obj)
+        json_groups = []
+
+        for group in groups:
+            json_group = {
+                'id': group.id,
+                'name': group.name,
+            }
+            json_groups.append(json_group)
+        
+        return json_groups
