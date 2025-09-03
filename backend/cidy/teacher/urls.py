@@ -4,9 +4,18 @@ from . import views
 
 urlpatterns = [
     # Notifications endpoints
-    path('notifications/get_unread_notifications_count/', views.get_unread_notifications_count, name='teacher_get_unread_notifications_count'),
-    path('notifications/reset_notification_count/', views.reset_notification_count, name='teacher_reset_notification_count'),
-    
+    path('notifications/unread_count/', views.get_unread_notifications_count, name='get_unread_notifications_count'),
+    path('notifications/mark_as_read/', views.mark_notifications_as_read, name='mark_notifications_as_read'),
+    path('notifications/', views.get_notifications, name='get_notifications'),
+    path('notifications/new/', views.get_new_notifications, name='get_new_notifications'),
+    path('notifications/<int:notification_id>/mark_as_read/', views.mark_a_notification_as_read, name='mark_a_notification_as_read'),
+    path('notifications/<int:notification_id>/accept_student_request_form/', views.student_request_accept_form_data, name='student_request_accept_form_data'),
+    path('notifications/<int:notification_id>/accept_student_request/', views.accept_student_request, name='accept_student_request'),
+    path('notifications/<int:notification_id>/reject_student_request/', views.reject_student_request, name='reject_student_request'),
+    path('notifications/<int:notification_id>/accept_parent_request_form/', views.parent_request_accept_form_data, name='parent_request_accept_form_data'),
+    path('notifications/<int:notification_id>/accept_parent_request/', views.accept_parent_request, name='accept_parent_request'),
+    path('notifications/<int:notification_id>/decline_parent_request/', views.decline_parent_request, name='decline_parent_request'),
+
     # Dasboard enpoints
     path('get_dashboard_data/', views.get_dashboard_data, name='teacher_get_dashboard_data'),
     
@@ -49,5 +58,11 @@ urlpatterns = [
     path('prices/add/', views.add_teacher_subject, name='add_teacher_subject'),
     path('prices/edit/<int:teacher_subject_id>/', views.edit_teacher_subject_price, name='edit_teacher_subject_price'),
     path('prices/delete/<int:teacher_subject_id>/', views.delete_level_section_subject, name='delete_level_section_subject'),
+
+    # Account endpoints
+    path('account/info/', views.get_account_info, name='get_account_info'),
+    path('account/update/', views.update_account_info, name='update_account_info'),
+    path('account/change_password/', views.change_password, name='change_password'),
+
 ]
 

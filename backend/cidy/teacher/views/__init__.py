@@ -1,15 +1,29 @@
 from .dashboard_views import get_dashboard_data
 from .week_schedule_views import get_week_schedule, update_group_schedule
-from .notifications_views import get_unread_notifications_count, reset_notification_count
+from .notifications_views import (
+    get_unread_notifications_count,
+    mark_notifications_as_read,
+    get_notifications,
+    get_new_notifications,
+    mark_a_notification_as_read,
+    student_request_accept_form_data,
+    accept_student_request,
+    reject_student_request,
+    parent_request_accept_form_data,
+    accept_parent_request,
+    decline_parent_request
+)
+
 from .groups_views import (
     can_create_group, get_groups, 
     create_group, delete_groups, 
-    get_group_details, edit_group,get_group_students,
-    create_group_student,add_students_to_group,
-    mark_attendance,unmark_attendance,
-    mark_absence,unmark_absence,
-    mark_payment,unmark_payment,
+    get_group_details, edit_group, get_group_students,
+    create_group_student, add_students_to_group,
+    mark_attendance, unmark_attendance,
+    mark_absence, unmark_absence,
+    mark_payment, unmark_payment
 )
+
 from .students_views import (
     can_create_student,
     get_students,
@@ -29,4 +43,10 @@ from .prices_views import (
     add_teacher_subject,
     edit_teacher_subject_price,
     delete_level_section_subject
+)
+
+from .account_views import (
+    get_account_info,
+    update_account_info,
+    change_password
 )

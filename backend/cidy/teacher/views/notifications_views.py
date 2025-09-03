@@ -21,7 +21,7 @@ def get_unread_notifications_count(request):
 
 # this will be used to mark the notifications as read after leaving the notification screen
 # starting from the last notification ID loaded in the screen and going backward 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def mark_notifications_as_read(request):
     last_notification_id = request.data.get('last_notification_id')
@@ -104,7 +104,7 @@ def get_new_notifications(request):
 
 # this will be used in the case of the user clicked on an action button
 # of a notification then he canceled the action 
-@api_view(['POST'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def mark_a_notification_as_read(request, notification_id):
     """Mark a single notification as read"""
@@ -129,6 +129,10 @@ def student_request_accept_form_data(request, notification_id):
     teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
     if not teacher_notification:
         return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+    
+    # mark the notification as read 
+    teacher_notification.is_read = True
+    teacher_notification.save()
     
     # get the student to get his level and section to return students with the same level and section
     student_id = teacher_notification.meta_data.get('student_id')
@@ -178,10 +182,14 @@ def accept_student_request(request, notification_id):
     # get the teacher notification of the notification_id to get the student id
     teacher = request.user.teacher
     teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
+    
     if not teacher_notification:
         return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
 
+    # mark the notification as accepted
     teacher_notification.meta_data['accepted'] = True 
+    # mark the notification as read 
+    teacher_notification.is_read = True
     teacher_notification.save()
     # get the student to accept the request
     requested_student_id = teacher_notification.meta_data.get('student_id')
@@ -198,7 +206,7 @@ def accept_student_request(request, notification_id):
         requesting_student.save()
 
         # assign the user of the student to replace by to the requesting student
-        student_to_replace_by = Student.objects.get(id=student_to_replace_by_id)
+        student_to_replace_by = Student.objects.get(id=student_to_replace_by_id,teacher_enrollment_set__teacher=teacher)
         student_to_replace_by.user = requesting_student_user
         student_to_replace_by.image = requesting_student.image
         student_to_replace_by.fullname = requesting_student.fullname
@@ -214,15 +222,16 @@ def accept_student_request(request, notification_id):
 
     # add the final student to groups of the accepted subjects
     for subject in accepted_subjects:
-        group = Group.objects.get(id=subject['group_id'], teacher=teacher)
+        new_group = Group.objects.get(id=subject['group_id'], teacher=teacher)
         # enroll the student in the group 
-        GroupEnrollment.objects.create(group=group, student=final_student)
+        GroupEnrollment.objects.create(group=new_group, student=final_student)
+
 
     """ send notifications to the student and to his parents, informing them about the acceptance"""
 
     # Notify the student
     teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
-    student_message = f"{teacher_pronoun} {teacher.fullname} a accepté(e) votre demande d'inscription dans la/les matière(s) suivante(s) : {', '.join([sub['name'] for sub in accepted_subjects])}"
+    student_message = f"{teacher_pronoun} {teacher.fullname} a accepté votre demande d'inscription dans la/les matière(s) suivante(s) : {', '.join([sub['name'] for sub in accepted_subjects])}"
     if request.data.get('rejected_subjects') :
         student_message += f" Cependant, votre demande d'inscription dans la/les matière(s) suivante(s) a été refusée : {', '.join([sub['name'] for sub in request.data['rejected_subjects']])}."
     else : 
@@ -238,7 +247,7 @@ def accept_student_request(request, notification_id):
     # Notify the parents
     child_pronoun = "votre fils" if final_student.gender == "male" else "votre fille"
     for son in final_student.sons.all():
-        parent_message = f"{teacher_pronoun} {teacher.fullname} a accepté(e) la demande d'inscription de {child_pronoun} {son.fullname} dans la/les matière(s) suivante(s) : {', '.join([sub['name'] for sub in accepted_subjects])}."
+        parent_message = f"{teacher_pronoun} {teacher.fullname} a accepté la demande d'inscription de {child_pronoun} {son.fullname} dans la/les matière(s) suivante(s) : {', '.join([sub['name'] for sub in accepted_subjects])}."
         if request.data.get('rejected_subjects'):
             parent_message += f" Cependant, la demande d'inscription dans la/les matières suivante(s) a été refusée : {', '.join([sub['name'] for sub in request.data['rejected_subjects']])}."
         else:
@@ -253,6 +262,8 @@ def accept_student_request(request, notification_id):
 
     return JsonResponse({'status': 'success','message':"the student request was accepted successfully"})
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
 def reject_student_request(request, notification_id):
     """Reject a student request notification"""
     # get the teacher notification of the student request
@@ -263,6 +274,8 @@ def reject_student_request(request, notification_id):
 
     # mark the rejection of the student request
     teacher_notification.meta_data['accepted'] = False
+    # mark the notification as read
+    teacher_notification.is_read = True
     teacher_notification.save()
 
     # Get the requesting student
@@ -270,7 +283,7 @@ def reject_student_request(request, notification_id):
 
     # Notify the student about the rejection 
     teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
-    student_message = f"{teacher_pronoun} {teacher.fullname} a refusé(e) votre demande d'inscription."
+    student_message = f"{teacher_pronoun} {teacher.fullname} a refusé votre demande d'inscription."
 
     StudentNotification.objects.create(
             student=requesting_student,
@@ -282,7 +295,7 @@ def reject_student_request(request, notification_id):
     # Notify the parents of the student about the rejection
     child_pronoun = "votre fils" if requesting_student.gender == "male" else "votre fille"
     for son in requesting_student.sons.all():
-        parent_message = f"{teacher_pronoun} {teacher.fullname} a refusé(e) la demande d'inscription de {child_pronoun} {son.fullname}."
+        parent_message = f"{teacher_pronoun} {teacher.fullname} a refusé la demande d'inscription de {child_pronoun} {son.fullname}."
         ParentNotification.objects.create(
             parent=son.parent,
             image=son.image,
@@ -303,6 +316,10 @@ def parent_request_accept_form_data(request, notification_id):
     if not teacher_notification:
         return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
 
+    # mark the notification as read
+    teacher_notification.is_read = True
+    teacher_notification.save()
+
     # Get the requesting parent
     parent_id = teacher_notification.meta_data['parent_id']
     requesting_parent = Parent.objects.get(id=parent_id)
@@ -322,7 +339,7 @@ def parent_request_accept_form_data(request, notification_id):
                                       'id' : student.id,
                                       'fullname': student.fullname,
                                   }
-                                 for student in Student.objects.filter(level=son.level, section=son.section,gender=son.gender) ]
+                                 for student in Student.objects.filter(teacher_enrollment_set__teacher=teacher, level=son.level, section=son.section,gender=son.gender) ]
         }
         for son in requested_sons
     ]
@@ -340,7 +357,7 @@ def parent_request_accept_form_data(request, notification_id):
     return JsonResponse({'status': 'success', 'form_data': form_data})
 
 
-@api_view(['GET'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def accept_parent_request(request, notification_id):
     accepted_sons = request.data.get('accepted_sons', [])
@@ -356,6 +373,8 @@ def accept_parent_request(request, notification_id):
 
     # Mark the notification of the parent request as accepted
     teacher_notification.meta_data['accepted'] = True
+    # mark the notification as read
+    teacher_notification.is_read = True
     teacher_notification.save()
 
     parent_id = teacher_notification.meta_data['parent_id']
@@ -387,9 +406,9 @@ def accept_parent_request(request, notification_id):
         increment_student_unread_notifications(student)
 
     # Notify the parent about the acceptance
-    parent_message = f"{teacher_pronoun_parent} {teacher.fullname} vous a accepté(e) comme parent de : {', '.join([son['fullname'] for son in accepted_sons])}"
+    parent_message = f"{teacher_pronoun_parent} {teacher.fullname} vous a accepté comme parent de : {', '.join([son['fullname'] for son in accepted_sons])}"
     if request.data.get('rejected_sons'):
-        parent_message += f". Cependant, {'il' if teacher.gender == 'male' else 'elle'} vous a refusé(e) comme parent de : {', '.join([son['fullname'] for son in request.data['rejected_sons']])}."
+        parent_message += f". Cependant, {'il' if teacher.gender == 'male' else 'elle'} vous a refusé comme parent de : {', '.join([son['fullname'] for son in request.data['rejected_sons']])}."
     else : 
         parent_message += "."
 
@@ -401,3 +420,34 @@ def accept_parent_request(request, notification_id):
     increment_parent_unread_notifications(requesting_parent)
 
     return JsonResponse({'status': 'success', 'message': 'Parent request accepted successfully'})
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def decline_parent_request(request, notification_id):
+    # Get the teacher notification of the parent request
+    teacher = request.user.teacher
+    teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
+    if not teacher_notification:
+        return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+
+    # Mark the notification of the parent request as declined
+    teacher_notification.meta_data['declined'] = True
+    # mark the notification as read
+    teacher_notification.is_read = True
+    teacher_notification.save()
+
+    parent_id = teacher_notification.meta_data['parent_id']
+    requesting_parent = Parent.objects.get(id=parent_id)
+
+    # Notify the parent about the decline
+    teacher_pronoun_parent = "Le professeur" if requesting_parent.gender == "male" else "La professeure"
+    parent_message = f"{teacher_pronoun_parent} {teacher.fullname} a refusé votre demande de parentalité."
+
+    ParentNotification.objects.create(
+        parent=requesting_parent,
+        image=teacher.image,
+        message=parent_message,
+    )
+    increment_parent_unread_notifications(requesting_parent)
+
+    return JsonResponse({'status': 'success', 'message': 'Parent request declined successfully'})

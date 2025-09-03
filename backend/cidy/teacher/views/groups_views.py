@@ -113,6 +113,7 @@ def get_groups(request):
     except Exception:
         # If page is out of range, deliver last page
         paginated_groups = paginator.page(paginator.num_pages)
+        page = paginator.num_pages
 
     serializer = GroupListSerializer(paginated_groups, many=True)
 
@@ -123,6 +124,7 @@ def get_groups(request):
     return JsonResponse({
         'has_groups': True,
         'groups_total_count': paginator.count,
+        'current_page': page,
         'groups': serializer.data,
         'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy.data
     })
@@ -354,64 +356,30 @@ def add_students_to_group(request,group_id):
     # add the students to the group 
     students_qs = group.students.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
     for student in students_qs :
-        # Check if the student is already in a group with the same level, section, and subject
-        student_groups = Group.objects.filter(
-            students=student,
-            teacher_subject=group.teacher_subject
-        )
-        if student_groups.exists():
-            student_group = student_groups.first()
-            student_group.students.remove(student)
-            group.students.add(student)
-
-            for student in group.students.all() :
-                # Create notification for each student that has an independant account
-                if student.user : 
-                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a changé votre groupe de {group.teacher_subject.subject.name}."
-                    StudentNotification.objects.create(
-                        student=student,
-                        image=teacher.image,
-                        message=student_message,
-                        meta_data = {'group_id': group.id}
-                    )
-                    increment_student_unread_notifications(student)
-                # If student has parents, notify them too
-                child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-                for son in student.sons.all() :
-                    # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
-                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a changé le groupe de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname}."
-                    ParentNotification.objects.create(
-                        parent=son.parent,
-                        image=son.image,
-                        message=parent_message,
-                        meta_data = {"son_id":son.id,'group_id':group.id}
-                    )
-                    increment_parent_unread_notifications(son.parent)
-        else : 
-            group.students.add(student)
-            for student in group.students.all() :
-                # Create notification for each student that has an independant account
-                if student.user : 
-                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a ajouté vous à un groupe de {group.teacher_subject.subject.name}."
-                    StudentNotification.objects.create(
-                        student=student,
-                        image=teacher.image,
-                        message=student_message,
-                        meta_data = {'group_id': group.id}
-                    )
-                    increment_student_unread_notifications(student)
-                # If student has parents, notify them too
-                child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-                for son in student.sons.all() :
-                    # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
-                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a ajouté {child_pronoun} {son.fullname} à un groupe de {group.teacher_subject.subject.name}."
-                    ParentNotification.objects.create(
-                        parent=son.parent,
-                        image=son.image,
-                        message=parent_message,
-                        meta_data = {"son_id":son.id,'group_id':group.id}
-                    )
-                    increment_parent_unread_notifications(son.parent)
+        # enroll the student in the group 
+        GroupEnrollment.objects.create(group=group, student=student)
+        # Create notification for each student that has an independant account
+        if student.user : 
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a ajouté vous à un groupe de {group.teacher_subject.subject.name}."
+            StudentNotification.objects.create(
+                student=student,
+                image=teacher.image,
+                message=student_message,
+                meta_data = {'group_id': group.id}
+            )
+            increment_student_unread_notifications(student)
+        # If student has parents, notify them too
+        child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+        for son in student.sons.all() :
+            # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a ajouté {child_pronoun} {son.fullname} à un groupe de {group.teacher_subject.subject.name}."
+            ParentNotification.objects.create(
+                parent=son.parent,
+                image=son.image,
+                message=parent_message,
+                meta_data = {"son_id":son.id,'group_id':group.id}
+            )
+            increment_parent_unread_notifications(son.parent)
 
     return JsonResponse({
         'success': True,
@@ -980,3 +948,46 @@ def unmark_payment(request, group_id):
         'success': True,
         'message': 'Payment marked successfully'
     })
+
+
+
+
+"""
+
+
+# Check if the student is already in a group with the same level, section, and subject
+        student_groups = Group.objects.filter(
+            students=student,
+            teacher_subject=group.teacher_subject
+        )
+        if student_groups.exists():
+            student_group = student_groups.first()
+            student_group.students.remove(student)
+            group.students.add(student)
+
+            for student in group.students.all() :
+                # Create notification for each student that has an independant account
+                if student.user : 
+                    student_message = f"{student_teacher_pronoun} {teacher.fullname} a changé votre groupe de {group.teacher_subject.subject.name}."
+                    StudentNotification.objects.create(
+                        student=student,
+                        image=teacher.image,
+                        message=student_message,
+                        meta_data = {'group_id': group.id}
+                    )
+                    increment_student_unread_notifications(student)
+                # If student has parents, notify them too
+                child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+                for son in student.sons.all() :
+                    # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
+                    parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a changé le groupe de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname}."
+                    ParentNotification.objects.create(
+                        parent=son.parent,
+                        image=son.image,
+                        message=parent_message,
+                        meta_data = {"son_id":son.id,'group_id':group.id}
+                    )
+                    increment_parent_unread_notifications(son.parent)
+        else : 
+
+"""
