@@ -16,7 +16,7 @@ class Student(models.Model):
         return f"{self.fullname} -- {self.user.email}"
 
 class StudentUnreadNotification(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.OneToOneField(Student, on_delete=models.CASCADE)
     unread_notifications = models.PositiveIntegerField(default=0)
 
 class StudentNotification(models.Model):

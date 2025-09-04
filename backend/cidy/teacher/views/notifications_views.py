@@ -55,7 +55,6 @@ def get_notifications(request):
     notifications = TeacherNotification.objects.filter(teacher=teacher
                                                       ).exclude(id__gte=int(start_from_notification_id)
                                                       ).order_by('-id')
-        
     # Paginate results
     paginator = Paginator(notifications, 30)
     try:

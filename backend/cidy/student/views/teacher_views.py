@@ -2,9 +2,8 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from teacher.models import Teacher, TeacherSubject,Subject
-from teacher.serializers.price_serializers import SubjectSerializer
-from student.models import Student, StudentNotification
+from teacher.models import Teacher,Subject,TeacherNotification
+from teacher.serializers import SubjectSerializer
 from common.tools import increment_teacher_unread_notifications
 from ..serializers import TeacherListSerializer
 
@@ -13,7 +12,7 @@ from ..serializers import TeacherListSerializer
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_student_possible_subjects(request):
-    """Get all subjects available for the student's level and section."""
+    """Get all of the subjects that the student can study for his level and section."""
     student = request.user.student
     student_level = student.level
     student_section = student.section
@@ -76,38 +75,23 @@ def get_teachers(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def enroll_in_subjects(request, teacher_id):
-    """Send an enrollment request notification to a teacher"""
+def send_a_student_request(request, teacher_id):
+    """Send a student request notification to a teacher"""
     student = request.user.student
-    subjects_to_enroll = request.data.get('subject_ids', [])
+    requested_teacher_subjects = request.data.get('requested_teacher_subjects', [])
 
-    if not subjects_to_enroll:
-        return JsonResponse({'status': 'error', 'message': 'At least one subject must be selected'}, status=400)
-
-    try:
+    try : 
         teacher = Teacher.objects.get(id=teacher_id)
     except Teacher.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Teacher not found'}, status=404)
 
-    # Filter out subjects the student is already studying with this teacher
-    existing_subject_ids = TeacherSubject.objects.filter(
+    requested_subject_names = [subject['name'] for subject in requested_teacher_subjects]
+    TeacherNotification.objects.create(
         teacher=teacher,
-        group__groupenrollment__student=student
-    ).values_list('subject__id', flat=True)
-    subjects_to_enroll = [sub_id for sub_id in subjects_to_enroll if sub_id not in existing_subject_ids]
-
-    if not subjects_to_enroll:
-        return JsonResponse({'status': 'error', 'message': 'No new subjects to enroll in'}, status=400)
-
-    # Create a notification for the teacher
-    subject_names = TeacherSubject.objects.filter(id__in=subjects_to_enroll).values_list('subject__name', flat=True)
-    message = f"{student.fullname} has requested to enroll in the following subjects: {', '.join(subject_names)}"
-    StudentNotification.objects.create(
-        student=student,
-        teacher=teacher,
-        message=message,
-        meta_data={'subject_ids': subjects_to_enroll}
+        image=student.image,
+        message=f"l'étudiant {student.fullname} de niveau {student.level} {student.section if student.section else ''} veut s'inscrire dans la/les matière(s) suivante(s) : {', '.join(requested_subject_names)}.",
+        meta_data={'student_id': student.id, 'requested_teacher_subjects': requested_teacher_subjects}
     )
     increment_teacher_unread_notifications(teacher)
 
-    return JsonResponse({'status': 'success', 'message': 'Enrollment request sent successfully'})
+    return JsonResponse({'status': 'success', 'message': 'Student request sent successfully to the teacher'})

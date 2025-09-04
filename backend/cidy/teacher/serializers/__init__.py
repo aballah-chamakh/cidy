@@ -1,10 +1,12 @@
 from .price_serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
                                 TeacherSubjectSerializer,
-                                StudentListToReplaceBySerializer)
+                                StudentListToReplaceBySerializer,
+                                SubjectSerializer)
 from .group_serializers import (GroupListSerializer,GroupCreateUpdateSerializer,
                                 GroupDetailsSerializer,GroupStudentListSerializer,
                                 GroupCreateStudentSerializer,)
 from .student_serializers import (TeacherStudentListSerializer,
                                   TeacherStudentCreateSerializer,
-                                  TeacherStudentDetailSerializer)
+                                  TeacherStudentDetailSerializer,
+                                  TeacherClassListSerializer)
 from .notification_serializers import TeacherNotificationSerializer

@@ -17,7 +17,6 @@ class SubjectSerializer(serializers.ModelSerializer):
         model = Subject
         fields = ['id', 'name']
 
-
 class TeacherSubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherSubject

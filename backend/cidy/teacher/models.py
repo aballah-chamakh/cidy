@@ -1,14 +1,12 @@
 from django.db import models
 from account.models import User
 from student.models import Student
-from django.db.models.signals import m2m_changed
-from django.dispatch import receiver
-
 
 class Level(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
 class Section(models.Model):
+    image = models.ImageField(null=True, blank=True)
     name = models.CharField(max_length=100, unique=True)
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
 
@@ -30,7 +28,7 @@ class Teacher(models.Model):
 
 class TeacherSubject(models.Model): 
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    teacher_subject = models.ForeignKey(Level, on_delete=models.CASCADE)
+    level = models.ForeignKey(Level, on_delete=models.CASCADE)
     section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True,blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     price_per_class = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -79,7 +77,7 @@ class Group(models.Model):
         ('Sunday', 'Sunday'),
     ], null=True)
     temporary_start_time = models.TimeField(null=True, blank=True)
-    temporary_start_time = models.TimeField(null=True, blank=True)
+    temporary_end_time = models.TimeField(null=True, blank=True)
     clear_temporary_schedule_at = models.DateTimeField(null=True, blank=True)
     students = models.ManyToManyField(Student,through="GroupEnrollment",related_name="groups")
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
