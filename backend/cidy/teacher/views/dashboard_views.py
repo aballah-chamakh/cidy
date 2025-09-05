@@ -1,6 +1,6 @@
-from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from ..models import Class, Group, GroupEnrollment, TeacherSubject
 from datetime import datetime, timedelta
 
@@ -32,7 +32,7 @@ def get_dashboard_data(request):
     has_groups = Group.objects.filter(teacher=teacher).exists()
     
     if not has_groups:
-        return JsonResponse({
+        return Response({
             'has_groups': False
         })
     
@@ -118,7 +118,7 @@ def get_dashboard_data(request):
             dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_unpaid_amount'] += group_enrollment.unpaid_amount
             dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_active_students'] += 1
 
-    return JsonResponse({
+    return Response({
         'has_groups': True,
         'dashboard': dashboard
     })

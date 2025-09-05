@@ -1,6 +1,6 @@
-from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from teacher.serializers import (
     TeacherAccountInfoSerializer,
     UpdateTeacherAccountInfoSerializer,
@@ -13,7 +13,7 @@ def get_account_info(request):
     """Retrieve the account information of the logged-in teacher."""
     teacher = request.user.teacher
     serializer = TeacherAccountInfoSerializer(teacher, context={'request': request})
-    return JsonResponse({'teacher_account_data': serializer.data}, status=200)
+    return Response({'teacher_account_data': serializer.data}, status=200)
 
 
 @api_view(['PUT'])
@@ -27,8 +27,8 @@ def update_account_info(request):
     if serializer.is_valid():
         serializer.save()
 
-        return JsonResponse({"message": "Account info updated successfully"}, status=200)
-    return JsonResponse({"error": serializer.errors}, status=400)
+        return Response({"message": "Account info updated successfully"}, status=200)
+    return Response({"error": serializer.errors}, status=400)
 
 
 @api_view(['PUT'])
@@ -41,5 +41,5 @@ def change_password(request):
     )
     if serializer.is_valid():
         serializer.save()
-        return JsonResponse({"message": "Password changed successfully"}, status=200)
-    return JsonResponse({"error": serializer.errors}, status=400)
+        return Response({"message": "Password changed successfully"}, status=200)
+    return Response({"error": serializer.errors}, status=400)

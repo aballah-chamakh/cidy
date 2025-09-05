@@ -1,4 +1,3 @@
-from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from ..serializers import (
@@ -7,6 +6,8 @@ from ..serializers import (
     ChangeStudentPasswordSerializer,
     IncompatibleGroupsSerializer
 )
+from rest_framework.response import Response
+
 from teacher.models import GroupEnrollment
 from parent.models import ParentNotification
 from common.tools import increment_parent_unread_notifications
@@ -19,7 +20,7 @@ def get_account_info(request):
     """Retrieve the account information of the logged-in student."""
     student = request.user.student
     serializer = StudentAccountInfoSerializer(student, context={'request': request})
-    return JsonResponse({'student_account_data': serializer.data}, status=200)
+    return Response({'student_account_data': serializer.data}, status=200)
 
 
 
@@ -32,7 +33,7 @@ def get_incompatible_groups_with_the_new_level_and_section(request):
     new_section_id = request.data.get('section_id',None)
 
     if not new_level_id : 
-        return JsonResponse({'error': 'Level ID is required.'}, status=400)
+        return Response({'error': 'Level ID is required.'}, status=400)
 
     # Check if the new level and section are compatible with the student's groups
     if new_section_id is None:
@@ -41,7 +42,7 @@ def get_incompatible_groups_with_the_new_level_and_section(request):
         incompatible_groups = student.groups.exclude(teacher_subject__level__id=new_level_id, teacher_subject__section__id=new_section_id)
     
     serializer = IncompatibleGroupsSerializer(incompatible_groups, many=True)
-    return JsonResponse({'levels_and_sections': serializer.data}, status=200)
+    return Response({'levels_and_sections': serializer.data}, status=200)
 
 
 @api_view(['PUT'])
@@ -73,8 +74,8 @@ def update_account_info(request):
                     message=f"{son_pronoun} a quitté le(s) groupe(s) de la/les matière(s) suivante(s) : {subjects}"
                 )
                 increment_parent_unread_notifications(son.parent)
-        return JsonResponse({"message": "Account info updated successfully"}, status=200)
-    return JsonResponse({"error": serializer.errors}, status=400)
+        return Response({"message": "Account info updated successfully"}, status=200)
+    return Response({"error": serializer.errors}, status=400)
 
 
 @api_view(['PUT'])
@@ -87,5 +88,5 @@ def change_password(request):
     )
     if serializer.is_valid():
         serializer.save()
-        return JsonResponse({"message": "Password changed successfully"}, status=200)
-    return JsonResponse({"error": serializer.errors}, status=400)
+        return Response({"message": "Password changed successfully"}, status=200)
+    return Response({"error": serializer.errors}, status=400)

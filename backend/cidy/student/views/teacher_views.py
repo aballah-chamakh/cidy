@@ -1,7 +1,7 @@
-from django.http import JsonResponse
 from django.core.paginator import Paginator
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from teacher.models import Teacher,Subject,TeacherNotification
 from teacher.serializers import SubjectSerializer
 from common.tools import increment_teacher_unread_notifications
@@ -25,7 +25,7 @@ def get_student_possible_subjects(request):
 
     serializer = SubjectSerializer(subjects, many=True)
 
-    return JsonResponse({'subjects': serializer.data})
+    return Response({'subjects': serializer.data})
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -40,10 +40,16 @@ def get_teachers(request):
     student_section = student.section
 
     # Filter teachers based on level and section of the student 
-    teachers = Teacher.objects.filter(
-        teachersubject_set__level=student_level,
-        teachersubject_set__section=student_section if student_section else None
-    ).distinct()
+    if not student_section : 
+        teachers = Teacher.objects.filter(
+            teachersubject_set__level=student_level,
+            teachersubject_set__section__isnull=True
+        ).distinct()
+    else :
+        teachers = Teacher.objects.filter(
+            teachersubject_set__level=student_level,
+            teachersubject_set__section=student_section
+        ).distinct()    
 
     # Apply fullname filter
     if fullname_filter:
@@ -66,7 +72,7 @@ def get_teachers(request):
     # Serialize the teachers
     serializer = TeacherListSerializer(paginated_teachers, many=True, context={'student':student} )
 
-    return JsonResponse({
+    return Response({
         'teachers': serializer.data,
         'total_count': paginator.count,
         'current_page': page
@@ -83,7 +89,7 @@ def send_a_student_request(request, teacher_id):
     try : 
         teacher = Teacher.objects.get(id=teacher_id)
     except Teacher.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Teacher not found'}, status=404)
+        return Response({'status': 'error', 'message': 'Teacher not found'}, status=404)
 
     requested_subject_names = [subject['name'] for subject in requested_teacher_subjects]
     TeacherNotification.objects.create(
@@ -94,4 +100,4 @@ def send_a_student_request(request, teacher_id):
     )
     increment_teacher_unread_notifications(teacher)
 
-    return JsonResponse({'status': 'success', 'message': 'Student request sent successfully to the teacher'})
+    return Response({'status': 'success', 'message': 'Student request sent successfully to the teacher'})

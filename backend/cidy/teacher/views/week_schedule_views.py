@@ -1,11 +1,10 @@
-from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from ..models import Group
 from student.models import StudentNotification, StudentUnreadNotification
 from parent.models import ParentNotification, ParentUnreadNotification
 from ..serializers import GroupCreateUpdateSerializer
-from django.db.models import Q
 
 def increment_student_unread_notifications(student):
     """Helper function to increment student unread notifications count"""
@@ -53,7 +52,7 @@ def get_week_schedule(request):
             'students_count': group.students.count()
         })
     
-    return JsonResponse({'groups': schedule_data})
+    return Response({'groups': schedule_data})
 
 # review it
 @api_view(['PUT'])
@@ -67,14 +66,14 @@ def update_group_schedule(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
     
     # pass the data to update the serializer
     serializer = GroupCreateUpdateSerializer(group,data=request.data, context={'request': request}, partial=True)
     
     # Validate the data
     if not serializer.is_valid():
-        return JsonResponse({'error': serializer.errors}, status=400)
+        return Response({'error': serializer.errors}, status=400)
     
     # update the group
     group = serializer.save()
@@ -108,7 +107,7 @@ def update_group_schedule(request, group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({
+    return Response({
         'status': 'success',
         'message': 'Group schedule updated successfully',
     })

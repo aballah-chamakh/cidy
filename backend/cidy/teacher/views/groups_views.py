@@ -1,10 +1,11 @@
 from datetime import datetime
 
-from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from student.models import Student, StudentNotification, StudentUnreadNotification
 from parent.models import ParentNotification, ParentUnreadNotification
@@ -26,12 +27,12 @@ def can_create_group(request):
     has_level_with_subjects = TeacherSubject.objects.filter(teacher=teacher).exists()
     
     if not has_level_with_subjects:
-        return JsonResponse({
+        return Response({
             'can_create': False,
             'message': 'You need to set up at least one level with subjects in the Prices screen before creating a group.'
         })
     
-    return JsonResponse({
+    return Response({
         'can_create': True
     })
 
@@ -45,7 +46,7 @@ def get_groups(request):
     
     # Check if teacher has any groups
     if not groups.exists():
-        return JsonResponse({
+        return Response({
             'has_groups': False
         })
     
@@ -121,7 +122,7 @@ def get_groups(request):
     teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level','section','subject')
     teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects,many=True)
 
-    return JsonResponse({
+    return Response({
         'has_groups': True,
         'groups_total_count': paginator.count,
         'current_page': page,
@@ -140,12 +141,12 @@ def create_group(request):
     
     # Validate the data
     if not serializer.is_valid():
-        return JsonResponse({'error': serializer.errors}, status=400)
+        return Response({'error': serializer.errors}, status=400)
     
     # Create the group
     group = serializer.save()
     
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Group created successfully'
     })
@@ -159,7 +160,7 @@ def delete_groups(request):
     group_ids = request.data.get('group_ids', [])
     
     if not group_ids:
-        return JsonResponse({'error': 'No groups selected'}, status=400)
+        return Response({'error': 'No groups selected'}, status=400)
     
     # Get the groups to delete
     groups = Group.objects.filter(teacher=teacher, id__in=group_ids)
@@ -190,7 +191,7 @@ def delete_groups(request):
                 increment_parent_unread_notifications(son.parent)
         group.delete()    
     
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': f'{len(groups)} groups deleted successfully'
     })
@@ -205,13 +206,13 @@ def get_group_details(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
     
     
     serializer = GroupDetailsSerializer(group,context={'request':request})
 
     
-    return JsonResponse(serializer.data)
+    return Response(serializer.data)
 
 
 @api_view(['PUT'])
@@ -222,14 +223,14 @@ def edit_group(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
     
     # pass the data to update the serializer
     serializer = GroupCreateUpdateSerializer(group,data=request.data, context={'request': request}, partial=True)
     
     # Validate the data
     if not serializer.is_valid():
-        return JsonResponse({'error': serializer.errors}, status=400)
+        return Response({'error': serializer.errors}, status=400)
     
     # update the group
     group = serializer.save()
@@ -264,7 +265,7 @@ def edit_group(request, group_id):
                 )
                 increment_parent_unread_notifications(son.parent)
     
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Group updated successfully'
     })
@@ -281,7 +282,7 @@ def get_group_students(request,group_id):
     try: 
         group = Group.objects.get(id=group_id,teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     # Get students associated with this group
     students = group.students.all()
@@ -304,7 +305,7 @@ def get_group_students(request,group_id):
     
     serializer = GroupStudentListSerializer(paginated_students,many=True)
     
-    return JsonResponse({
+    return Response({
         'students': serializer.data,
         'total_students': paginator.count,
     })
@@ -319,14 +320,14 @@ def create_group_student(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     # Create a serializer with the request data
     serializer = GroupCreateStudentSerializer(data=request.data)
 
     # Validate the data
     if not serializer.is_valid():
-        return JsonResponse({'error': serializer.errors}, status=400)
+        return Response({'error': serializer.errors}, status=400)
 
     # Save the student
     student = serializer.save(level=group.teacher_subject.level,section=group.teacher_subject.section)
@@ -335,7 +336,7 @@ def create_group_student(request, group_id):
     group.students.add(student)
 
     
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Student created and added to the group successfully'
     })
@@ -349,7 +350,7 @@ def add_students_to_group(request,group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
     
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
@@ -381,7 +382,7 @@ def add_students_to_group(request,group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Students added to the group successfully'
     })
@@ -396,15 +397,15 @@ def remove_students_from_group(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
-        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+        return Response({'error': 'No student IDs provided'}, status=400)
 
     students_to_remove = group.students.filter(id__in=student_ids)
     if not students_to_remove.exists():
-        return JsonResponse({'error': 'No matching students found in the group'}, status=404)
+        return Response({'error': 'No matching students found in the group'}, status=404)
 
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
@@ -435,7 +436,7 @@ def remove_students_from_group(request, group_id):
         # Remove the student from the group
         group.students.remove(student)
 
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': f'{students_to_remove.count()} students removed from the group successfully'
     })
@@ -448,14 +449,14 @@ def mark_attendance(request, group_id):
     # validate the request data
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
-        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+        return Response({'error': 'No student IDs provided'}, status=400)
 
     attendance_date = request.data.get('attendance_date')
     attendance_start_time = request.data.get('attendance_start_time')
     attendance_end_time = request.data.get('attendance_end_time')
     
     if not attendance_date or not attendance_start_time or not attendance_end_time:
-        return JsonResponse({'error': 'Date and time range are required for the "specify" option'}, status=400)
+        return Response({'error': 'Date and time range are required for the "specify" option'}, status=400)
 
     attendance_date = datetime.strptime(attendance_date, "%d/%m/%Y").date()
     attendance_start_time = datetime.strptime(attendance_start_time, "%H:%M").time()
@@ -467,12 +468,12 @@ def mark_attendance(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     # check if these students are enrolled in the group of the teacher
     students = group.students.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
     if not students.exists():
-        return JsonResponse({'error': 'No students found in the group'}, status=404)
+        return Response({'error': 'No students found in the group'}, status=404)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher, level=group.level, section=group.section, subject=group.subject).first()
 
@@ -527,7 +528,7 @@ def mark_attendance(request, group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Attendance marked successfully'
     })
@@ -541,17 +542,17 @@ def unmark_attendance(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
-        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+        return Response({'error': 'No student IDs provided'}, status=400)
 
     num_classes_to_unmark = request.data.get('num_classes_to_unmark')
     if not num_classes_to_unmark or not isinstance(num_classes_to_unmark, int) or num_classes_to_unmark < 1:
-        return JsonResponse({'error': 'Invalid number of classes to unmark'}, status=400)
+        return Response({'error': 'Invalid number of classes to unmark'}, status=400)
 
     students = group.students.filter(id__in=student_ids)
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
@@ -607,7 +608,7 @@ def unmark_attendance(request, group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Attendance unmarked successfully'
     })
@@ -620,14 +621,14 @@ def mark_absence(request,group_id):
     # validate the request data
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
-        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+        return Response({'error': 'No student IDs provided'}, status=400)
 
     absence_date = request.data.get('absence_date')
     absence_start_time = request.data.get('absence_start_time')
     absence_end_time = request.data.get('absence_end_time')
 
     if not absence_date or not absence_start_time or not absence_end_time:
-        return JsonResponse({'error': 'Date and time range are required'}, status=400)
+        return Response({'error': 'Date and time range are required'}, status=400)
 
     absence_date = datetime.strptime(absence_date, "%d/%m/%Y").date()
     absence_start_time = datetime.strptime(absence_start_time, "%H:%M").time()
@@ -639,12 +640,12 @@ def mark_absence(request,group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     # check if these students have a relationship with the teacher
     students = Student.objects.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
     if not students.exists():
-        return JsonResponse({'error': 'No students found in the group'}, status=404)
+        return Response({'error': 'No students found in the group'}, status=404)
 
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
@@ -704,7 +705,7 @@ def mark_absence(request,group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse(response)
+    return Response(response)
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
@@ -714,11 +715,11 @@ def unmark_absence(request,group_id):
     # validate the request data
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
-        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+        return Response({'error': 'No student IDs provided'}, status=400)
 
     number_of_classes_to_unmark = request.data.get('number_of_classes_to_unmark')
     if not number_of_classes_to_unmark or not isinstance(number_of_classes_to_unmark, int) or number_of_classes_to_unmark < 1:
-        return JsonResponse({'error': 'Invalid number of classes to unmark'}, status=400)
+        return Response({'error': 'Invalid number of classes to unmark'}, status=400)
 
     teacher = request.user.teacher
 
@@ -726,12 +727,12 @@ def unmark_absence(request,group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     # check if these students have a relationship with the teacher
     students = Student.objects.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
     if not students.exists():
-        return JsonResponse({'error': 'No students found in the group'}, status=404)
+        return Response({'error': 'No students found in the group'}, status=404)
 
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
@@ -742,7 +743,7 @@ def unmark_absence(request,group_id):
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
         existing_classes = student_group_enrollment.class_set.filter(status='absent').order_by('-absence_date')[:number_of_classes_to_unmark]
         if not existing_classes.exists():
-            return JsonResponse({'error': 'No absent classes found to unmark'}, status=404)
+            return Response({'error': 'No absent classes found to unmark'}, status=404)
         
         classes_to_unmark_their_absence_count = existing_classes.count()
         # delete these absent classes
@@ -771,7 +772,7 @@ def unmark_absence(request,group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Absences were unmarked successfully.'
     })
@@ -785,22 +786,22 @@ def mark_payment(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
-        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+        return Response({'error': 'No student IDs provided'}, status=400)
 
     num_classes_to_mark = request.data.get('num_classes_to_mark')
     payment_datetime = request.data.get('payment_datetime')
 
     if not num_classes_to_mark or not isinstance(num_classes_to_mark, int) or num_classes_to_mark < 1:
-        return JsonResponse({'error': 'Invalid number of classes to mark as paid'}, status=400)
+        return Response({'error': 'Invalid number of classes to mark as paid'}, status=400)
 
     if not payment_datetime:
-        return JsonResponse({'error': 'Payment datetime is required'}, status=400)
+        return Response({'error': 'Payment datetime is required'}, status=400)
 
     payment_datetime = datetime.strptime(payment_datetime, "%H:%M:%S-%d/%m/%Y")
 
@@ -859,7 +860,7 @@ def mark_payment(request, group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Payment marked successfully'
     })
@@ -874,18 +875,18 @@ def unmark_payment(request, group_id):
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
     except Group.DoesNotExist:
-        return JsonResponse({'error': 'Group not found'}, status=404)
+        return Response({'error': 'Group not found'}, status=404)
 
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
-        return JsonResponse({'error': 'No student IDs provided'}, status=400)
+        return Response({'error': 'No student IDs provided'}, status=400)
 
     num_classes_to_unmark = request.data.get('num_classes_to_unmark')
 
     if not num_classes_to_unmark or not isinstance(num_classes_to_unmark, int) or num_classes_to_unmark < 1:
-        return JsonResponse({'error': 'Invalid number of classes to unmark their payment'}, status=400)
+        return Response({'error': 'Invalid number of classes to unmark their payment'}, status=400)
 
 
     students = Student.objects.filter(id__in=student_ids)
@@ -944,7 +945,7 @@ def unmark_payment(request, group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({
+    return Response({
         'success': True,
         'message': 'Payment marked successfully'
     })

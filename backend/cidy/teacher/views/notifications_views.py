@@ -1,7 +1,7 @@
-from django.http import JsonResponse
 from django.core.paginator import Paginator
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from student.models import Student,StudentNotification
 from parent.models import Parent,ParentNotification,Son
@@ -17,7 +17,7 @@ from ..serializers import TeacherNotificationSerializer,StudentListToReplaceBySe
 def get_unread_notifications_count(request):
     teacher = request.user.teacher
     teacher_unread_notifications = TeacherUnreadNotification.objects.get(teacher=teacher)
-    return JsonResponse({'unread_count': teacher_unread_notifications.unread_notifications})
+    return Response({'unread_count': teacher_unread_notifications.unread_notifications})
 
 # this will be used to mark the notifications as read after leaving the notification screen
 # starting from the last notification ID loaded in the screen and going backward 
@@ -27,14 +27,14 @@ def mark_notifications_as_read(request):
     last_notification_id = request.data.get('last_notification_id')
 
     if not last_notification_id or not isinstance(last_notification_id, int):
-        return JsonResponse({'status': 'error', 'message': 'Invalid notification ID'}, status=400)
+        return Response({'status': 'error', 'message': 'Invalid notification ID'}, status=400)
 
     teacher = request.user.teacher
     TeacherNotification.objects.filter(
         teacher=teacher,
         id__lte=last_notification_id
     ).update(is_read=True)
-    return JsonResponse({'status': 'success'})
+    return Response({'status': 'success'})
 
 
 
@@ -47,7 +47,7 @@ def get_notifications(request):
     # Get query parameters
     start_from_notification_id = request.GET.get('start_from_notification_id')
     if not start_from_notification_id or not start_from_notification_id.isdigit():
-        return JsonResponse({'status': 'error', 'message': 'Invalid start_from_notification_id'}, status=400)
+        return Response({'status': 'error', 'message': 'Invalid start_from_notification_id'}, status=400)
 
     page = request.GET.get('page', 1)
     
@@ -67,7 +67,7 @@ def get_notifications(request):
     # Serialize the data
     serializer = TeacherNotificationSerializer(paginated_notifications, many=True)
     
-    return JsonResponse({
+    return Response({
         'notifications': serializer.data,
         'unread_count': teacher.teacher_unread_notifications.unread_notifications,
         'total_count': paginator.count,
@@ -86,7 +86,7 @@ def get_new_notifications(request):
     # Get query parameters
     start_from_notification_id = request.GET.get('start_from_notification_id')
     if not start_from_notification_id or not start_from_notification_id.isdigit():
-        return JsonResponse({'status': 'error', 'message': 'Invalid start_from_notification_id'}, status=400)
+        return Response({'status': 'error', 'message': 'Invalid start_from_notification_id'}, status=400)
 
 
     # Get notifications with IDs >= start_from_notification_id (to avoid duplicates notifications in the screen)
@@ -96,7 +96,7 @@ def get_new_notifications(request):
     # Serialize the data
     serializer = TeacherNotificationSerializer(notifications, many=True)
     
-    return JsonResponse({
+    return Response({
         'new_notifications': serializer.data,
     })
 
@@ -113,9 +113,9 @@ def mark_a_notification_as_read(request, notification_id):
         notification = TeacherNotification.objects.get(id=notification_id, teacher=teacher)
         notification.is_read = True
         notification.save()
-        return JsonResponse({'status': 'success'})
+        return Response({'status': 'success'})
     except TeacherNotification.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+        return Response({'status': 'error', 'message': 'Notification not found'}, status=404)
     
 
 
@@ -127,7 +127,7 @@ def student_request_accept_form_data(request, notification_id):
     teacher = request.user.teacher
     teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
     if not teacher_notification:
-        return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+        return Response({'status': 'error', 'message': 'Notification not found'}, status=404)
     
     # mark the notification as read 
     teacher_notification.is_read = True
@@ -165,7 +165,7 @@ def student_request_accept_form_data(request, notification_id):
         'students_to_replace_by_options' : students_to_replace_by_options,
         'requested_teacher_subjects' : requested_teacher_subjects
     }
-    return JsonResponse({'status': 'success', 'data': data})
+    return Response({'status': 'success', 'data': data})
 
 
 
@@ -176,14 +176,14 @@ def accept_student_request(request, notification_id):
     # ensure that the teacher accepted at least one subject 
     accepted_subjects = request.data.get('accepted_subjects', [])
     if not accepted_subjects : 
-        return JsonResponse({'status': 'error', 'message': 'At least one subject must be accepted'}, status=400)
+        return Response({'status': 'error', 'message': 'At least one subject must be accepted'}, status=400)
 
     # get the teacher notification of the notification_id to get the student id
     teacher = request.user.teacher
     teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
     
     if not teacher_notification:
-        return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+        return Response({'status': 'error', 'message': 'Notification not found'}, status=404)
 
     # mark the notification as accepted
     teacher_notification.meta_data['accepted'] = True 
@@ -259,7 +259,7 @@ def accept_student_request(request, notification_id):
         )
         increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({'status': 'success','message':"the student request was accepted successfully"})
+    return Response({'status': 'success','message':"the student request was accepted successfully"})
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
@@ -269,7 +269,7 @@ def reject_student_request(request, notification_id):
     teacher = request.user.teacher
     teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
     if not teacher_notification:
-        return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+        return Response({'status': 'error', 'message': 'Notification not found'}, status=404)
 
     # mark the rejection of the student request
     teacher_notification.meta_data['accepted'] = False
@@ -303,7 +303,7 @@ def reject_student_request(request, notification_id):
         )
         increment_parent_unread_notifications(son.parent)
 
-    return JsonResponse({'status': 'success','message':"the student request was rejected successfully"})
+    return Response({'status': 'success','message':"the student request was rejected successfully"})
 
 
 @api_view(['GET'])
@@ -313,7 +313,7 @@ def parent_request_accept_form_data(request, notification_id):
     teacher = request.user.teacher
     teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
     if not teacher_notification:
-        return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+        return Response({'status': 'error', 'message': 'Notification not found'}, status=404)
 
     # mark the notification as read
     teacher_notification.is_read = True
@@ -353,7 +353,7 @@ def parent_request_accept_form_data(request, notification_id):
         'sons' : requested_sons_json
     }
 
-    return JsonResponse({'status': 'success', 'form_data': form_data})
+    return Response({'status': 'success', 'form_data': form_data})
 
 
 @api_view(['PUT'])
@@ -361,13 +361,13 @@ def parent_request_accept_form_data(request, notification_id):
 def accept_parent_request(request, notification_id):
     accepted_sons = request.data.get('accepted_sons', [])
     if not accepted_sons:
-        return JsonResponse({'status': 'error', 'message': 'you must attach at least one son to a student'}, status=400)
+        return Response({'status': 'error', 'message': 'you must attach at least one son to a student'}, status=400)
 
     # Get the teacher notification of the parent request
     teacher = request.user.teacher
     teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
     if not teacher_notification:
-        return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+        return Response({'status': 'error', 'message': 'Notification not found'}, status=404)
 
 
     # Mark the notification of the parent request as accepted
@@ -418,7 +418,7 @@ def accept_parent_request(request, notification_id):
     )
     increment_parent_unread_notifications(requesting_parent)
 
-    return JsonResponse({'status': 'success', 'message': 'Parent request accepted successfully'})
+    return Response({'status': 'success', 'message': 'Parent request accepted successfully'})
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
@@ -427,7 +427,7 @@ def decline_parent_request(request, notification_id):
     teacher = request.user.teacher
     teacher_notification = TeacherNotification.objects.get(teacher=teacher, id=notification_id)
     if not teacher_notification:
-        return JsonResponse({'status': 'error', 'message': 'Notification not found'}, status=404)
+        return Response({'status': 'error', 'message': 'Notification not found'}, status=404)
 
     # Mark the notification of the parent request as declined
     teacher_notification.meta_data['declined'] = True
@@ -449,4 +449,4 @@ def decline_parent_request(request, notification_id):
     )
     increment_parent_unread_notifications(requesting_parent)
 
-    return JsonResponse({'status': 'success', 'message': 'Parent request declined successfully'})
+    return Response({'status': 'success', 'message': 'Parent request declined successfully'})

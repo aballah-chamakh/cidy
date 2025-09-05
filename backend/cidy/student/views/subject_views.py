@@ -1,6 +1,6 @@
-from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from teacher.models import GroupEnrollment
 from django.db.models import Sum
 from ..serializers import StudentSubjectListSerializer,StudentSubjectDetailSerializer
@@ -30,7 +30,7 @@ def get_student_subject_list(request):
 
     serializer = StudentSubjectListSerializer(group_enrollments, many=True)
 
-    return JsonResponse({
+    return Response({
         'total_paid_amount': total_paid_amount,
         'total_unpaid_amount': total_unpaid_amount,
         'subjects': serializer.data
@@ -46,8 +46,8 @@ def get_subject_detail(request, group_enrollment_id):
     try:
         group_enrollment = GroupEnrollment.objects.get(id=group_enrollment_id, student=student)
     except GroupEnrollment.DoesNotExist:
-        return JsonResponse({'error': 'Subject not found'}, status=404)
+        return Response({'error': 'Subject not found'}, status=404)
 
     serializer = StudentSubjectDetailSerializer(group_enrollment)
 
-    return JsonResponse(serializer.data)
+    return Response(serializer.data)
