@@ -17,4 +17,12 @@ urlpatterns = [
     path('subjects/', views.get_student_subject_list, name='student_get_subject_list'),
     path('subjects/<int:group_enrollment_id>/', views.get_subject_detail, name='student_get_subject_detail'),
 
+    # Account endpoints
+    path('account/get_info/', views.get_account_info, name='student_get_account_info'),
+    path('account/update_info/', views.update_account_info, name='student_update_account_info'),
+    path('account/change_password/', views.change_password, name='student_change_password'),
+    path('account/get_incompatible_groups/', views.get_incompatible_groups_with_the_new_level_and_section, name='student_get_incompatible_groups'),
+
+    # Parent endpoints
+    path('parents/', views.get_student_parents, name='student_get_parents'),
 ]

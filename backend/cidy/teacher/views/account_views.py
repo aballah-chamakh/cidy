@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from teacher.serializers.account_serializers import (
+from teacher.serializers import (
     TeacherAccountInfoSerializer,
     UpdateTeacherAccountInfoSerializer,
     ChangeTeacherPasswordSerializer,
@@ -26,6 +26,7 @@ def update_account_info(request):
     )
     if serializer.is_valid():
         serializer.save()
+
         return JsonResponse({"message": "Account info updated successfully"}, status=200)
     return JsonResponse({"error": serializer.errors}, status=400)
 
