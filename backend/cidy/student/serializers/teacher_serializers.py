@@ -11,8 +11,9 @@ class TeacherSubjectListSerializer(serializers.ModelSerializer):
 
 
 class TeacherListSerializer(serializers.ModelSerializer):
-    subjects = serializers.SerializerMethodField()
+    image = serializers.ImageField(source='image.url', read_only=True)
     phone_number = serializers.CharField(source='user.phone_number',read_only=True)
+    subjects = serializers.SerializerMethodField()
 
     class Meta:
         model = Teacher
