@@ -1,0 +1,46 @@
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from ..serializers import (
+    ParentAccountInfoSerializer,
+    UpdateParentAccountInfoSerializer,
+    ChangeParentPasswordSerializer,
+)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_account_info(request):
+    """Retrieve the account information of the logged-in parent."""
+    parent = request.user.parent
+    serializer = ParentAccountInfoSerializer(parent, context={'request': request})
+    return Response({'parent_account_data': serializer.data}, status=200)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_account_info(request):
+    """Update the account information of the logged-in parent."""
+    parent = request.user.parent
+    serializer = UpdateParentAccountInfoSerializer(
+        parent, data=request.data, context={'request': request}
+    )
+    if serializer.is_valid():
+        serializer.save()
+
+        return Response({"message": "Account info updated successfully"}, status=200)
+    return Response({"error": serializer.errors}, status=400)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """Change the password of the logged-in parent."""
+    parent = request.user.parent
+    serializer = ChangeParentPasswordSerializer(
+        parent, data=request.data, context={'request': request}
+    )
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Password changed successfully"}, status=200)
+    return Response({"error": serializer.errors}, status=400)

@@ -2868,12 +2868,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - two radio buttons, pre-selected with the current gender of the son (required):
                                                             - "Male"
                                                             - "Female"
+                                                           - note : disable it if the son is attached to a student
                                             - row 4:
                                                 - col:
                                                     - row 1:
                                                         - the label: "Level"
                                                     - row 2:
                                                         - a select input for the level of the son, pre-filled with the current level of the son, which contains as options the list of all of the levels according to the Tunisian education system (required)
+                                                            - note : disable it if the son is attached to a student
                                             - row 5:
                                                 - col:
                                                     - row 1:
@@ -2884,6 +2886,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - disable it in the following cases:
                                                                 - if the parent didn't select a level yet
                                                                 - if the selected level doesn't have sections according to the Tunisian education system
+                                                                - if the son is attached to a student
                                     - row 3: the footer of the popup
                                         - col 1:
                                             - a "Cancel" button
@@ -2892,7 +2895,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - Dynamics:
                                 - clicking on the close icon, closes the popup form
                                 - clicking on the "Cancel" button of the popup form closes the popup form without editing the son 
-                                - clicking on the "edit" button of the popup form edits the son's data with the new values, closes the popup form, and updates the son card in the list
+                                - clicking on the "edit" button of the popup form : 
+                                    - edits the son's data with the new values, closes the popup form, and updates the son card in the list
 
                         - clicking on the "Add a son" button opens up a popup form : 
                             - UI : 

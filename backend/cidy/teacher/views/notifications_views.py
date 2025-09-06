@@ -69,7 +69,7 @@ def get_notifications(request):
     
     return Response({
         'notifications': serializer.data,
-        'unread_count': teacher.teacher_unread_notifications.unread_notifications,
+        'unread_count': teacher.teacherunreadnotifications.unread_notifications,
         'total_count': paginator.count,
         'total_pages': paginator.num_pages,
         'current_page': int(page)
@@ -383,7 +383,7 @@ def accept_parent_request(request, notification_id):
     for son in accepted_sons:
         son = Son.objects.get(parent=requesting_parent,id=son['id'])
         student = Student.objects.get(id=son['student_id'],teacher_enrollment_set__teacher=teacher)
-        son.student = student
+        son.student = student # we have to send a notification to the old student too 
         son.save()
 
     # Notify the selected students about their new parent

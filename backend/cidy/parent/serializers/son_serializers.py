@@ -1,17 +1,22 @@
 from datetime import datetime 
 from rest_framework import serializers
-from teacher.models import GroupEnrollment
-from teacher.serializers import TeacherClassListSerializer
+from teacher.models import GroupEnrollment,Level
+from teacher.serializers import TeacherClassListSerializer,SectionSerializer
 from ..models import Son
 
 class SonListSerializer(serializers.ModelSerializer):
     image = serializers.CharField(source='image.url', read_only=True)
     level = serializers.CharField(source='level.name', read_only=True)
     section = serializers.CharField(source='section.name', read_only=True)
+    has_student = serializers.SerializerMethodField()
 
     class Meta:
         model = Son
-        fields = ['id', 'image', 'fullname', 'level', 'section']
+        fields = ['id', 'image', 'fullname', 'level','gender', 'section', 'has_student']
+
+    def get_has_student(self, obj):
+        return obj.student.exists()
+    
 
 class SonSubjectListSerializer(serializers.ModelSerializer):
     image = serializers.CharField(source='group.teacher_subject.subject.image.url', read_only=True)
@@ -47,10 +52,11 @@ class SonDetailSerializer(serializers.ModelSerializer):
     level = serializers.CharField(source='level.name', read_only=True)
     section = serializers.CharField(source='section.name', read_only=True)
     subjects = serializers.SerializerMethodField()
+    has_student = serializers.SerializerMethodField()
 
     class Meta:
         model = Son
-        fields = ['id', 'image', 'fullname', 'level', 'section']
+        fields = ['id', 'image', 'fullname', 'level', 'section', 'has_student']
 
     def get_subjects(self, son):
         son_student = son.student
@@ -61,6 +67,9 @@ class SonDetailSerializer(serializers.ModelSerializer):
         son_subjects = serializer.data
         return son_subjects
     
+    def get_has_student(self, son):
+        return son.student.exists()
+
 
 class SonSubjectDetailSerializer(serializers.ModelSerializer):
     image = serializers.CharField(source='group.teacher_subject.subject.image.url', read_only=True)
@@ -94,3 +103,21 @@ class SonSubjectDetailSerializer(serializers.ModelSerializer):
     def get_classes(self, group_enrollment):
         classes_qs = group_enrollment.class_set.all()
         return TeacherClassListSerializer(classes_qs, many=True).data
+
+
+class TesLevelsSectionsSerializer(serializers.ModelSerializer):
+    sections = serializers.SerializerMethodField(many=True)
+
+    class Meta:
+        model = Level
+        fields = ['id', 'name', 'sections']
+
+    def get_sections(self, level):
+        sections = level.section_set.all()
+        return SectionSerializer(sections, many=True).data
+    
+
+class SonCreateEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Son
+        fields = ['id','image','fullname','gender', 'level', 'section']

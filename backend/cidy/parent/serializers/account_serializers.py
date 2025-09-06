@@ -1,0 +1,74 @@
+from rest_framework import serializers
+from ..models import Parent
+
+class ParentAccountInfoSerializer(serializers.ModelSerializer):
+    """Serializer for retrieving parent account information."""
+    image = serializers.ImageField(source='image.url', read_only=True)
+    email = serializers.EmailField(source='user.email', read_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', read_only=True)
+
+    class Meta:
+        model = Parent
+        fields = ['image', 'fullname', 'email', 'phone_number', 'gender']
+
+
+class UpdateParentAccountInfoSerializer(serializers.ModelSerializer):
+    """ModelSerializer for updating parent account information."""
+    email = serializers.EmailField(source='user.email', required=True, write_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', min_length=8, max_length=8, required=True, write_only=True)
+    current_password = serializers.CharField(write_only=True, required=True)
+
+    class Meta:
+        model = Parent
+        fields = ['image', 'fullname', 'email', 'phone_number', 'gender', 'current_password']
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Incorrect current password.")
+        return value
+
+    def update(self, parent, validated_data):
+        validated_data.pop('current_password', None)
+        email = validated_data.pop('email', None)
+        phone_number = validated_data.pop('phone_number', None)
+        user = parent.user
+
+        # Update user fields
+        if email is not None:
+            user.email = email
+        if phone_number is not None:
+            user.phone_number = phone_number
+        user.save()
+
+        return super().update(parent, validated_data)
+
+
+class ChangeParentPasswordSerializer(serializers.ModelSerializer):
+    """Serializer for changing parent password."""
+    current_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, min_length=8, required=True)
+
+    class Meta:
+        model = Parent
+        fields = ['current_password', 'new_password']
+
+
+    def validate_current_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Incorrect current password.")
+        return value
+    
+
+    def update(self, parent, validated_data):
+        # only update the password
+        new_password = validated_data.pop('new_password', None)
+        user = parent.user
+
+        if new_password is not None:
+            user.set_password(new_password)
+        user.save()
+
+        return parent
+
