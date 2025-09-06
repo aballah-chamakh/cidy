@@ -324,7 +324,7 @@ def parent_request_accept_form_data(request, notification_id):
     requesting_parent = Parent.objects.get(id=parent_id)
 
     # Get the requested sons to attach to students
-    requested_son_ids = teacher_notification.meta_data.get('requested_son_ids', [])
+    requested_son_ids = teacher_notification.meta_data['son_ids']
     requested_sons = Son.objects.filter(parent=requesting_parent,id__in=requested_son_ids)
 
     requested_sons_json = [

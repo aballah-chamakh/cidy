@@ -1,9 +1,9 @@
-from urllib import request
 from django.core.paginator import Paginator
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from teacher.models import Teacher,Level
+from common.tools import increment_parent_unread_notifications
+from teacher.models import Teacher,Level,TeacherNotification
 from ..serializers import TesLevelsSectionsSubjectsSerializer,TeacherListSerializer
 
 # this one will be user in the filter of the teacher list
@@ -21,6 +21,8 @@ def get_tes_levels_sections_subjects(request):
 @permission_classes([IsAuthenticated])
 def get_teachers(request):
     """Get a filtered and paginated list of teachers for the logged student"""
+
+    parent = request.user.parent
 
     fullname_filter = request.GET.get('fullname', None)
     level_id = request.GET.get('level_id', None)
@@ -73,11 +75,53 @@ def get_teachers(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def parenting_request_form_data(request,teacher_id):
+    
     try : 
         teacher = Teacher.objects.get(id=teacher_id)
     except Teacher.DoesNotExist:
         return Response({'error': 'Teacher not found'}, status=404)
     
     serializer = TeacherListSerializer(teacher)
+    teacher_detail = serializer.data
 
+    parent = request.user.parent
+    # Get all sons of the parent who aren't attached to a student enrolled with the teacher
+    parent_sons = parent.son_set.exclude(student__teacherenrollment__teacher=teacher).distinct()
+
+    return Response({'teacher': teacher_detail, 'parent_sons': parent_sons})
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def send_parenting_request(request, teacher_id):
+
+    try:
+        teacher = Teacher.objects.get(id=teacher_id)
+    except Teacher.DoesNotExist:
+        return Response({'error': 'Teacher not found'}, status=404)
+
+    son_ids = request.data.get('son_ids', [])
+    if not son_ids:
+        return Response({'error': 'No son IDs provided'}, status=400)
     
+
+    # ensure that the requested sons belong to the parent
+    if not (parent.son_set.filter(id__in=son_ids).count() == len(son_ids)):
+        return Response({'error': 'Invalid son IDs provided'}, status=400)
+
+    parent = request.user.parent
+    son_pronoun = "son fils" if parent.gender == "male" else "sa fille"
+    son_names = [son.fullname for son in parent.son_set.filter(id__in=son_ids)]
+    if len(son_ids) == 1:
+        message = f"Le parent {parent.fullname} demande un accès parental pour {son_pronoun} : {son_names[0]}."
+    else:
+        message = f"Le parent {parent.fullname} demande un accès parental pour ses enfants : {', '.join(son_names)}."
+    
+    TeacherNotification.objects.create(
+        image=parent.image,
+        teacher=teacher,
+        message=message,
+        meta_data={'parent_id': parent.id, 'son_ids': son_ids}
+    )
+
+    return Response({'success': 'Parenting request sent successfully'})

@@ -1,0 +1,96 @@
+from datetime import datetime 
+from rest_framework import serializers
+from teacher.models import GroupEnrollment
+from teacher.serializers import TeacherClassListSerializer
+from ..models import Son
+
+class SonListSerializer(serializers.ModelSerializer):
+    image = serializers.CharField(source='image.url', read_only=True)
+    level = serializers.CharField(source='level.name', read_only=True)
+    section = serializers.CharField(source='section.name', read_only=True)
+
+    class Meta:
+        model = Son
+        fields = ['id', 'image', 'fullname', 'level', 'section']
+
+class SonSubjectListSerializer(serializers.ModelSerializer):
+    image = serializers.CharField(source='group.teacher_subject.subject.image.url', read_only=True)
+    name = serializers.CharField(source='group.teacher_subject.subject.name', read_only=True)
+    teacher_name = serializers.CharField(source='group.teacher.fullname', read_only=True)
+    schedule = serializers.SerializerMethodField()
+    monthly_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupEnrollment
+        fields = ['id','image','name', 'teacher_name', 'schedule', 'monthly_price','paid_amount','unpaid_amount']
+
+    def get_schedule(self, group_enrollment):
+        schedule = {}
+        if group_enrollment.clear_temporary_schedule_at and group_enrollment.clear_temporary_schedule_at > datetime.now():
+            schedule['temporary'] = {
+                "week_day": group_enrollment.group.temporary_week_day,
+                "start_time": group_enrollment.group.temporary_start_time,
+                "end_time": group_enrollment.group.temporary_end_time,
+            }
+        schedule['permanent'] = {
+            "week_day": group_enrollment.group.week_day,
+            "start_time": group_enrollment.group.start_time,
+            "end_time": group_enrollment.group.end_time,
+        }
+        return schedule
+
+    def get_monthly_price(self, group_enrollment):
+        return group_enrollment.group.teacher_subject.price_per_class * 4  # Assuming 4 classes a month
+
+class SonDetailSerializer(serializers.ModelSerializer):
+    image = serializers.CharField(source='image.url', read_only=True)
+    level = serializers.CharField(source='level.name', read_only=True)
+    section = serializers.CharField(source='section.name', read_only=True)
+    subjects = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Son
+        fields = ['id', 'image', 'fullname', 'level', 'section']
+
+    def get_subjects(self, son):
+        son_student = son.student
+        if not son_student:
+            return []
+        student_group_enrollments = son_student.groupsenrollment_set.all()
+        serializer = SonSubjectListSerializer(student_group_enrollments, many=True)
+        son_subjects = serializer.data
+        return son_subjects
+    
+
+class SonSubjectDetailSerializer(serializers.ModelSerializer):
+    image = serializers.CharField(source='group.teacher_subject.subject.image.url', read_only=True)
+    name = serializers.CharField(source='group.teacher_subject.subject.name', read_only=True)
+    teacher_name = serializers.CharField(source='group.teacher.fullname', read_only=True)
+    schedule = serializers.SerializerMethodField()
+    monthly_price = serializers.SerializerMethodField()
+
+    class Meta:
+        model = GroupEnrollment
+        fields = ['id','image','name', 'teacher_name', 'schedule', 'monthly_price','paid_amount','unpaid_amount']
+
+    def get_schedule(self, group_enrollment):
+        schedule = {}
+        if group_enrollment.clear_temporary_schedule_at and group_enrollment.clear_temporary_schedule_at > datetime.now():
+            schedule['temporary'] = {
+                "week_day": group_enrollment.group.temporary_week_day,
+                "start_time": group_enrollment.group.temporary_start_time,
+                "end_time": group_enrollment.group.temporary_end_time,
+            }
+        schedule['permanent'] = {
+            "week_day": group_enrollment.group.week_day,
+            "start_time": group_enrollment.group.start_time,
+            "end_time": group_enrollment.group.end_time,
+        }
+        return schedule
+
+    def get_monthly_price(self, group_enrollment):
+        return group_enrollment.group.teacher_subject.price_per_class * 4  # Assuming 4 classes a month
+
+    def get_classes(self, group_enrollment):
+        classes_qs = group_enrollment.class_set.all()
+        return TeacherClassListSerializer(classes_qs, many=True).data

@@ -343,7 +343,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - closes the filter popup
                                         - updates the group list by replacing it with the first 30 groups that match the filters (name text input,all of the selects and the selectors of the filter popup form)
                             
-                            - clicking on the "add"  button opens up a popup form which contains 
+                            - clicking on the "add" button opens up a popup form which contains 
                                 UI : 
                                     - col : 
                                         - row 1 : in the header of the popup
@@ -496,7 +496,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - row 1 : the header of the student list card 
                                                         - col 1 : 
                                                             - in the most left, the title : {the number of students that belongs to the group filtered and non paginated} Student(s)
-                                                        - col 2  : 
+                                                        - col 2 : 
                                                             - in the most right, an "Add" button 
                                                     - row 2 : the content area of the student list card  :
                                                         - col : 
@@ -781,26 +781,18 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - row 3 :
                                                                             - col :
                                                                                 - row 1 :  
-                                                                                    - the label : "Choose the way you set the date and time of range of attendance :"
+                                                                                    - the label : "Date"
                                                                                 - row 2 : 
-                                                                                    - a radio button group with the following options:
-                                                                                        - "Next automatic date and time range"
-                                                                                        - "Specify the date and the time range"
-                                                                                        
-                                                                                - row 3 (visible only if "Specify the date and the time range" is selected): 
-                                                                                    - col :
-                                                                                        - row 1 :  
-                                                                                            - the label : "Date"
-                                                                                        - row 2 : 
-                                                                                            - a date picker (required,allow past dates)
-                                                                                        - row 3 :  
-                                                                                            - the label : "Time range"
-                                                                                        - row 4 : 
-                                                                                            - a time range selector (required,example : 18h to 21h)
-                                                                                - row 4 (visible only if "Next automatic date and time range" is selected): 
-                                                                                    - col :
-                                                                                        - row 1 :  
-                                                                                            - a label with the text: "Attendance will be marked based on the next automatic scheduled class for each student."
+                                                                                    - a date picker (required,allow past dates)
+                                                                                - row 3 :  
+                                                                                    - the label : "Start time"
+                                                                                - row 4 : 
+                                                                                    - a time picker (required)
+                                                                                - row 3 :  
+                                                                                    - the label : "End time"
+                                                                                - row 4 : 
+                                                                                    - a time picker (required)
+
                                                                 - row 3 : the footer of the popup
                                                                     - col 1 : 
                                                                         - a button with the name "Cancel"
@@ -910,7 +902,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - clicking on the "Cancel" button, closes the popup 
                                                             - clicking on the "Mark" button : 
                                                                 - for each selected students : 
-                                                                    - unmark the payment for his last {the specified number of classes} paid classes in this group throught returning their status to the previous ones which is either attended or future 
+                                                                    - unmark the payment for his last {the specified number of classes} paid classes in this group throught returning their status to attended 
                                                                     - if the number of the last paid classes of the student in this group are less than the {the specified number of classes}, just unmark the payment for the last paid classes of the student in this group
                                                                       throught returning their status to the previous ones which is either attended or future
                                                                     - if the student had an overflow of unnecessary class batches resulted from unmarking, delete them (unecessary class batch means : a class batch with only future classes)
@@ -1014,6 +1006,12 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system
                                                               and that level doesn't have subjects according to the data of the prices screen
                                                         validations : the value can be blank
+                                                - row 4 : 
+                                                    - a select input to sort the students by the following options :
+                                                        - paid amount descendant 
+                                                        - paid amount ascendant 
+                                                        - unpaid amount descendant
+                                                        - unpaid amount ascendant
                                                                 
                                         - row 3 : the footer of the popup 
                                             - row  : 
@@ -1114,7 +1112,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                 sends a notification to him informing him that the teacher ended the relationship with his sons
 
                                                     - then closes popup 
-                                                    - finally it updates the groups list by replacing it with the first 30 students that match the filters (name text input and all of the selects and the selectors of the filter popup form) 
+                                                    - finally it updates the student list by replacing it with the first 30 students that match the filters (name text input and all of the selects and the selectors of the filter popup form) 
 
                             - clicking on any part of a student card aside from the checkbox routes to the student detail screen : 
                                 - the title of the App Bar is : "Student"
@@ -1166,37 +1164,28 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 
                                             - row 5 : 
                                                 - col : 
-                                                    - row 1 : 
-                                                        - a header with the text : "{the number of class batches after filtering with the date range picker,and without pagination} Class Batches"
-                                                    if the student has no class batches in the selected group :
-                                                        - row 2 : 
-                                                            - a borderless rectangle which contains at the center of it the text : "This student doesn't have any class batches yet"
-                                                    if the student has class batches : 
-                                                        - row 2 :
-                                                            - a date range picker 
-                                                        - row 2 : the list of latest 30 class batches of the selected group and each class batch must be in a clickable card which contains : 
-                                                            - row : justify content : space around
-                                                                col 1 : 
-                                                                    -  a circle, which represents a class 
-                                                                col 2 : 
-                                                                    -  a circle, which represents a class  
-                                                                col 3 : 
-                                                                    -  a circle, which represents  a class
-                                                                col 4 : 
-                                                                    -  a circle, which represents a class
-                                                            notes : 
-                                                                - the stoke color of the batch card and the circle color represents the status of the payment and attendance of the student,
-                                                                following the following color code below  : 
-                                                                    - for the circle (class)
-                                                                        - red circle : the student attended this class , he still didn't pay for it and the payment is due (status : not_paid)
-                                                                        - orange circle : the student attended this class , he still didn't pay for it and the payment isn't due (status : not_due)
-                                                                        - green circle : the student attended this class and he paid for it (status : paid)
-                                                                        - gray circle : the class still in the future (status : future)
-                                                                    - for the cards (batch of classes)
-                                                                        - red stroke : the batch contains 4 classes that the student attended, didn't pay for them and their payment is due (status : not_paid)
-                                                                        - green stroke : the batch contains 4 classes that the student attended and he did pay for them (status : paid)
-                                                                        - orange stroke : the batch contains at least one class paid and the rest for the classes are due and not paid (status : partially_paid)
-                                                                        - gray stroke : the rest of the situation (status : not_due)
+                                                    - row:
+                                                        - a calendar component:
+                                                            - plots the student’s attended and paid classes in the selected group
+                                                            - plots placeholders for future classes based on the group’s weekly schedule
+                                                            - each class represented by a circle with the following color code:
+                                                                - red circle: attended but unpaid and payment is due
+                                                                - orange circle: attended but unpaid and payment is not due
+                                                                - green circle: attended and paid
+                                                                - gray circle: future class
+                                                            - tooltips for each kind of plotted class :
+                                                                - for attended classes : 
+                                                                    - status 
+                                                                    - date and time range of the attendance in the format : "Attended on DD/MM/YYYY from HH:MM to HH:MM"
+                                                                - for paid classes : 
+                                                                    - status 
+                                                                    - date and time range of the attendance in the format : "Attended on DD/MM/YYYY from HH:MM to HH:MM"
+                                                                    - payment datetime in the format : "Paid on DD/MM/YYYY at HH:MM"
+                                                                - for future classes :
+                                                                    - status
+                                                                    - date and time range of the attendance in the format : "Scheduled on DD/MM/YYYY from HH:MM to HH:MM"
+                                                            - allows navigation between months and years
+                                            
                                             - row 6 : a sticky overlayblock at the bottom of the screen that doesn't hide the last element in the screen, which contains : 
                                                 - row : 
                                                     - col 1 : which takes the double width of the next col 
@@ -1208,38 +1197,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - edit (add this options only if the student was created by the teacher and not added by a student request)
                                                             - delete 
                                                     - col 2 : which takes the half of the width of the first column
-                                                        - a button with the name start 
+                                                        - a button with the name "start" 
                                     - Dynamics : 
-                                        - picking a date range , updates the list of class batches by replacing it with the first 30 class batches that match the selected date range
-                                          in a descendant order by date time (start from the latest one to the oldest one)
-                                        - when the user reaches the bottom scrolling, load the next 30 class batches that match the selected date range and append them to the existing list
-                                        - clicking on any batch card, opens up a popup which contains  : 
-                                            - UI : 
-                                                - col : 
-                                                    - row 1 : the header of the popup
-                                                        - col 1 : 
-                                                            - at the most left, the title of the popup : "Class batch details"
-                                                        - col 2 : 
-                                                            - at the most right, the close icon 
-                                                    - row 2 : the content area of the popup 
-                                                        - col : 
-                                                            - row 1 : 
-                                                                - a badge which contains the status of the batch (status : paid, not_due, not_paid and partially_paid. replace the underscore with a space) 
-                                                                and his background color colored according to the status of the batch
-                                                            - row 2 : 
-                                                                - a vertical line with 4 circles in top of it and spaced, each circle : 
-                                                                    - represents a class in the batch 
-                                                                    - colored according to the status of the class (status : future, paid, not_due, not_paid) 
-                                                                next to each circle there is the details of the class which contains : 
-                                                                    - the status of the class (status : future, paid, not_due, not_paid) , replacing the underscore with a space
-                                                                    - if the status of the class is attended then the datetime of attendance , if it's paid the datetime of the payment, otherwise skip this part 
-                                                                    
-                                                    - row 3 : the footer of the popup 
-                                                        - col 1 : 
-                                                            - a button with the name "Close"
-                                            - Dynamics : 
-                                                - clicking on the close icon of the header, closes the popup form 
-                                                - clicking on the close button of the footer, closes the popup form 
+
                                         - clicking on the "start" button opens up a different popup type depending to the selected action
                                             - for the action : "mark attendance", the popup contains 
                                                 - UI : 
@@ -1281,10 +1241,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - Dynamics : 
                                                     - clicking on the "Cancel" button, closes the popup 
                                                     - clicking on the "Mark" button : 
-                                                        - if the last class of the last class batch of the student in the selected group is marked as attended or paid : 
-                                                            - create a new class batch for the student in the selected group and mark the first class of the new batch as attended in the date option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
-                                                        - otherwise : 
-                                                            - mark as attended the oldest class that is not marked as attended nor as paid in the last class batch of the student in the selected group, in the date and the time range option the teacher choose ("Next automatic date and time range" or "Specify the date and the time range")
+                                                        - create a new class for the student in the selected group with the specified date and time range 
+                                                          if this new class is the 4th non paid class  : 
+                                                            - set his status to "Attended and unpaid with payment due"
+
                                                         - send a notification to the student informing him that the teacher marked him as attended in his last {subject of the selected group} class
                                                         - if the student has parents send a notification to them informing them that the teacher marked their son as attended in his last {subject of the selected group} class
                                                         - then closes the popup  
@@ -1513,8 +1473,6 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - row 1 : the header row for the levels list
                                 - col 1 : at the most left
                                     - the text "Levels"
-                                - col 2 : at the most right
-                                    - a button with the name "Add"
                             - row 2 : 
                                 - col : the list of levels, and each level must be in a card which contains :
                                     - row : 
@@ -1525,6 +1483,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col 2 :
                                                     - the name of the level
                                                 - col 3 :
+                                                    - a trash icon in a rounded button
+                                                - col 4 :
                                                     - an arrow down icon in a rounded button
                                             - row (hidden by default, toggled by the arrow down icon button) :
                                                 - col :
@@ -1532,8 +1492,6 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - row 1 : the header row for the sections list
                                                             - col 1 :
                                                                 - the text "Sections"
-                                                            - col 2 :
-                                                                - a button with the name "Add"
                                                         - row 2 : 
                                                             - col : the list of sections, and each section must be in a card which contains :
                                                                 - row : 
@@ -1544,14 +1502,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                             - col 2 :
                                                                                 - the name of the section
                                                                             - col 3 :
+                                                                                - a trash icon in a rounded button
+                                                                            - col 4 :
                                                                                 - an arrow down icon in a rounded button
                                                                         - row (hidden by default, toggled by the arrow down icon button) :
                                                                             - col :
                                                                                 - row 1 : the header row for the subjects list
                                                                                     - col 1 :
                                                                                         - the text "Subjects"
-                                                                                    - col 2 :
-                                                                                        - a button with the name "Add"
                                                                                 - row 2 : 
                                                                                     - col : the list of subjects, and each subject must be in a card which contains :
                                                                                         - row :
@@ -1561,12 +1519,14 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                                                 - the name of the subject
                                                                                             - col 3 :
                                                                                                 - the price of the subject
+                                                                                            - col 4 :
+                                                                                                - a trash icon in a rounded button
+                                                                                            - col 4 :
+                                                                                                - an edit icon in a rounded button
                                                     - if the level does not have sections (according to the tunisian education system):
                                                         - row 1 : the header row for the subjects list
                                                             - col 1 :
                                                                 - the text "Subjects"
-                                                            - col 2 :
-                                                                - a button with the name "Add"
                                                         - row 2 : 
                                                             - col : the list of subjects, and each subject must be in a card which contains :
                                                                 - row :
@@ -1576,65 +1536,127 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - the name of the subject
                                                                     - col 3 :
                                                                         - the price of the subject
-
+                                                                    - col 4 :
+                                                                        - a trash icon in a rounded button
+                                                                    - col 4 :
+                                                                        - an edit icon in a rounded button
+                            - row 3 : the sticky footer row at the bottom of the screen
+                                - col :
+                                    - a button with the name "Add a subject"
                     - Dynamics :
                         - handle the empty list of levels, sections and subjects by showing a message in the center of where list suppose to be : 
                             - "There are no levels yet" for the levels list
                             - "There are no sections yet" for the sections list
                             - "There are no subjects yet" for the subjects list
-                        - clicking on the "Add" button in the levels header row opens a popup form which contains :
-                            - a select input for the level which contains as options, all of the levels of the tunisian education system, and it's required.
-                            - an "Add" button, clicking on it adds the selected level to the list of levels
                         - clicking on the arrow down icon of a level card toggles the visibility of its sections block or subjects block if the level has no sections according to the tunisian education system and it's required.
-                        - clicking on the "Add" button in a sections header row opens a popup form which contains :
-                            - a select input for the section which contains as options, all of the sections of the level the clicked "add" button is in, according to the tunisian education system, and it's required.
-                            - an "Add" button, clicking on it adds the selected section to the list of sections that is below the clicked "add" button
                         - clicking on the arrow down icon of a section card toggles the visibility of its subjects block
-                        - clicking on the "Add" button of a subjects header row opens a popup form which contains :
-                            - a select input for the subject which contains as options, all of the subjects of the section the clicked "add" button is in, according to the tunisian education system.
-                            - a float input for the price of the subject
-                            - an "Add" button, clicking on it adds the selected subject with its price to the list of subjects that is below the clicked "add" button
-                        - checking the checkbox of any card (level or section or subject) , slides up a from the bottom of the screen a sticky block a the bottom which contains : 
+                        - clicking on the edit rounded button of a subject, opens up a popup form which contains : 
                             - UI : 
-                                - row : 
-                                    - a button with the name "Delete ({number of selected items})"
-                            - Dynamics : 
-                                - clicking on the "Delete" button in the sticky block opens a confirmation popup which contains :
-                                    - UI : 
+                                - col : 
+                                    - row 1 : the header of the popup
+                                        - col 1 : 
+                                            - at the most left, the title of the popup : "Edit the subject price per class"
+                                        - col 2 : 
+                                            - at the most right, the close icon
+                                    - row 2 : the content area of the group 
                                         - col : 
-                                            - row 1 : the header of the popup
-                                                - at center of the row, the title of the popup : "Confirm Delete ({the number of selected items})"
-                                            - row 2 : the content area of the group 
+                                            - row 1 : 
+                                                - at the center of the row, the image of the subject
+                                            - row 1 : 
+                                                - at the center of the row, the name of the subject
+                                            - row 2 : 
+                                                - col :
+                                                    - row 1 :  
+                                                        - the label : "Price per class (DT)" 
+                                                    - row 2 : 
+                                                        - a number input pre-filled with the current price (min : 1, required)
+                                    - row 3 : the footer of the popup
+                                        - col 1 : 
+                                            - a button with the name "Cancel"
+                                        - col 2 : 
+                                            - a highlighted button with the name "Edit"
+                            - Dynamics :
+                                - clicking on the "Edit" button saves the changes and closes the popup and updates the subject price in the UI
+                                - clicking on the "Cancel" button closes the popup without saving changes
+                        - clicking on the trash rounded button of a level or section or subject opens a confirmation popup which contains : 
+                            - UI : 
+                                - col : 
+                                    - row 1 : the header of the popup
+                                        - at center of the row, the title of the popup : "Confirm Delete"
+                                    - row 2 : the content area of the group 
+                                        - col : 
+                                            - row 1 : 
+                                                - at the center of the row,a trash icon 
+                                            - row 2 : 
                                                 - col : 
                                                     - row 1 : 
-                                                        - at the center of the row,a trash icon 
-                                                    - row 2 : 
-                                                        - col : 
-                                                            - row 1 : 
-                                                                - at the center of the row, the text format : "Are you sure you want to delete the selected {the number of selected items} items ? because that will delete the following groups : "
-                                                            - row 2 : 
-                                                                - col : the list of groups that will be deleted and each one must contains : 
-                                                                    row : 
-                                                                        - {group name} -- {group subject} -- {the number of students in the group}
-                                                                    
-                                            - row 3 : the footer of the popup
-                                                - col 1 : 
-                                                    - a button with the name "No"
-                                                - col 2 : 
-                                                    - a highlighted button with the name "Yes"
-                                    - Dynamics : 
-                                        - clicking on the "No" button, closes the popup 
-                                        - clicking on the "Yes" button : 
-                                            - deletes the selected items with their related groups which leads to :
-                                                - deleting the association records linking the students of the deleted groups to the deleted groups without deleting the students themselves, which leads to:
-                                                    - deleting the paid and unpaid amounts KPIs related to the deleted association records.
-                                                    - deleting the class batches that were related to the deleted association records with their associated classes.
-                                                - deleting the groups associated with the deleted items.
-                                            - then 
-                                                - sends notifications to the students of the deleted groups informing them that the teacher deleted their {subject of the group} group.
-                                                  if the students have parents, sending notifications to the parents informing them that the teacher deleted the {subject of the group} group of their son.
-                                            - finally closes the popup and update the levels,sections and subjects of the prices screen 
-                        - don't allow duplicate levels, sections in the same level, subjects in the same level or section
+                                                        - at the center of the row, the text format : 
+                                                            - if it's a level that has sections or subjects : "Are you sure you want to delete the level {the level name} since this will delete the sections,subjects and groups related to it ?"
+                                                            - if it's a section : "Are you sure you want to delete the section {the section name} since this will delete the subjects and groups related to it ?"
+                                                            - if it's a subject : "Are you sure you want to delete the subject {the subject name} since this will delete the groups related to it ?"
+                                                            
+                                    - row 3 : the footer of the popup
+                                        - col 1 : 
+                                            - a button with the name "No"
+                                        - col 2 : 
+                                            - a highlighted button with the name "Yes"
+                            - Dynamics : 
+                                - clicking on the "No" button, closes the popup 
+                                - clicking on the "Yes" button : 
+                                    - deletes the selected items with their related groups which leads to :
+                                        - deleting the association records linking the students of the deleted groups to the deleted groups without deleting the students themselves, which leads to:
+                                            - deleting the paid and unpaid amounts KPIs related to the deleted association records.
+                                            - deleting the class batches that were related to the deleted association records with their associated classes.
+                                        - deleting the groups associated with the deleted items.
+                                    - then 
+                                        - sends notifications to the students of the deleted groups informing them that the teacher deleted their {subject of the group} group.
+                                            if the students have parents, sending notifications to the parents informing them that the teacher deleted the {subject of the group} group of their son.
+                                    - finally closes the popup and update the levels,sections and subjects of the prices screen 
+                        - clicking on the "Add a subject" button opens up a popup form which contains:
+                            - UI:
+                                - col:
+                                    - row 1: the header of the popup
+                                        - col 1:
+                                            - at the most left, the title: "Add a subject"
+                                        - col 2:
+                                            - at the most right, the close icon
+                                    - row 2: the content area of the popup
+                                        - col:
+                                            - row 1:
+                                                - a select input for the level
+                                                    - options: the levels of the tunisian education system
+                                                    - validations: required
+                                            - row 2:
+                                                - a select input for the section
+                                                    - options: the sections of the selected level, according to the tunisian education system
+                                                    - make this select disabled if one of the following is true:
+                                                        - if the user didn't select a level yet
+                                                        - if the selected level doesn't have sections according to the tunisian education system
+                                                    - validations: required if it isn't disabled
+                                            - row 3:
+                                                - a select input for the subject
+                                                    - options:
+                                                        - if the selected level has sections according to the tunisian education system:
+                                                            the subjects of the selected section of the selected level according to the tunisian education system
+                                                        - if the selected level doesn't have sections and has directly subjects according to the tunisian education system:
+                                                            the subjects of the selected level according to the tunisian education system
+                                                    - disable this select in the following cases:
+                                                        - if the user didn't select a level yet
+                                                        - if the section select input isn't disabled and the user didn't select a section yet
+                                                    - validations: required if it isn't disabled
+                                    - row 3: the footer of the popup
+                                        - col 1:
+                                            - a button with the name "Add"
+                            - Dynamics:
+                                - clicking on the close icon closes the popup form
+                                - clicking on the "Add" button:
+                                    - validates the inputs of the popup form by ensuring:
+                                        - the selected subject doesn't already exist in the selected level and section or the selected level if it doesn't have sections
+                                    - if there is any validation error, inform the user about it in the popup form without closing it
+                                    - if the validation is successful :
+                                        - creates a teacher subject for the logged teacher
+                                        - closes the popup form
+                                        - adds this subject to the selected level and section or to the selected level if it doesn't have sections in the prices screen
 
             - the notifications screen : 
                 - the title of the App Bar is : "Notifications ({the number of unread notification})" : 
@@ -1720,7 +1742,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                                 - the option : "decline this subject" which is the default 
                                                                                 - the rest of the options : 
                                                                                     the list of groups that have the same level and section of the requesting student and teach this subject 
-                                                                                    or only the same level (if the requesting student doesn't have a section) as the requesting student and teach this subject , 
+                                                                                    or only the same level (if the requesting student doesn't have a section) as the requesting student and teach this subject, 
                                                                                     the label of each option is the name of the group and the value is the id of the group
                                                                                 - note :
                                                                                     - if the teacher selected a existing student to replace by and this student belongs to a group in the option list of this select, pre-fill the value of this select by it's group 
@@ -1906,13 +1928,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
 
                     - Dynamics : 
                         - the number of unread notifications in the app title when the user opens the notifications screen : is the number of the new notifications that happened 
-                          after the user last opened the notifications screen
+                          after the last time the user opened the notifications screen
                         - when the user reaches the bottom scrolling ,load the next latest 30 notifications and append them to the list at the bottom of the list
                         - keep the notification card highlighted until the teacher either clicks on it if it's clickable or clicks on one of her buttons 
                         - when the user clicks on a highlighted clickable card or clicks on the one of the button of a highlighted card decrease the number of 
                           unread notifications by 1 
                         - in real time : 
-                            - add the new notifications to the top of the list, the ones that matches the fullname text input
+                            - add the new notifications to the top of the list
                             - update the number of unread notifications in the App Bar title by adding to it the number of new notifications
                               that happened during opening this screen
                              
@@ -2182,11 +2204,27 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - col 2 : 
                                                 - in a kpi card the total non paid amount in DT for this subject by the student
                                         - row 3 : 
-                                            - the header for the class batches list which contains the text "Class Batches"
+                                            - a calendar component:
+                                                - plots the student’s attended and paid classes in the group of this subject
+                                                - plots placeholders for future classes based on the group’s weekly schedule of this subject
+                                                - each class represented by a circle with the following color code:
+                                                    - red circle: attended but unpaid and payment is due
+                                                    - orange circle: attended but unpaid and payment is not due
+                                                    - green circle: attended and paid
+                                                    - gray circle: future class
+                                                - tooltips for each kind of plotted class :
+                                                    - for attended classes : 
+                                                        - status 
+                                                        - date and time range of the attendance in the format : "Attended on DD/MM/YYYY from HH:MM to HH:MM"
+                                                    - for paid classes : 
+                                                        - status 
+                                                        - date and time range of the attendance in the format : "Attended on DD/MM/YYYY from HH:MM to HH:MM"
+                                                        - payment datetime in the format : "Paid on DD/MM/YYYY at HH:MM"
+                                                    for future classes :
+                                                        - status
+                                                        - date and time range of the attendance in the format : "Scheduled on DD/MM/YYYY from HH:MM to HH:MM"
+                                                - allows navigation between months and years
                                         - row 4 : 
-                                            - the list of class batches of this subject (the class batches of the student attached to this son, in his group of this subject) with its header and date range picker which must be similar to the one in the student detail screen of the teacher 
-                                              profile with no ability to make any action on them
-                                        - row 5 : 
                                             - a button with the name "Leave the subject group"
                                 - Dynamics :
                                     - clicking on the "Leave the subject group" button  : 
@@ -2783,8 +2821,26 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - col 2 : 
                                                             - in a kpi card the total non paid amount in DT in this subject 
                                                     - row 4 : 
-                                                        - the list of class batches of this subject (the class batches of the student attached to this son, in his group of this subject) with its header and date range picker which must be similar to the one in the student detail screen of the teacher 
-                                                          profile with no ability to make any action on them
+                                                        - a calendar component:
+                                                            - plots the son's attended and paid classes in the group of this subject
+                                                            - plots placeholders for future classes based on the group’s weekly schedule of this subject
+                                                            - each class represented by a circle with the following color code:
+                                                                - red circle: attended but unpaid and payment is due
+                                                                - orange circle: attended but unpaid and payment is not due
+                                                                - green circle: attended and paid
+                                                                - gray circle: future class
+                                                            - tooltips for each kind of plotted class :
+                                                                - for attended classes : 
+                                                                    - status 
+                                                                    - date and time range of the attendance in the format : "Attended on DD/MM/YYYY from HH:MM to HH:MM"
+                                                                - for paid classes : 
+                                                                    - status 
+                                                                    - date and time range of the attendance in the format : "Attended on DD/MM/YYYY from HH:MM to HH:MM"
+                                                                    - payment datetime in the format : "Paid on DD/MM/YYYY at HH:MM"
+                                                                - for future classes :
+                                                                    - status
+                                                                    - date and time range of the attendance in the format : "Scheduled on DD/MM/YYYY from HH:MM to HH:MM"
+                                                            - allows navigation between months and years
 
                         - clicking on the "edit" button of a son card opens up a popup form which contains:
                             - UI:

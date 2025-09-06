@@ -157,3 +157,18 @@ private classes, which will allow them to :
                 - otherwise
                     - include the subjects of the year only
         
+
+22/08/2025 
+
+- add send ability to mark abcense 
+- turn the class batches to a calendar of 4 weeks
+
+to do (28/08/2025) :
+    - add the teacher enrollment model wich contains  : 
+        - teacher 
+        - student 
+        - paid amount
+        - unpaid amount
+    - update the sorting in the sorting the get_students of the students views and the group serializer 
+      using the group teacher 
+
