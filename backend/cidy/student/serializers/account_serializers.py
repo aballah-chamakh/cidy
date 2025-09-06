@@ -30,16 +30,6 @@ class StudentAccountInfoSerializer(serializers.ModelSerializer):
         fields = ['image', 'fullname', 'email', 'phone_number', 'gender', 'level', 'section', 'levels_and_sections']
 
 
-
-
-class IncompatibleGroupsSerializer(serializers.ModelSerializer):
-    """Serializer for incompatible groups."""
-    subject_name = serializers.CharField(source='teacher_subject.subject.name', read_only=True)
-    class Meta:
-        model = Group
-        fields = ['subject_name']
-
-
 class UpdateStudentAccountInfoSerializer(serializers.ModelSerializer):
     """ModelSerializer for updating student account information."""
     email = serializers.EmailField(source='user.email', required=True, write_only=True)
@@ -55,6 +45,15 @@ class UpdateStudentAccountInfoSerializer(serializers.ModelSerializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Incorrect current password.")
         return value
+    
+    def validate(self,attrs):
+        if self.instance : 
+            level = attrs.get('level')
+            section = attrs.get('section')
+            if self.instance.level != level or self.instance.section != section:
+                if self.instance.groupenrollment_set.all().exists() : 
+                    raise serializers.ValidationError("YOU_CANNOT_CHANGE_LEVEL_OR_SECTION_WHILE_BEING_ENROLLED_IN_A_GROUP")
+        return attrs
 
     def update(self, student, validated_data):
         validated_data.pop('current_password', None)
@@ -100,3 +99,14 @@ class ChangeStudentPasswordSerializer(serializers.ModelSerializer):
 
         return student
 
+
+
+"""
+class IncompatibleGroupsSerializer(serializers.ModelSerializer):
+    ""Serializer for incompatible groups.""
+    subject_name = serializers.CharField(source='teacher_subject.subject.name', read_only=True)
+    class Meta:
+        model = Group
+        fields = ['subject_name']
+
+"""

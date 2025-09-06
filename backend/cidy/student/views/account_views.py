@@ -24,10 +24,47 @@ def get_account_info(request):
 
 
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_account_info(request):
+    """Update the account information of the logged-in student."""
+    student = request.user.student
+    serializer = UpdateStudentAccountInfoSerializer(
+        student, data=request.data, context={'request': request}
+    )
+    if serializer.is_valid():
+        student = serializer.save()
+        # propagate the changes of the gender, level and section to sons attached to the student
+        for son in student.sons.all():
+            son.gender = student.gender
+            son.level = student.level
+            son.section = student.section
+            son.save()
+        return Response({"message": "Account info updated successfully"}, status=200)
+    return Response({"error": serializer.errors}, status=400)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """Change the password of the logged-in student."""
+    student = request.user.student
+    serializer = ChangeStudentPasswordSerializer(
+        student, data=request.data, context={'request': request}
+    )
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "Password changed successfully"}, status=200)
+    return Response({"error": serializer.errors}, status=400)
+
+
+
+"""
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def get_incompatible_groups_with_the_new_level_and_section(request):
-    """Check if the student's level and section are compatible with their groups."""
+    ""Check if the student's level and section are compatible with their groups.""
     student = request.user.student
     new_level_id = request.data.get('level_id',None)
     new_section_id = request.data.get('section_id',None)
@@ -45,18 +82,7 @@ def get_incompatible_groups_with_the_new_level_and_section(request):
     return Response({'levels_and_sections': serializer.data}, status=200)
 
 
-@api_view(['PUT'])
-@permission_classes([IsAuthenticated])
-def update_account_info(request):
-    """Update the account information of the logged-in student."""
-    student = request.user.student
-    serializer = UpdateStudentAccountInfoSerializer(
-        student, data=request.data, context={'request': request}
-    )
-    if serializer.is_valid():
-        student = serializer.save()
-
-        # if the student had incompatible groups after the update, remove him from these group and inform his parent about that through notifications
+# if the student had incompatible groups after the update, remove him from these group and inform his parent about that through notifications
         # note : i didn't send a notification to the student because he is aware by this action
         if student.section is None:
             incompatible_groups = student.groups.exclude(teacher_subject__level=student.level, teacher_subject__section__isnull=True)
@@ -74,19 +100,5 @@ def update_account_info(request):
                     message=f"{son_pronoun} a quitté le(s) groupe(s) de la/les matière(s) suivante(s) : {subjects}"
                 )
                 increment_parent_unread_notifications(son.parent)
-        return Response({"message": "Account info updated successfully"}, status=200)
-    return Response({"error": serializer.errors}, status=400)
 
-
-@api_view(['PUT'])
-@permission_classes([IsAuthenticated])
-def change_password(request):
-    """Change the password of the logged-in student."""
-    student = request.user.student
-    serializer = ChangeStudentPasswordSerializer(
-        student, data=request.data, context={'request': request}
-    )
-    if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Password changed successfully"}, status=200)
-    return Response({"error": serializer.errors}, status=400)
+"""

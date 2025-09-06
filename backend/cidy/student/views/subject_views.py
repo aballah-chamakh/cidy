@@ -1,7 +1,9 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from teacher.models import GroupEnrollment
+from teacher.models import GroupEnrollment,TeacherNotification
+from parent.models import ParentNotification
+from common.tools import increment_parent_unread_notifications,increment_teacher_unread_notifications
 from django.db.models import Sum
 from ..serializers import StudentSubjectListSerializer,StudentSubjectDetailSerializer
 
@@ -51,3 +53,42 @@ def get_subject_detail(request, group_enrollment_id):
     serializer = StudentSubjectDetailSerializer(group_enrollment)
 
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def leave_subject_group(request, group_enrollment_id):
+    """
+    API view to leave a specific subject group for the student .
+    """
+    student = request.user.student
+    try:
+        group_enrollment = GroupEnrollment.objects.get(id=group_enrollment_id, student=student)
+    except GroupEnrollment.DoesNotExist:
+        return Response({'error': 'Subject not found'}, status=404)
+
+    if group_enrollment.unpaid_amount == 0:
+        group_enrollment.delete()
+        group = group_enrollment.group
+        teacher_student_pronoun = "l'étudiante" if student.gender == 'F' else "l'étudiant"
+        TeacherNotification.objects.create(
+            teacher=group.teacher,
+            image=student.image,
+            message=f"{teacher_student_pronoun} {student.user.username} de {student.level}{' '+student.section if student.section else ''} a quitté le groupe {group.name} de matière {group.teacher_subject.subject.name}.",
+            meta_data={'student_id': student.id})
+        increment_teacher_unread_notifications(group.teacher)
+        
+        parent_student_pronoun = "Votre fils" if student.gender == 'M' else "Votre fille"
+        for son in student.sons.all():
+            ParentNotification.objects.create(
+                parent=son.parent,
+                image=son.image,
+                message=f"{parent_student_pronoun} {son.fullname} a quitté le groupe de matière {group.teacher_subject.subject.name}.",
+                meta_data={'son_id': son.id}
+            )
+            increment_parent_unread_notifications(son.parent)
+
+        return Response({'message': 'Successfully left the subject group'}, status=200)
+    else:
+        return Response({'error': 'GROUP_FEES_NOT_SETTLED'}, status=400)
+

@@ -379,10 +379,13 @@ def accept_parent_request(request, notification_id):
     parent_id = teacher_notification.meta_data['parent_id']
     requesting_parent = Parent.objects.get(id=parent_id)
 
+    old_students = [] # the student(s) that are no longer attached to the accepted son(s)
     # attach the selected student to the accepted son(s)
     for son in accepted_sons:
         son = Son.objects.get(parent=requesting_parent,id=son['id'])
         student = Student.objects.get(id=son['student_id'],teacher_enrollment_set__teacher=teacher)
+        if son.student : 
+            
         son.student = student # we have to send a notification to the old student too 
         son.save()
 
