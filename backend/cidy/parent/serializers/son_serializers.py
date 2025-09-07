@@ -59,16 +59,22 @@ class SonDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'image', 'fullname', 'level', 'section', 'has_student']
 
     def get_subjects(self, son):
-        son_student = son.student
-        if not son_student:
+        # get son's student teacher enrollments
+        son_student_teacher_enrollments = son.student_teacher_enrollments.all()
+        if not son_student_teacher_enrollments.exists():
             return []
-        student_group_enrollments = son_student.groupsenrollment_set.all()
+        
+        # get the group enrollment related to each student_teacher_enrollment of the son 
+        student_group_enrollments = GroupEnrollment.objects.none() 
+        for son_student_teacher_enrollment in son_student_teacher_enrollments:
+            student_group_enrollments |= GroupEnrollment.objects.filter(student=son_student_teacher_enrollment.student, group__teacher=son_student_teacher_enrollment.teacher)
+        
         serializer = SonSubjectListSerializer(student_group_enrollments, many=True)
         son_subjects = serializer.data
         return son_subjects
     
     def get_has_student(self, son):
-        return son.student.exists()
+        return son.student_teacher_enrollments.exists()
 
 
 class SonSubjectDetailSerializer(serializers.ModelSerializer):

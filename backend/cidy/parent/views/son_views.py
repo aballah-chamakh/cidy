@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from teacher.models import GroupEnrollment
 from ..models import Son
-from ..serializers import SonSubjectListSerializer,SonListSerializer,SonDetailSerializer,SonSubjectDetailSerializer,SonCreateEditSerializer
+from ..serializers import SonListSerializer,SonDetailSerializer,SonSubjectDetailSerializer,SonCreateEditSerializer
 
 
 @api_view(['GET'])
@@ -38,9 +38,14 @@ def get_son_subject_detail(request, son_id, subject_id):
         son = parent.son_set.get(id=son_id)
     except Son.DoesNotExist:
         return Response({'error': 'Son not found'}, status=404)
-
+    # ensure that the group enrollment hold the id subject_id is related to the son
     try:
-        subject = son.student.groupsenrollment_set.get(id=subject_id)
+        son_student_teacher_enrollments = son.student_teacher_enrollments.all()
+        if not son_student_teacher_enrollments.exists():
+            raise GroupEnrollment.DoesNotExist
+        students = [enrollment.student for enrollment in son_student_teacher_enrollments]
+        teachers = [enrollment.teacher for enrollment in son_student_teacher_enrollments]
+        subject = GroupEnrollment.objects.get(id=subject_id,student__in=students, group__teacher__in=teachers)
     except GroupEnrollment.DoesNotExist:
         return Response({'error': 'Subject not found'}, status=404)
 

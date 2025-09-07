@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from student.models import Student, StudentNotification, StudentUnreadNotification
-from parent.models import ParentNotification, ParentUnreadNotification
+from parent.models import ParentNotification,Son 
 from common.tools import increment_student_unread_notifications, increment_parent_unread_notifications
 
 from ..models import Group, TeacherSubject,GroupEnrollment,Class,TeacherEnrollment
@@ -181,7 +181,7 @@ def delete_groups(request):
             # send a notification to the parent of the sons attached to each student belongs to the group
             child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.teacher_subject.subject.name} dans lequel {child_pronoun} {son.fullname} était inscrit."
-            for son in student.sons : 
+            for son in Son.objects.filter(student_teacher_enrollments__student=student).all() : 
                 ParentNotification.objects.create(
                     parent=son.parent,
                     image=son.image,
@@ -254,7 +254,7 @@ def edit_group(request, group_id):
 
             # If student has parents, notify them too
             child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-            for son in student.sons.all() :
+            for son in Son.objects.filter(student_teacher_enrollments__student=student).all() :
                 # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
                 parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time.strftime('%H:%M')} à {group.end_time.strftime('%H:%M')} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
                 ParentNotification.objects.create(
@@ -371,7 +371,7 @@ def add_students_to_group(request,group_id):
             increment_student_unread_notifications(student)
         # If student has parents, notify them too
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all() :
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all() :
             # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a ajouté {child_pronoun} {son.fullname} à un groupe de {group.teacher_subject.subject.name}."
             ParentNotification.objects.create(
@@ -423,7 +423,7 @@ def remove_students_from_group(request, group_id):
 
         # Notify the parents of the student
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a retiré {child_pronoun} {son.fullname} du groupe de {group.subject.name}."
             ParentNotification.objects.create(
                 parent=son.parent,
@@ -518,7 +518,7 @@ def mark_attendance(request, group_id):
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {child_pronoun} {son.fullname} comme présent(e) dans le cours de {group.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
             ParentNotification.objects.create(
                 parent=son.parent,
@@ -598,7 +598,7 @@ def unmark_attendance(request, group_id):
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé la présence de {child_pronoun} {son.fullname} pour {attended_classes_to_delete_count} séances de {group.subject.name}."
             ParentNotification.objects.create(
                 parent=son.parent,
@@ -695,7 +695,7 @@ def mark_absence(request,group_id):
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué l'absence de {child_pronoun} {son.fullname} dans la séance de {group.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
             ParentNotification.objects.create(
                 parent=son.parent,
@@ -762,7 +762,7 @@ def unmark_absence(request,group_id):
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé pour {child_pronoun} {son.fullname} l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.subject.name}."
             ParentNotification.objects.create(
                 parent=son.parent,
@@ -850,7 +850,7 @@ def mark_payment(request, group_id):
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
             ParentNotification.objects.create(
                 parent=son.parent,
@@ -935,7 +935,7 @@ def unmark_payment(request, group_id):
 
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
             ParentNotification.objects.create(
                 parent=son.parent,
@@ -979,7 +979,7 @@ def unmark_payment(request, group_id):
                     increment_student_unread_notifications(student)
                 # If student has parents, notify them too
                 child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-                for son in student.sons.all() :
+                for son in Son.objects.filter(student_teacher_enrollments__student=student).all() :
                     # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
                     parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a changé le groupe de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname}."
                     ParentNotification.objects.create(

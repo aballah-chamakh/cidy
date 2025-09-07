@@ -4,13 +4,10 @@ from ..serializers import (
     StudentAccountInfoSerializer,
     UpdateStudentAccountInfoSerializer,
     ChangeStudentPasswordSerializer,
-    IncompatibleGroupsSerializer
 )
 from rest_framework.response import Response
 
-from teacher.models import GroupEnrollment
-from parent.models import ParentNotification
-from common.tools import increment_parent_unread_notifications
+from parent.models import Son
 
 
 
@@ -35,7 +32,7 @@ def update_account_info(request):
     if serializer.is_valid():
         student = serializer.save()
         # propagate the changes of the gender, level and section to sons attached to the student
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             son.gender = student.gender
             son.level = student.level
             son.section = student.section

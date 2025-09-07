@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from ..models import Group
 from student.models import StudentNotification, StudentUnreadNotification
-from parent.models import ParentNotification, ParentUnreadNotification
+from parent.models import ParentNotification, ParentUnreadNotification, Son 
 from ..serializers import GroupCreateUpdateSerializer
 
 def increment_student_unread_notifications(student):
@@ -97,7 +97,7 @@ def update_group_schedule(request, group_id):
 
         # If student has parents, notify them too
         child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
-        for son in student.sons.all() :
+        for son in Son.objects.filter(student_teacher_enrollment__student=student).all() :
             # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time_range} à {group.end_time_range} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
             ParentNotification.objects.create(

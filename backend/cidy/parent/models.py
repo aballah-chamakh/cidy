@@ -1,7 +1,7 @@
 from django.db import models
 from account.models import User
-from student.models import Student
-from common.models import Level, Section
+from teacher.models import TeacherEnrollment
+from teacher.models import Level, Section
 
 class Parent(models.Model):
     image = models.ImageField(default='defaults/parent.png', upload_to='parent_images/', null=True, blank=True)
@@ -16,7 +16,7 @@ class Parent(models.Model):
 class Son(models.Model):
     image = models.ImageField(default='defaults/son.jpg', upload_to='son_images/', null=True, blank=True)
     parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
-    student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True, related_name='sons')
+    student_teacher_enrollments = models.ManyToManyField(TeacherEnrollment, on_delete=models.SET_NULL, null=True, blank=True)
     fullname = models.CharField(max_length=255)
     gender = models.CharField(max_length=10, choices=(('M', 'Male'), ('F', 'Female')), default='M')
     level = models.ForeignKey(Level, on_delete=models.CASCADE)

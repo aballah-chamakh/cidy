@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from teacher.models import GroupEnrollment,TeacherNotification
-from parent.models import ParentNotification
+from parent.models import ParentNotification,Son
 from common.tools import increment_parent_unread_notifications,increment_teacher_unread_notifications
 from django.db.models import Sum
 from ..serializers import StudentSubjectListSerializer,StudentSubjectDetailSerializer
@@ -79,7 +79,7 @@ def leave_subject_group(request, group_enrollment_id):
         increment_teacher_unread_notifications(group.teacher)
         
         parent_student_pronoun = "Votre fils" if student.gender == 'M' else "Votre fille"
-        for son in student.sons.all():
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,

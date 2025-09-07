@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 from student.models import Student,StudentNotification
 from parent.models import Parent,ParentNotification,Son
-from teacher.models import Group,GroupEnrollment
+from teacher.models import Group,GroupEnrollment,TeacherEnrollment
 from common.tools import increment_student_unread_notifications, increment_parent_unread_notifications
 
 from ..models import TeacherNotification,TeacherUnreadNotification
@@ -245,10 +245,10 @@ def accept_student_request(request, notification_id):
 
     # Notify the parents
     child_pronoun = "votre fils" if final_student.gender == "male" else "votre fille"
-    for son in final_student.sons.all():
-        parent_message = f"{teacher_pronoun} {teacher.fullname} a accepté la demande d'inscription de {child_pronoun} {son.fullname} dans la/les matière(s) suivante(s) : {', '.join([sub['name'] for sub in accepted_subjects])}."
+    for son in Son.objects.filter(student_teacher_enrollments__student=final_student).all():
+        parent_message = f"{teacher_pronoun} {teacher.fullname} a accepté la demande d'inscription de {child_pronoun} {son.fullname} dans la/les matière(s) suivante(s) : {', '.join([sub['name'] for sub in accepted_subjects])}"
         if request.data.get('rejected_subjects'):
-            parent_message += f" Cependant, la demande d'inscription dans la/les matières suivante(s) a été refusée : {', '.join([sub['name'] for sub in request.data['rejected_subjects']])}."
+            parent_message += f", Cependant la demande d'inscription dans la/les matières suivante(s) a été refusée : {', '.join([sub['name'] for sub in request.data['rejected_subjects']])}."
         else:
             parent_message += "."
         ParentNotification.objects.create(
@@ -292,8 +292,9 @@ def reject_student_request(request, notification_id):
     increment_student_unread_notifications(requesting_student)
 
     # Notify the parents of the student about the rejection
+    """
     child_pronoun = "votre fils" if requesting_student.gender == "male" else "votre fille"
-    for son in requesting_student.sons.all():
+    for son in Son.objects.filter(student_teacher_enrollment__student=requesting_student).all():
         parent_message = f"{teacher_pronoun} {teacher.fullname} a refusé la demande d'inscription de {child_pronoun} {son.fullname}."
         ParentNotification.objects.create(
             parent=son.parent,
@@ -303,6 +304,7 @@ def reject_student_request(request, notification_id):
         )
         increment_parent_unread_notifications(son.parent)
 
+    """
     return Response({'status': 'success','message':"the student request was rejected successfully"})
 
 
@@ -327,21 +329,28 @@ def parent_request_accept_form_data(request, notification_id):
     requested_son_ids = teacher_notification.meta_data['son_ids']
     requested_sons = Son.objects.filter(parent=requesting_parent,id__in=requested_son_ids)
 
-    requested_sons_json = [
-        {
+    requested_sons_json = []
+    for son in requested_sons:
+        requested_son = {
             'id': son.id,
             'fullname': son.fullname,
             'level': son.level.name if son.level else None,
             'section': son.section.name if son.section else None,
-            'student_options' : [  
-                                  {
-                                      'id' : student.id,
-                                      'fullname': student.fullname,
-                                  }
-                                 for student in Student.objects.filter(teacher_enrollment_set__teacher=teacher, level=son.level, section=son.section,gender=son.gender) ]
+            'student_options' : [  ]
         }
-        for son in requested_sons
-    ]
+        # get the students of teacher that are in the same level,section and gender as the son
+        teacher_students = Student.objects.filter(teacher_enrollment_set__teacher=teacher,
+                                                   level=son.level, section=son.section,
+                                                   gender=son.gender)
+        for student in teacher_students:
+            # check that the student is not already attached to the son
+            if not son.student_teacher_enrollments.filter(student=student,teacher=teacher).exists():
+                requested_son['student_options'].append({
+                    'id': student.id,
+                    'fullname': student.fullname
+                })
+
+        requested_sons_json.append(requested_son)
 
     # Prepare the form data
     form_data = {
@@ -383,11 +392,11 @@ def accept_parent_request(request, notification_id):
     # attach the selected student to the accepted son(s)
     for son in accepted_sons:
         son = Son.objects.get(parent=requesting_parent,id=son['id'])
-        student = Student.objects.get(id=son['student_id'],teacher_enrollment_set__teacher=teacher)
-        if son.student : 
-            
-        son.student = student # we have to send a notification to the old student too 
+        new_student_teacher_enrollment = TeacherEnrollment.objects.get(student_id=son['student_id'],teacher=teacher)
+        son.student_teacher_enrollments.add(new_student_teacher_enrollment)
         son.save()
+
+
 
     # Notify the selected students about their new parent
     teacher_pronoun_student = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
@@ -410,7 +419,7 @@ def accept_parent_request(request, notification_id):
     # Notify the parent about the acceptance
     parent_message = f"{teacher_pronoun_parent} {teacher.fullname} vous a accepté comme parent de : {', '.join([son['fullname'] for son in accepted_sons])}"
     if request.data.get('rejected_sons'):
-        parent_message += f". Cependant, {'il' if teacher.gender == 'male' else 'elle'} vous a refusé comme parent de : {', '.join([son['fullname'] for son in request.data['rejected_sons']])}."
+        parent_message += f", Cependant {'il' if teacher.gender == 'male' else 'elle'} vous a refusé comme parent de : {', '.join([son['fullname'] for son in request.data['rejected_sons']])}."
     else : 
         parent_message += "."
 
