@@ -88,7 +88,7 @@ def edit_teacher_subject_price(request, teacher_subject_id):
                         increment_student_unread_notifications(student)
                     
                     # Notify parents of the student's sons
-                    for son in Son.objects.filter(student_teacher_enrollment__student=student).all():
+                    for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
                         child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
                         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a changé le prix de la séance de {group.subject.name} de {child_pronoun} {son.fullname} de {old_price} à {new_price}."
                         ParentNotification.objects.create(
@@ -139,7 +139,7 @@ def delete_level_section_subject(request, teacher_subject_id):
                 increment_student_unread_notifications(student)
             
             # Notify parents of the student's sons
-            for son in Son.objects.filter(student_teacher_enrollment__student=student).all():
+            for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
                 child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
                 parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.teacher_subject.subject.name} dans lequel {child_pronoun} {son.fullname} était inscrit."
                 ParentNotification.objects.create(
