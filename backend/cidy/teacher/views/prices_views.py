@@ -69,8 +69,8 @@ def edit_teacher_subject_price(request, teacher_subject_id):
             )
 
             # Set up pronouns based on teacher gender
-            student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-            parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+            student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+            parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
             # For each group, notify enrolled students and their parents
             for group in groups:
@@ -89,7 +89,7 @@ def edit_teacher_subject_price(request, teacher_subject_id):
                     
                     # Notify parents of the student's sons
                     for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-                        child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
+                        child_pronoun = "votre fils" if son.gender == "M" else "votre fille"
                         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a changé le prix de la séance de {group.subject.name} de {child_pronoun} {son.fullname} de {old_price} à {new_price}."
                         ParentNotification.objects.create(
                             parent=son.parent,
@@ -119,8 +119,8 @@ def delete_level_section_subject(request, teacher_subject_id):
     groups = Group.objects.filter(teacher_subject=teacher_subject)
 
     # Set up pronouns based on teacher gender
-    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
     # Delete related groups and notify students/parents
     for group in groups:
@@ -140,7 +140,7 @@ def delete_level_section_subject(request, teacher_subject_id):
             
             # Notify parents of the student's sons
             for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-                child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
+                child_pronoun = "votre fils" if son.gender == "M" else "votre fille"
                 parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a supprimé le groupe du {group.teacher_subject.subject.name} dans lequel {child_pronoun} {son.fullname} était inscrit."
                 ParentNotification.objects.create(
                     parent=son.parent,

@@ -157,27 +157,23 @@ def delete_students(request):
             'message': 'Selected students do not exist.'
         }, status=404)
 
-    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
     
     for student in students:
         # Check if the student has his independent account
         if student.user:
-            # delete the enrollment with this teacher and the enrollments in the groups of this teacher
-            TeacherEnrollment.objects.filter(student=student, teacher=teacher).delete()
-            GroupEnrollment.objects.filter(student=student, group__teacher=teacher).delete()
-
             # send a notification to the student
             student_message = f"{student_teacher_pronoun} {teacher.fullname} a mis fin à votre relation."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
-                message=student_message,
+                message=student_message
             )
             increment_student_unread_notifications(student)
 
         # send a notification to the parent of the sons attached to each student to delete
-        child_pronoun = "votre fils" if son.gender == "male" else "votre fille"
+        child_pronoun = "votre fils" if son.gender == "M" else "votre fille"
         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a mis fin à la relation avec {child_pronoun} {son.fullname}."
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all() : 
             ParentNotification.objects.create(
@@ -188,8 +184,14 @@ def delete_students(request):
             )
             increment_parent_unread_notifications(son.parent)
 
-        # i deleted him here because i want to get its sons before
-        if not student.user:
+        # notes i made the deletes here to get the sons attached to the student before deleting him or his enrollments
+        if student.user:
+            # delete the enrollment with this teacher and the enrollments in the groups of this teacher without deleting the student because he has his independent account
+            TeacherEnrollment.objects.filter(student=student, teacher=teacher).delete()
+            GroupEnrollment.objects.filter(student=student, group__teacher=teacher).delete()
+        else :
+            # delete the student here, because he doesn't have an independent account, 
+            # this will lead to deleting his teacher enrollment and his group enrollments
             student.delete()
 
         return Response({
@@ -286,7 +288,7 @@ def mark_attendance_of_a_student(request,student_id,group_id):
     student_group_enrollment.save()
     # Notify the student
     if student.user:
-        student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
+        student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
         student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans la séance de {group.subject.name} qui a eu lieu le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
         StudentNotification.objects.create(
             student=student,
@@ -297,8 +299,8 @@ def mark_attendance_of_a_student(request,student_id,group_id):
         increment_student_unread_notifications(student)
 
     # Notify the parents
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
-    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
+    child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
     for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {child_pronoun} {son.fullname} comme présent(e) dans la séance de {group.subject.name} qui a eu lieu le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
         ParentNotification.objects.create(
@@ -350,8 +352,8 @@ def unmark_attendance_of_a_student(request, group_id, student_id):
     student_teacher_enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student).first()
 
 
-    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
     attended_classes_to_delete = Class.objects.filter(
         group_enrollment=student_group_enrollment,
@@ -393,7 +395,7 @@ def unmark_attendance_of_a_student(request, group_id, student_id):
         increment_student_unread_notifications(student)
 
     # Notify the parents
-    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
     for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé la présence de {child_pronoun} {son.fullname} pour {attended_classes_to_delete_count} séances de {group.subject.name}."
         ParentNotification.objects.create(
@@ -460,8 +462,8 @@ def mark_absence_of_a_student(request,student_id,group_id):
                          absence_end_time=absence_end_time,
                          status='absent')
     
-    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
     # Notify the student
     if student.user:
@@ -475,7 +477,7 @@ def mark_absence_of_a_student(request,student_id,group_id):
         increment_student_unread_notifications(student)
 
     # Notify the parents
-    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
     for son in Son.objects.filter(student_teacher_enrollments__student=student).all().all():
         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué l'absence de {child_pronoun} {son.fullname} dans la séance de {group.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
         ParentNotification.objects.create(
@@ -540,8 +542,8 @@ def unmark_absence_of_a_student(request,student_id,group_id):
     classes_to_unmark_their_absence_count = existing_classes.count()
     existing_classes.delete()
 
-    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
     # Notify the student
     if student.user:
@@ -555,7 +557,7 @@ def unmark_absence_of_a_student(request,student_id,group_id):
         increment_student_unread_notifications(student)
 
     # Notify the parents
-    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
     for son in Son.objects.filter(student_teacher_enrollments__student=student).all().all():
         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé pour {child_pronoun} {son.fullname} l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.subject.name}."
         ParentNotification.objects.create(
@@ -610,8 +612,8 @@ def mark_payment_of_a_student(request, group_id, student_id):
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
     student_teacher_enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student).first()
 
-    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
     student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
     classes_to_mark_as_paid = Class.objects.filter(
@@ -656,7 +658,7 @@ def mark_payment_of_a_student(request, group_id, student_id):
         increment_student_unread_notifications(student)
 
     # Notify the parents
-    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
     for son in Son.objects.filter(student_teacher_enrollments__student=student).all().all():
         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
         ParentNotification.objects.create(
@@ -705,8 +707,8 @@ def unmark_payment_of_a_student(request, group_id, student_id):
     teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
     student_teacher_enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student).first()
 
-    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
     student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
     paid_classes = Class.objects.filter(
@@ -754,7 +756,7 @@ def unmark_payment_of_a_student(request, group_id, student_id):
         increment_student_unread_notifications(student)
 
     # Notify the parents
-    child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+    child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
     for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
         parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
         ParentNotification.objects.create(

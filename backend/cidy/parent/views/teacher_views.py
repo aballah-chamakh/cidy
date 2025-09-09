@@ -110,9 +110,11 @@ def send_parenting_request(request, teacher_id):
         return Response({'error': 'Invalid son IDs provided'}, status=400)
 
     parent = request.user.parent
-    son_pronoun = "son fils" if parent.gender == "male" else "sa fille"
-    son_names = [son.fullname for son in parent.son_set.filter(id__in=son_ids)]
+    requested_sons = parent.son_set.filter(id__in=son_ids)
+    son_names = [son.fullname for son in requested_sons]
+    
     if len(son_ids) == 1:
+        son_pronoun = "son fils" if requested_sons.first().gender == "M" else "sa fille"
         message = f"Le parent {parent.fullname} demande un accès parental pour {son_pronoun} : {son_names[0]}."
     else:
         message = f"Le parent {parent.fullname} demande un accès parental pour ses enfants : {', '.join(son_names)}."

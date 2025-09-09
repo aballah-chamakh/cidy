@@ -218,9 +218,12 @@ def accept_student_request(request, notification_id):
         # delete the requesting student
         requesting_student.delete()
         final_student = student_to_replace_by
+    else : 
+        # create a teacher enrollment for the requesting student if he doesn't have one with this teacher
+        TeacherEnrollment.objects.get_or_create(teacher=teacher, student=requesting_student)
 
     # add the final student to groups of the accepted subjects
-    for subject in accepted_subjects:
+    for subject in accepted_subjects :
         new_group = Group.objects.get(id=subject['group_id'], teacher=teacher)
         # enroll the student in the group 
         GroupEnrollment.objects.create(group=new_group, student=final_student)
@@ -229,7 +232,7 @@ def accept_student_request(request, notification_id):
     """ send notifications to the student and to his parents, informing them about the acceptance"""
 
     # Notify the student
-    teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
     student_message = f"{teacher_pronoun} {teacher.fullname} a accepté votre demande d'inscription dans la/les matière(s) suivante(s) : {', '.join([sub['name'] for sub in accepted_subjects])}"
     if request.data.get('rejected_subjects') :
         student_message += f" Cependant, votre demande d'inscription dans la/les matière(s) suivante(s) a été refusée : {', '.join([sub['name'] for sub in request.data['rejected_subjects']])}."
@@ -244,7 +247,7 @@ def accept_student_request(request, notification_id):
     increment_student_unread_notifications(final_student)
 
     # Notify the parents
-    child_pronoun = "votre fils" if final_student.gender == "male" else "votre fille"
+    child_pronoun = "votre fils" if final_student.gender == "M" else "votre fille"
     for son in Son.objects.filter(student_teacher_enrollments__student=final_student).all():
         parent_message = f"{teacher_pronoun} {teacher.fullname} a accepté la demande d'inscription de {child_pronoun} {son.fullname} dans la/les matière(s) suivante(s) : {', '.join([sub['name'] for sub in accepted_subjects])}"
         if request.data.get('rejected_subjects'):
@@ -281,7 +284,7 @@ def reject_student_request(request, notification_id):
     requesting_student = Student.objects.get(id=teacher_notification.meta_data['student_id'])
 
     # Notify the student about the rejection 
-    teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
     student_message = f"{teacher_pronoun} {teacher.fullname} a refusé votre demande d'inscription."
 
     StudentNotification.objects.create(
@@ -293,7 +296,7 @@ def reject_student_request(request, notification_id):
 
     # Notify the parents of the student about the rejection
     """
-    child_pronoun = "votre fils" if requesting_student.gender == "male" else "votre fille"
+    child_pronoun = "votre fils" if requesting_student.gender == "M" else "votre fille"
     for son in Son.objects.filter(student_teacher_enrollment__student=requesting_student).all():
         parent_message = f"{teacher_pronoun} {teacher.fullname} a refusé la demande d'inscription de {child_pronoun} {son.fullname}."
         ParentNotification.objects.create(
@@ -388,7 +391,6 @@ def accept_parent_request(request, notification_id):
     parent_id = teacher_notification.meta_data['parent_id']
     requesting_parent = Parent.objects.get(id=parent_id)
 
-    old_students = [] # the student(s) that are no longer attached to the accepted son(s)
     # attach the selected student to the accepted son(s)
     for son in accepted_sons:
         son = Son.objects.get(parent=requesting_parent,id=son['id'])
@@ -396,12 +398,10 @@ def accept_parent_request(request, notification_id):
         son.student_teacher_enrollments.add(new_student_teacher_enrollment)
         son.save()
 
-
-
     # Notify the selected students about their new parent
-    teacher_pronoun_student = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    teacher_pronoun_parent = "Le professeur" if requesting_parent.gender == "male" else "La professeure"
-    parent_pronoun = "M." if requesting_parent.gender == "male" else "Mme."
+    teacher_pronoun_student = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    teacher_pronoun_parent = "Le professeur" if requesting_parent.gender == "M" else "La professeure"
+    parent_pronoun = "M." if requesting_parent.gender == "M" else "Mme."
     
     student_message = f"{teacher_pronoun_student} {teacher.fullname} a accepté {parent_pronoun} {requesting_parent.fullname} comme votre parent."
 
@@ -451,7 +451,7 @@ def decline_parent_request(request, notification_id):
     requesting_parent = Parent.objects.get(id=parent_id)
 
     # Notify the parent about the decline
-    teacher_pronoun_parent = "Le professeur" if requesting_parent.gender == "male" else "La professeure"
+    teacher_pronoun_parent = "Le professeur" if requesting_parent.gender == "M" else "La professeure"
     parent_message = f"{teacher_pronoun_parent} {teacher.fullname} a refusé votre demande de parentalité."
 
     ParentNotification.objects.create(

@@ -81,8 +81,8 @@ def update_group_schedule(request, group_id):
     schedule_change_type = request.data.get("schedule_change_type")
     
     # Send notifications to students and their parents
-    student_teacher_pronoun = "Votre professeur" if teacher.gender == "male" else "Votre professeure"
-    parent_teacher_pronoun = "Le professeur" if teacher.gender == "male" else "La professeure"
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
     for student in group.students.all():
         # Create notification for each student
@@ -96,7 +96,7 @@ def update_group_schedule(request, group_id):
 
 
         # If student has parents, notify them too
-        child_pronoun = "votre fils" if student.gender == "male" else "votre fille"
+        child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all() :
             # Assuming `son` has an attribute `gender` that can be 'male' or 'female'
             parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a modifié l'horaire du cours de {group.subject.name} de {child_pronoun} {son.fullname} à : {group.week_day} de {group.start_time_range} à {group.end_time_range} {'seulement cette semaine' if schedule_change_type == 'temporary' else 'de façon permanente'}."
