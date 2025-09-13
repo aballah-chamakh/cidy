@@ -1,45 +1,38 @@
+import 'package:cidy/splash.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(Cidy());
+  runApp(const MyApp());
 }
 
-class Cidy extends StatefulWidget {
-  const Cidy({super.key});
-
-  @override
-  State<StatefulWidget> createState() {
-    return CidyState();
-  }
-}
-
-class CidyState extends State<Cidy> {
-  var counter = 0;
-
-  void increaseCounter() {
-    setState(() {
-      counter++;
-    });
-  }
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: Text('Cidy')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Counter: $counter'),
-              ElevatedButton(
-                onPressed: increaseCounter,
-                child: Text('Increase'),
-              ),
-            ],
+      title: 'Cidy',
+      theme: ThemeData(
+        primarySwatch: Colors.orange,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFF54E1E),
+            foregroundColor: Colors.white,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(foregroundColor: const Color(0xFFF54E1E)),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFFF54E1E)),
+            borderRadius: BorderRadius.circular(8.0),
           ),
         ),
       ),
+      home: const SplashScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }

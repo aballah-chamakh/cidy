@@ -94,12 +94,8 @@ flutter_native_splash:
   ios: true
   web: true  
   color: "#F54E1E"
-  image: assets/splash_cidy_logo.png
 
 
   android_12:
     color: "#F54E1E"
-    image: assets/splash_cidy_logo.png
-
-  
-  android_gravity: center
+    image : null 
