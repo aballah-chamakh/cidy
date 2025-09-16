@@ -12,6 +12,7 @@ class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
@@ -23,10 +24,14 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _scaleAnimation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
     _controller.forward();
 
-    Future.delayed(const Duration(seconds: 3), () {
+    Future.delayed(const Duration(seconds: 5), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
@@ -46,7 +51,10 @@ class _SplashScreenState extends State<SplashScreen>
       body: Center(
         child: FadeTransition(
           opacity: _animation,
-          child: Image.asset('assets/white_cidy_logo.png', height: 100.0),
+          child: ScaleTransition(
+            scale: _scaleAnimation,
+            child: Image.asset('assets/white_cidy_logo.png', height: 100.0),
+          ),
         ),
       ),
     );

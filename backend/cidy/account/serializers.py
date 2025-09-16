@@ -3,9 +3,12 @@ from .models import User
 from student.models import Student
 from teacher.models import Teacher
 from parent.models import Parent 
+from teacher.serializers import SectionSerializer
+from teacher.models import Level
 
 
-class RegisterSerializer(serializers.Serializer):
+
+class UserRegistrationSerializer(serializers.Serializer):
     """
     Serializer for user registration that matches the register screen requirements.
     """
@@ -78,15 +81,6 @@ class RegisterSerializer(serializers.Serializer):
         }
     )
     
-    confirm_password = serializers.CharField(
-        min_length=8,
-        write_only=True,
-        style={'input_type': 'password'},
-        error_messages={
-            'required': 'Password confirmation is required.',
-            'min_length': 'Password confirmation must be at least 8 characters long.'
-        }
-    )
     
     def validate_email(self, value):
         """
@@ -111,17 +105,6 @@ class RegisterSerializer(serializers.Serializer):
         return value
     
     
-    def validate(self, attrs):
-        """
-        Check that password and confirm_password match.
-        """
-        password = attrs.get('password')
-        confirm_password = attrs.get('confirm_password')
-        
-        if password and confirm_password and password != confirm_password:
-            raise serializers.ValidationError("Password and confirm password do not match.")
-        
-        return attrs
     
     def create(self, validated_data):
 
@@ -159,4 +142,15 @@ class RegisterSerializer(serializers.Serializer):
 
 
 
+class LevelsAndSectionsSerializer(serializers.ModelSerializer):
+
+    sections = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Level
+        fields = ['id', 'name', 'sections']
+
+    def get_sections(self, level):
+        sections = level.section_set.all()
+        return SectionSerializer(sections, many=True).data
 

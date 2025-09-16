@@ -6,5 +6,4 @@ from .account_serializers import (
     StudentAccountInfoSerializer,
     UpdateStudentAccountInfoSerializer,
     ChangeStudentPasswordSerializer,
-    IncompatibleGroupsSerializer
 )

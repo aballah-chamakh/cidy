@@ -41,15 +41,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
                       const SizedBox(height: 48.0),
-                      const Text(
+                      Text(
                         'Login',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 60.0,
-                          fontFamily: 'Nunito',
-                          color: Color(0xFFF54E1E),
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.headlineLarge,
                       ),
                       const SizedBox(height: 24.0),
                       Image.asset(
@@ -58,14 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 48.0),
                       TextFormField(
-                        style: const TextStyle(fontSize: 16.0),
+                        style: Theme.of(context).textTheme.bodyLarge,
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
+                          border: Theme.of(context).inputDecorationTheme.border,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -79,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16.0),
                       TextFormField(
-                        style: const TextStyle(fontSize: 16.0),
+                        style: Theme.of(context).textTheme.bodyLarge,
                         controller: _passwordController,
                         obscureText: _obscureText,
                         decoration: InputDecoration(

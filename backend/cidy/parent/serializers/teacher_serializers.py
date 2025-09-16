@@ -5,7 +5,7 @@ from teacher.models import Teacher, TeacherSubject
 
 
 class SectionSerializer(serializers.ModelSerializer):
-    subjects = serializers.SerializerMethodField(many=True)
+    subjects = serializers.SerializerMethodField()
 
     class Meta:
         model = Section
@@ -16,7 +16,7 @@ class SectionSerializer(serializers.ModelSerializer):
         return SubjectSerializer(subjects, many=True).data
 
 class TesLevelsSectionsSubjectsSerializer(serializers.ModelSerializer):
-    sections = serializers.SerializerMethodField(many=True)
+    sections = serializers.SerializerMethodField()
 
     class Meta:
         model = Level

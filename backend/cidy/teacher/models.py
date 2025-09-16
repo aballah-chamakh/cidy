@@ -1,17 +1,16 @@
 from django.db import models
 from account.models import User
-from student.models import Student
 
 class Level(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
 
 class Section(models.Model):
     image = models.ImageField(null=True, blank=True)
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
 
 class Subject(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
     level = models.ForeignKey(Level, on_delete=models.CASCADE,null=True, blank=True)
     section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True, blank=True)
 
@@ -20,7 +19,7 @@ class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     fullname = models.CharField(max_length=255)
     gender = models.CharField(max_length=10, choices=(('M', 'Male'), ('F', 'Female')), default='M')
-    join_date = models.DateField(auto_now_add=True)
+    join_datetime = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.fullname} -- {self.user.email}"
@@ -39,7 +38,7 @@ class TeacherSubject(models.Model):
 
 class TeacherEnrollment(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey('student.Student', on_delete=models.CASCADE)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     unpaid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     date = models.DateField(auto_now_add=True)
@@ -79,7 +78,7 @@ class Group(models.Model):
     temporary_start_time = models.TimeField(null=True, blank=True)
     temporary_end_time = models.TimeField(null=True, blank=True)
     clear_temporary_schedule_at = models.DateTimeField(null=True, blank=True)
-    students = models.ManyToManyField(Student,through="GroupEnrollment",related_name="groups")
+    students = models.ManyToManyField('student.Student',through="GroupEnrollment",related_name="groups")
     total_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_unpaid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
@@ -87,7 +86,7 @@ class Group(models.Model):
         return f"{self.teacher_subject.subject.name} group : {self.name}"
     
 class GroupEnrollment(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey('student.Student', on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     date = models.DateField(auto_now_add=True)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)

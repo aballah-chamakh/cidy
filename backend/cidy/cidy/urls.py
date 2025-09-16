@@ -23,7 +23,7 @@ from parent import urls as parent_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(account_urls)),
+    path('api/auth/', include(account_urls)),
     path('api/student/', include(student_urls)),
     path('api/teacher/', include(teacher_urls)),
     path('api/parent/', include(parent_urls)),

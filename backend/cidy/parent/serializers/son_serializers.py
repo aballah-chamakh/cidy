@@ -112,7 +112,7 @@ class SonSubjectDetailSerializer(serializers.ModelSerializer):
 
 
 class TesLevelsSectionsSerializer(serializers.ModelSerializer):
-    sections = serializers.SerializerMethodField(many=True)
+    sections = serializers.SerializerMethodField()
 
     class Meta:
         model = Level

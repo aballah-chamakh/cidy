@@ -16,7 +16,7 @@ class Parent(models.Model):
 class Son(models.Model):
     image = models.ImageField(default='defaults/son.jpg', upload_to='son_images/', null=True, blank=True)
     parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
-    student_teacher_enrollments = models.ManyToManyField(TeacherEnrollment, on_delete=models.SET_NULL, null=True, blank=True)
+    student_teacher_enrollments = models.ManyToManyField(TeacherEnrollment)
     fullname = models.CharField(max_length=255)
     gender = models.CharField(max_length=10, choices=(('M', 'Male'), ('F', 'Female')), default='M')
     level = models.ForeignKey(Level, on_delete=models.CASCADE)

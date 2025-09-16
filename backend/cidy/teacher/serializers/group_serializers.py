@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.db.models import Sum, Q
 from ..models import Group
 from student.models import Student
-from common.serializers import LevelSerializer, SectionSerializer, SubjectSerializer
+from .price_serializers import LevelSerializer, SectionSerializer, SubjectSerializer
 from django.core.paginator import Paginator
 
 

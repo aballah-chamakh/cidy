@@ -5,6 +5,5 @@ from .account_views import (
     get_account_info,
     update_account_info,
     change_password,
-    get_incompatible_groups_with_the_new_level_and_section
 )
 from .parent_views import get_student_parents 

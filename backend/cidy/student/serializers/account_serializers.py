@@ -1,15 +1,15 @@
 from rest_framework import serializers
 from teacher.serializers import LevelSerializer, SectionSerializer
-from teacher.models import Group,Level 
+from teacher.models import Level 
 from ..models import Student
 
 
 class LevelsAndSectionsSerializer(serializers.ModelSerializer):
-    sections = serializers.SerializerMethodField(many=True)
+    sections = serializers.SerializerMethodField()
 
     class Meta:
         model = Level
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'sections']
 
     def get_sections(self, level):
         sections = level.section_set.all()
