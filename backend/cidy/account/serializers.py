@@ -4,7 +4,7 @@ from student.models import Student
 from teacher.models import Teacher
 from parent.models import Parent 
 from teacher.serializers import SectionSerializer
-from teacher.models import Level
+from teacher.models import Level,Section 
 
 
 
@@ -70,6 +70,9 @@ class UserRegistrationSerializer(serializers.Serializer):
             'invalid_choice': 'Please select either Male or Female.'
         }
     )
+
+    level = serializers.CharField(required=False)
+    section = serializers.CharField(required=False, allow_blank=True)
     
     password = serializers.CharField(
         min_length=8,
@@ -115,14 +118,24 @@ class UserRegistrationSerializer(serializers.Serializer):
             password=validated_data['password']
         )
 
-        profile_type = validated_data.pop('profile_type')
-        fullname = validated_data.pop('fullname')
-        gender = validated_data.pop('gender')
+        profile_type = validated_data.get('profile_type')
+        fullname = validated_data.get('fullname')
+        gender = validated_data.get('gender')
         if profile_type == 'student':
+            print("create a student")
+            level = validated_data.get('level')
+            section = validated_data.get('section')
+            if level : 
+                level = Level.objects.get(name=level)
+                if section : 
+                    section = Section.objects.get(name=section,level = level)
             Student.objects.create(
                 user=user,
                 fullname=fullname,
-                gender=gender
+                gender=gender,
+                phone_number=user.phone_number,
+                level = level,
+                section = section if isinstance(section,Section) else None
             )
         elif profile_type == 'teacher':
             Teacher.objects.create(
@@ -154,3 +167,21 @@ class LevelsAndSectionsSerializer(serializers.ModelSerializer):
         sections = level.section_set.all()
         return SectionSerializer(sections, many=True).data
 
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # 🔑 Add your extra claim(s)
+        # assuming your User model has a field or property called profile_type
+        if hasattr(user, 'student'):
+            token['profile_type'] = 'student'
+        elif hasattr(user, 'teacher'):
+            token['profile_type'] = 'teacher'
+        elif hasattr(user, 'parent'):
+            token['profile_type'] = 'parent'
+
+        return token

@@ -4,15 +4,24 @@ from account.models import User
 class Level(models.Model):
     name = models.CharField(max_length=100)
 
+    def __str__(self):
+        return self.name
+
 class Section(models.Model):
     image = models.ImageField(null=True, blank=True)
     name = models.CharField(max_length=100)
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return self.name
+
 class Subject(models.Model):
     name = models.CharField(max_length=100)
     level = models.ForeignKey(Level, on_delete=models.CASCADE,null=True, blank=True)
     section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True, blank=True)
+
+    def __str__(self):
+        return self.name
 
 class Teacher(models.Model):
     image = models.ImageField(default='defaults/teacher.png',upload_to='teacher_images/')

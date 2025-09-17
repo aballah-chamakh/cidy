@@ -1,10 +1,11 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import UserRegistrationSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from teacher.models import Level
-from .serializers import LevelsAndSectionsSerializer
+from .serializers import LevelsAndSectionsSerializer, MyTokenObtainPairSerializer
 
 
 @api_view(['POST'])
@@ -22,6 +23,8 @@ def register_user(request):
         "password": "your_password",
     }
     """
+
+    print(request.data)
     serializer = UserRegistrationSerializer(data=request.data)
     
     if serializer.is_valid():
@@ -29,6 +32,12 @@ def register_user(request):
         
         # Generate JWT tokens for the user
         refresh = RefreshToken.for_user(user)
+        if hasattr(user, 'student'):
+            refresh['profile_type'] = 'student'
+        elif hasattr(user, 'teacher'):
+            refresh['profile_type'] = 'teacher'
+        elif hasattr(user, 'parent'):
+            refresh['profile_type'] = 'parent'
 
         # Add tokens to the response
         tokens = {
@@ -54,3 +63,8 @@ def get_levels_and_sections(request):
     levels = Level.objects.all()
     serializer = LevelsAndSectionsSerializer(levels, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer

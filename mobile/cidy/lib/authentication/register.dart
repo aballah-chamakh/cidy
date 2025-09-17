@@ -1,4 +1,8 @@
 import 'dart:convert';
+import 'package:cidy/parent/parent_entry.dart';
+import 'package:cidy/student/student_entry.dart';
+import 'package:cidy/teacher/teacher_entry.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'login.dart';
@@ -20,6 +24,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _selectedGender = "M";
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _selectedLevel;
+  String? _selectedSection;
+  List<String> _sections = [];
 
   @override
   void dispose() {
@@ -35,33 +42,73 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     if (!isFormValid ||
         _selectedProfileType == null ||
-        _selectedGender == null) {
+        _selectedGender == null ||
+        (_selectedProfileType == 'student' && _selectedLevel == null) ||
+        (_selectedProfileType == 'student' &&
+            _sections.isNotEmpty &&
+            _selectedSection == null)) {
       return;
+    }
+
+    Map<String, dynamic> requestBody = {
+      'fullname': _nameController.text,
+      'email': _emailController.text,
+      'phone_number': _phoneController.text,
+      'gender': _selectedGender,
+      'password': _passwordController.text,
+      'profile_type': _selectedProfileType,
+    };
+
+    if (_selectedProfileType == 'student') {
+      requestBody.addAll({'level': _selectedLevel});
+      if (_selectedSection != null) {
+        requestBody['section'] = _selectedSection;
+      }
     }
 
     final url = Uri.parse('${Config.backendUrl}/api/auth/register/');
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'fullname': _nameController.text,
-        'email': _emailController.text,
-        'phone_number': _phoneController.text,
-        'gender': _selectedGender,
-        'password': _passwordController.text,
-        'profile_type': _selectedProfileType,
-      }),
+      body: jsonEncode(requestBody),
     );
 
     if (!mounted) return;
     if (response.statusCode == 200) {
+      if (!mounted) return;
+      final data = jsonDecode(response.body);
+      const storage = FlutterSecureStorage();
+      await storage.write(key: 'access_token', value: data['tokens']['access']);
+      await storage.write(
+        key: 'refresh_token',
+        value: data['tokens']['refresh'],
+      );
+
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Inscription réussie !')));
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-      );
+
+      Widget entryWidget;
+      switch (_selectedProfileType) {
+        case 'student':
+          entryWidget = const StudentEntry();
+          break;
+        case 'teacher':
+          entryWidget = const TeacherEntry();
+          break;
+        case 'parent':
+          entryWidget = const ParentEntry();
+          break;
+        default:
+          entryWidget = const LoginScreen();
+      }
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (context) => entryWidget));
     } else {
+      if (!mounted) return;
       final error = jsonDecode(response.body);
       ScaffoldMessenger.of(
         context,
@@ -232,6 +279,81 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       selectedBackgroundColor: const Color(0xFFF54E1E),
                     ),
                   ),
+                  if (_selectedProfileType == 'student') ...[
+                    const SizedBox(height: 16.0),
+                    DropdownButtonFormField<String>(
+                      value: _selectedLevel,
+                      decoration: InputDecoration(
+                        labelText: 'Niveau',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      items: Config.levelsSectionsSubjects.keys
+                          .map(
+                            (level) => DropdownMenuItem(
+                              value: level,
+                              child: Text(level),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedLevel = value;
+                          _selectedSection = null;
+                          if (value != null &&
+                              Config.levelsSectionsSubjects[value]!.containsKey(
+                                'sections',
+                              )) {
+                            _sections =
+                                (Config.levelsSectionsSubjects[value]!['sections']
+                                        as Map<String, dynamic>)
+                                    .keys
+                                    .toList();
+                          } else {
+                            _sections = [];
+                          }
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'Veuillez sélectionner un niveau';
+                        }
+                        return null;
+                      },
+                    ),
+                    if (_sections.isNotEmpty) ...[
+                      const SizedBox(height: 16.0),
+                      DropdownButtonFormField<String>(
+                        value: _selectedSection,
+                        decoration: InputDecoration(
+                          labelText: 'Section',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        items: _sections
+                            .map(
+                              (section) => DropdownMenuItem(
+                                value: section,
+                                child: Text(section),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedSection = value;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null) {
+                            return 'Veuillez sélectionner une section';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ],
                   const SizedBox(height: 16.0),
                   TextFormField(
                     style: const TextStyle(fontSize: 16.0),
