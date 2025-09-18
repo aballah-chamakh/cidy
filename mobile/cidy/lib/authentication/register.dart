@@ -78,11 +78,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
       final data = jsonDecode(response.body);
       const storage = FlutterSecureStorage();
-      await storage.write(key: 'access_token', value: data['tokens']['access']);
-      await storage.write(
-        key: 'refresh_token',
-        value: data['tokens']['refresh'],
-      );
+      await storage.write(key: 'access_token', value: data['token']);
 
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -179,9 +175,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     emptySelectionAllowed: true,
                     style: SegmentedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                      foregroundColor: const Color(0xFFF54E1E),
+                      foregroundColor: Theme.of(context).primaryColor,
                       selectedForegroundColor: Colors.white,
-                      selectedBackgroundColor: const Color(0xFFF54E1E),
+                      selectedBackgroundColor: Theme.of(context).primaryColor,
                     ),
                   ),
                   const SizedBox(height: 16.0),
@@ -274,9 +270,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     emptySelectionAllowed: true,
                     style: SegmentedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                      foregroundColor: const Color(0xFFF54E1E),
+                      foregroundColor: Theme.of(context).primaryColor,
                       selectedForegroundColor: Colors.white,
-                      selectedBackgroundColor: const Color(0xFFF54E1E),
+                      selectedBackgroundColor: Theme.of(context).primaryColor,
                     ),
                   ),
                   if (_selectedProfileType == 'student') ...[

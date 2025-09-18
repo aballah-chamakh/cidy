@@ -1,5 +1,12 @@
+import 'dart:convert';
 import 'package:cidy/authentication/register.dart';
+import 'package:cidy/parent/parent_entry.dart';
+import 'package:cidy/student/student_entry.dart';
+import 'package:cidy/teacher/teacher_entry.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:cidy/config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +26,76 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loginUser() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    Map<String, dynamic> requestBody = {
+      'email': _emailController.text,
+      'password': _passwordController.text,
+    };
+
+    final url = Uri.parse('${Config.backendUrl}/api/auth/token/');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(requestBody),
+    );
+
+    if (!mounted) return;
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      const storage = FlutterSecureStorage();
+      await storage.write(key: 'access_token', value: data['access']);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Connexion réussie !')));
+
+      // Decode the access token to get the profile type
+      final accessToken = data['access'];
+      final parts = accessToken.split('.');
+      if (parts.length == 3) {
+        final payload = parts[1];
+        // Add padding if needed
+        String normalizedPayload = base64.normalize(payload);
+        final decodedPayload = utf8.decode(base64.decode(normalizedPayload));
+        final tokenData = jsonDecode(decodedPayload);
+        final profileType = tokenData['profile_type'];
+
+        Widget entryWidget;
+        switch (profileType) {
+          case 'student':
+            entryWidget = const StudentEntry();
+            break;
+          case 'teacher':
+            entryWidget = const TeacherEntry();
+            break;
+          case 'parent':
+            entryWidget = const ParentEntry();
+            break;
+          default:
+            entryWidget = const LoginScreen();
+        }
+
+        if (!mounted) return;
+        Navigator.of(
+          context,
+        ).pushReplacement(MaterialPageRoute(builder: (context) => entryWidget));
+      }
+    } else {
+      if (!mounted) return;
+      final error = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur : ${error['detail'] ?? 'Erreur de connexion'}'),
+        ),
+      );
+    }
   }
 
   @override
@@ -102,11 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24.0),
                       ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            // TODO: Implement login functionality
-                          }
-                        },
+                        onPressed: _loginUser,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           shape: RoundedRectangleBorder(

@@ -10,24 +10,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    //const primaryColor = Color(0xFFF54E1E);
+    const primaryColor = Color(0xFF394CB3);
     return MaterialApp(
       title: 'Cidy',
       theme: ThemeData(
-        primaryColor: const Color(0xFFF54E1E),
+        primaryColor: primaryColor,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         textTheme: const TextTheme(
           headlineLarge: TextStyle(
             fontSize: 60.0,
             fontFamily: 'Nunito',
             fontWeight: FontWeight.bold,
-            color: Color(0xFFF54E1E),
+            color: primaryColor,
           ),
           bodyLarge: TextStyle(fontSize: 18.0),
           bodySmall: TextStyle(fontSize: 16.0),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFF54E1E),
+            backgroundColor: primaryColor,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             shape: RoundedRectangleBorder(
@@ -36,12 +38,12 @@ class MyApp extends StatelessWidget {
           ),
         ),
         textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(foregroundColor: const Color(0xFFF54E1E)),
+          style: TextButton.styleFrom(foregroundColor: primaryColor),
         ),
         inputDecorationTheme: InputDecorationTheme(
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
           focusedBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Color(0xFFF54E1E)),
+            borderSide: BorderSide(color: primaryColor),
             borderRadius: BorderRadius.circular(8.0),
           ),
         ),

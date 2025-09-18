@@ -4,6 +4,7 @@ from student.models import Student
 from teacher.models import Teacher
 from parent.models import Parent 
 from teacher.serializers import SectionSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from teacher.models import Level,Section 
 
 
@@ -168,9 +169,8 @@ class LevelsAndSectionsSerializer(serializers.ModelSerializer):
         return SectionSerializer(sections, many=True).data
 
 
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+class MyAccessTokenSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
@@ -185,3 +185,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             token['profile_type'] = 'parent'
 
         return token
+    
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        # Only return access token
+        return {'access': data['access']}

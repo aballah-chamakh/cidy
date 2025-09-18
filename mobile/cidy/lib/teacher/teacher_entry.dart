@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../authentication/login.dart';
 
 class TeacherEntry extends StatefulWidget {
   const TeacherEntry({super.key});
@@ -10,7 +11,6 @@ class TeacherEntry extends StatefulWidget {
 
 class _TeacherEntryState extends State<TeacherEntry> {
   String? _accessToken;
-  String? _refreshToken;
   bool _isLoading = true;
 
   @override
@@ -22,14 +22,22 @@ class _TeacherEntryState extends State<TeacherEntry> {
   Future<void> _loadTokens() async {
     const storage = FlutterSecureStorage();
     final accessToken = await storage.read(key: 'access_token');
-    final refreshToken = await storage.read(key: 'refresh_token');
     if (mounted) {
       setState(() {
         _accessToken = accessToken;
-        _refreshToken = refreshToken;
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _logout() async {
+    const storage = FlutterSecureStorage();
+    await storage.delete(key: 'access_token');
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
   }
 
   @override
@@ -58,12 +66,11 @@ class _TeacherEntryState extends State<TeacherEntry> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(_accessToken ?? 'Not found'),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Refresh Token:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _logout,
+                      child: const Text('Logout'),
                     ),
-                    Text(_refreshToken ?? 'Not found'),
                   ],
                 ),
               ),
