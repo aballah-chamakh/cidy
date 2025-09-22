@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:cidy/authentication/register.dart';
-import 'package:cidy/parent/parent_entry.dart';
-import 'package:cidy/student/student_entry.dart';
-import 'package:cidy/teacher/teacher_entry.dart';
+import 'package:cidy/profiles/parent/parent_entry.dart';
+import 'package:cidy/profiles/student/student_entry.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_dashboard_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -73,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
             entryWidget = const StudentEntry();
             break;
           case 'teacher':
-            entryWidget = const TeacherEntry();
+            entryWidget = const TeacherDashboardScreen();
             break;
           case 'parent':
             entryWidget = const ParentEntry();
@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: IntrinsicHeight(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -221,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 24.0, top: 16.0),
                         child: Image.asset(
-                          'assets/orange_cidy_logo.png',
+                          'assets/blue_cidy_logo.png',
                           height: 40.0,
                         ),
                       ),

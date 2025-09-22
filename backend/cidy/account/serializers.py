@@ -189,4 +189,9 @@ class MyAccessTokenSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         # Only return access token
+        data['user'] = {
+            'id': self.user.id,
+            'email': self.user.email,
+            'profile_type': data.get('profile_type')
+        }
         return {'access': data['access']}

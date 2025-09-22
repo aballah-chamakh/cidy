@@ -96,9 +96,9 @@ flutter_native_splash:
   android: true
   ios: true
   web: true  
-  color: "#F54E1E"
+  color: "#384059"
 
 
   android_12:
-    color: "#F54E1E"
-    image : "assets/native_splash_cidy_logo.png" 
+    color: "#384059"
+    image : "assets/native_splash_cidy_logo.png"

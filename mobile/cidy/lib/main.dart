@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     //const primaryColor = Color(0xFFF54E1E);
-    const primaryColor = Color(0xFF394CB3);
+    const primaryColor = Color(0xFF384059);
     return MaterialApp(
       title: 'Cidy',
       theme: ThemeData(

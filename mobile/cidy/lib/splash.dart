@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'authentication/register.dart';
-import 'student/student_entry.dart';
-import 'teacher/teacher_entry.dart';
-import 'parent/parent_entry.dart';
+import 'profiles/student/student_entry.dart';
+import 'profiles/teacher/screens/teacher_dashboard_screen.dart';
+import 'profiles/parent/parent_entry.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
               entryWidget = const StudentEntry();
               break;
             case 'teacher':
-              entryWidget = const TeacherEntry();
+              entryWidget = const TeacherDashboardScreen();
               break;
             case 'parent':
               entryWidget = const ParentEntry();
