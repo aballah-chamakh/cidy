@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../authentication/login.dart';
+import '../../authentication/login.dart';
 
 class StudentEntry extends StatefulWidget {
   const StudentEntry({super.key});

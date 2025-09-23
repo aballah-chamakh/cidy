@@ -1,5 +1,6 @@
 import 'package:cidy/splash.dart';
 import 'package:flutter/material.dart';
+import 'route_observer.dart';
 
 void main() {
   runApp(const MyApp());
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [routeObserver],
     );
   }
 }

@@ -171,27 +171,25 @@ class LevelsAndSectionsSerializer(serializers.ModelSerializer):
 
 
 class MyAccessTokenSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # 🔑 Add your extra claim(s)
-        # assuming your User model has a field or property called profile_type
-        if hasattr(user, 'student'):
-            token['profile_type'] = 'student'
-        elif hasattr(user, 'teacher'):
-            token['profile_type'] = 'teacher'
-        elif hasattr(user, 'parent'):
-            token['profile_type'] = 'parent'
-
-        return token
     
     def validate(self, attrs):
+        print("validate")
+        print(attrs)
         data = super().validate(attrs)
+        print(f"data : {data}")
+        if hasattr(self.user, 'student'):
+            profile_type = 'student'
+        elif hasattr(self.user, 'teacher'):
+            profile_type = 'teacher'
+        else:
+            profile_type = 'parent'
+
         # Only return access token
-        data['user'] = {
-            'id': self.user.id,
-            'email': self.user.email,
-            'profile_type': data.get('profile_type')
+        profile = getattr(self.user, profile_type)
+        user_data = {
+            'email' : self.user.email,
+            'fullname': profile.fullname,
+            'image_url': profile.image.url,
+            'profile_type': profile_type
         }
-        return {'access': data['access']}
+        return {'access': data['access'],'user': user_data}

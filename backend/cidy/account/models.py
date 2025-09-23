@@ -48,8 +48,7 @@ class User(AbstractBaseUser):
     email = models.EmailField(
             verbose_name='email address',
             max_length=255,
-            unique=True,
-        )
+            unique=True)
     phone_number = models.CharField(max_length=8,default='00000000',unique=True)
     active = models.BooleanField(default=True)
     staff = models.BooleanField(default=False)

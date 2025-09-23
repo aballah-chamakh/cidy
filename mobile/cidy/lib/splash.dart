@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'authentication/register.dart';
@@ -46,59 +45,34 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     const storage = FlutterSecureStorage();
-    final accessToken = await storage.read(key: 'access_token');
+    final profileType = await storage.read(key: 'profile_type');
 
-    if (accessToken == null) {
+    if (profileType == null) {
       // No token found, redirect to register
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const RegisterScreen()),
       );
     } else {
-      // Token exists, decode it to get profile type
-      try {
-        final parts = accessToken.split('.');
-        if (parts.length == 3) {
-          final payload = parts[1];
-          // Add padding if needed
-          String normalizedPayload = base64.normalize(payload);
-          final decodedPayload = utf8.decode(base64.decode(normalizedPayload));
-          final tokenData = jsonDecode(decodedPayload);
-          final profileType = tokenData['profile_type'];
-
-          Widget entryWidget;
-          switch (profileType) {
-            case 'student':
-              entryWidget = const StudentEntry();
-              break;
-            case 'teacher':
-              entryWidget = const TeacherDashboardScreen();
-              break;
-            case 'parent':
-              entryWidget = const ParentEntry();
-              break;
-            default:
-              entryWidget = const RegisterScreen();
-          }
-
-          if (!mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => entryWidget),
-          );
-        } else {
-          // Invalid token format, redirect to register
-          if (!mounted) return;
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const RegisterScreen()),
-          );
-        }
-      } catch (e) {
-        // Error decoding token, redirect to register
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const RegisterScreen()),
-        );
+      Widget profileScreen;
+      switch (profileType) {
+        case 'student':
+          profileScreen = const StudentEntry();
+          break;
+        case 'teacher':
+          profileScreen = const TeacherDashboardScreen();
+          break;
+        case 'parent':
+          profileScreen = const ParentEntry();
+          break;
+        default:
+          profileScreen = const RegisterScreen();
       }
+
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (context) => profileScreen));
     }
   }
 

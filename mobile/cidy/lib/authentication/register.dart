@@ -79,30 +79,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final data = jsonDecode(response.body);
       const storage = FlutterSecureStorage();
       await storage.write(key: 'access_token', value: data['token']);
+      await storage.write(key: 'email', value: data['user']['email']);
+      await storage.write(key: 'fullname', value: data['user']['fullname']);
+      await storage.write(key: 'image_url', value: data['user']['image_url']);
+      await storage.write(
+        key: 'profile_type',
+        value: data['user']['profile_type'],
+      );
 
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Inscription réussie !')));
-
-      Widget entryWidget;
-      switch (_selectedProfileType) {
+      Widget profileScreen;
+      switch (data['user']['profile_type']) {
         case 'student':
-          entryWidget = const StudentEntry();
+          profileScreen = const StudentEntry();
           break;
         case 'teacher':
-          entryWidget = const TeacherDashboardScreen();
+          profileScreen = const TeacherDashboardScreen();
           break;
         case 'parent':
-          entryWidget = const ParentEntry();
+          profileScreen = const ParentEntry();
           break;
         default:
-          entryWidget = const LoginScreen();
+          profileScreen = const LoginScreen();
       }
       if (!mounted) return;
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (context) => entryWidget));
+      ).pushReplacement(MaterialPageRoute(builder: (context) => profileScreen));
     } else {
       if (!mounted) return;
       final error = jsonDecode(response.body);

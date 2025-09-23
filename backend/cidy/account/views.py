@@ -32,18 +32,26 @@ def register_user(request):
         
         # Generate JWT tokens for the user
         token = AccessToken.for_user(user)
-        if hasattr(user, 'student'):
-            token['profile_type'] = 'student'
-        elif hasattr(user, 'teacher'):
-            token['profile_type'] = 'teacher'
-        elif hasattr(user, 'parent'):
-            token['profile_type'] = 'parent'
 
+        if hasattr(user, 'student'):
+            profile_type = 'student'
+        elif hasattr(user, 'teacher'):
+            profile_type = 'teacher'
+        else:
+            profile_type = 'parent'
+
+        profile = getattr(user, profile_type)
 
         # Return success response with user data (excluding password)
         return Response({
             'message': 'User registered successfully',
-            'token' : str(token)    
+            'token' : str(token),
+            'user': {
+                'email' : user.email,
+                'fullname': profile.fullname,
+                'image_url': profile.image.url,
+                'profile_type': profile_type
+            }
         }, status=status.HTTP_200_OK)
     
     # Return validation errors

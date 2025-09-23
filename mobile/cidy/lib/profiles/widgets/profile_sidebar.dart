@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/sidebar_menu_item.dart';
+import 'package:cidy/config.dart';
 
 class ProfileSidebar extends StatelessWidget {
+  final String email;
   final String fullName;
-  final String profileImageUrl;
+  final String imageUrl;
   final List<SidebarMenuItem> menuItems; // everything except logout
   final VoidCallback onLogout;
   final VoidCallback onClose;
@@ -11,8 +13,9 @@ class ProfileSidebar extends StatelessWidget {
 
   const ProfileSidebar({
     super.key,
+    required this.email,
     required this.fullName,
-    required this.profileImageUrl,
+    required this.imageUrl,
     required this.menuItems,
     required this.onLogout,
     required this.onClose,
@@ -31,7 +34,8 @@ class ProfileSidebar extends StatelessWidget {
             Align(
               alignment: Alignment.centerRight,
               child: IconButton(
-                icon: const Icon(Icons.arrow_left),
+                icon: const Icon(Icons.arrow_back),
+                color: Colors.white,
                 onPressed: onClose,
               ),
             ),
@@ -48,16 +52,33 @@ class ProfileSidebar extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundImage: NetworkImage(profileImageUrl),
+                      backgroundImage: NetworkImage(
+                        Config.backendUrl + imageUrl,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        fullName,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            fullName,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            email,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -70,17 +91,50 @@ class ProfileSidebar extends StatelessWidget {
             // Dynamic menu items
             ...menuItems.map(
               (item) => ListTile(
+                iconColor: Colors.white,
+                textColor: Colors.white,
                 leading: Icon(item.icon),
-                title: Text(item.label),
+                title: Row(
+                  children: [
+                    Text(item.label),
+                    if (item.label == "Notifications")
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: Container(
+                          padding: const EdgeInsets.only(
+                            right: 12,
+                            left: 12,
+                            top: 2,
+                            bottom: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          child: Text(
+                            '$notificationCount',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   item.onTap();
                 },
               ),
             ),
+
             const Spacer(),
             // Fixed logout item
             ListTile(
+              iconColor: Colors.white,
+              textColor: Colors.white,
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () {

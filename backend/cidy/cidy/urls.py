@@ -20,6 +20,8 @@ from account import urls as account_urls
 from student import urls as student_urls
 from teacher import urls as teacher_urls
 from parent import urls as parent_urls
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,3 +30,6 @@ urlpatterns = [
     path('api/teacher/', include(teacher_urls)),
     path('api/parent/', include(parent_urls)),
 ]
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+

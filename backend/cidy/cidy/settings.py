@@ -142,23 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 SIMPLE_JWT = {
-    # One token only — good for 14 days
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=14),
-
-    # Disable refresh-token use
-    'REFRESH_TOKEN_LIFETIME': timedelta(0),      # or just don’t expose the refresh view
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': False,
-
-    # Standard signing settings
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
-
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME' : timedelta(days=5),
+    'ACCESS_TOKEN_LIFETIME' : timedelta(days=14),
     'REFRESH_TOKEN_LIFETIME' : timedelta(0),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,

@@ -15,19 +15,23 @@ class ProfileAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      foregroundColor: Colors.white,
       backgroundColor: Theme.of(context).primaryColor,
       leading: IconButton(
         icon: const Icon(Icons.menu),
+        iconSize: 30,
         onPressed: () {
           Scaffold.of(context).openDrawer();
         },
       ),
-      title: Text(title),
+      title: Text(title, style: const TextStyle(fontSize: 22)),
+      centerTitle: true,
       actions: [
         Stack(
           children: [
             IconButton(
               icon: const Icon(Icons.notifications),
+              iconSize: 30,
               onPressed: onNotificationTap,
             ),
             if (notificationCount > 0)

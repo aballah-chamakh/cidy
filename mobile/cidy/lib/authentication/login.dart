@@ -50,43 +50,35 @@ class _LoginScreenState extends State<LoginScreen> {
       final data = jsonDecode(response.body);
       const storage = FlutterSecureStorage();
       await storage.write(key: 'access_token', value: data['access']);
+      await storage.write(key: 'email', value: data['user']['email']);
+      await storage.write(key: 'fullname', value: data['user']['fullname']);
+      await storage.write(key: 'image_url', value: data['user']['image_url']);
+
+      await storage.write(
+        key: 'profile_type',
+        value: data['user']['profile_type'],
+      );
+
+      Widget profileScreen;
+
+      switch (data['user']['profile_type']) {
+        case 'student':
+          profileScreen = const StudentEntry();
+          break;
+        case 'teacher':
+          profileScreen = const TeacherDashboardScreen();
+          break;
+        case 'parent':
+          profileScreen = const ParentEntry();
+          break;
+        default:
+          profileScreen = const LoginScreen();
+      }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(
+      Navigator.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Connexion réussie !')));
-
-      // Decode the access token to get the profile type
-      final accessToken = data['access'];
-      final parts = accessToken.split('.');
-      if (parts.length == 3) {
-        final payload = parts[1];
-        // Add padding if needed
-        String normalizedPayload = base64.normalize(payload);
-        final decodedPayload = utf8.decode(base64.decode(normalizedPayload));
-        final tokenData = jsonDecode(decodedPayload);
-        final profileType = tokenData['profile_type'];
-
-        Widget entryWidget;
-        switch (profileType) {
-          case 'student':
-            entryWidget = const StudentEntry();
-            break;
-          case 'teacher':
-            entryWidget = const TeacherDashboardScreen();
-            break;
-          case 'parent':
-            entryWidget = const ParentEntry();
-            break;
-          default:
-            entryWidget = const LoginScreen();
-        }
-
-        if (!mounted) return;
-        Navigator.of(
-          context,
-        ).pushReplacement(MaterialPageRoute(builder: (context) => entryWidget));
-      }
+      ).pushReplacement(MaterialPageRoute(builder: (context) => profileScreen));
     } else {
       if (!mounted) return;
       final error = jsonDecode(response.body);
