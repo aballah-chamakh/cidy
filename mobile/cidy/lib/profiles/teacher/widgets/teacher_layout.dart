@@ -90,6 +90,7 @@ class _TeacherLayoutState extends State<TeacherLayout>
     const duration = Duration(seconds: 5); // Update every 30 seconds
 
     // Start periodic updates
+
     _notificationCountUpdaterTimer = Timer.periodic(duration, (Timer timer) {
       _updateNotificationCount();
     });
