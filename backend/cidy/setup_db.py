@@ -4,6 +4,42 @@ import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cidy.settings")
 django.setup()
 
+from teacher.models import Teacher, TeacherSubject,Group,Level, Section, Subject
+
+teacher = Teacher.objects.get(user__email="teacher10@gmail.com")
+
+# add teacher subjects for teacher10
+first_primary_level = Level.objects.get(name="Première année primaire")
+bac_level = Level.objects.get(name="Quatrième année secondaire")
+technology_section = Section.objects.get(name="Technique", level=bac_level)
+math_subject = Subject.objects.get(name="Mathématiques", level=bac_level, section=technology_section)
+bac_level_teacher_subject = TeacherSubject.objects.create(teacher=teacher,
+                                                level=bac_level,
+                                                section=technology_section,
+                                                subject=math_subject,
+                                                price_per_class=20)
+first_primary_level_teacher_subject = TeacherSubject.objects.create(teacher=teacher,
+                                                level=first_primary_level,
+                                                section=None,
+                                                subject=Subject.objects.get(name="Mathématiques", level=first_primary_level),
+                                                price_per_class=15)
+
+# Create groups for teacher10
+group1 = Group.objects.create(teacher=teacher, 
+                              name="Groupe de mathématiques - Bac - Technique", 
+                              teacher_subject=bac_level_teacher_subject,
+                              week_day="Monday",
+                              start_time="10:00",
+                              end_time="12:00")
+group2 = Group.objects.create(teacher=teacher, 
+                              name="Groupe de mathématiques - Première année - Primaire", 
+                              teacher_subject=first_primary_level_teacher_subject,
+                              week_day="Tuesday",
+                              start_time="09:00",
+                              end_time="11:00")
+
+quit()
+# Setup the sections, levels and subjects
 from teacher.models import Subject, Level, Section
 
 Level.objects.all().delete()

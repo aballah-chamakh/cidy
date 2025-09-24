@@ -88,23 +88,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       Widget profileScreen;
+      String profileRouteName;
       switch (data['user']['profile_type']) {
         case 'student':
           profileScreen = const StudentEntry();
+          profileRouteName = '/student';
           break;
         case 'teacher':
           profileScreen = const TeacherDashboardScreen();
+          profileRouteName = '/teacher_dashboard';
           break;
         case 'parent':
           profileScreen = const ParentEntry();
+          profileRouteName = '/parent';
           break;
         default:
           profileScreen = const LoginScreen();
+          profileRouteName = '/login';
       }
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (context) => profileScreen));
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          settings: RouteSettings(name: profileRouteName),
+          builder: (context) => profileScreen,
+        ),
+        (route) => false,
+      );
     } else {
       if (!mounted) return;
       final error = jsonDecode(response.body);
@@ -280,7 +289,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   if (_selectedProfileType == 'student') ...[
                     const SizedBox(height: 16.0),
                     DropdownButtonFormField<String>(
-                      value: _selectedLevel,
+                      initialValue: _selectedLevel,
                       decoration: InputDecoration(
                         labelText: 'Niveau',
                         border: OutlineInputBorder(
@@ -323,7 +332,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (_sections.isNotEmpty) ...[
                       const SizedBox(height: 16.0),
                       DropdownButtonFormField<String>(
-                        value: _selectedSection,
+                        initialValue: _selectedSection,
                         decoration: InputDecoration(
                           labelText: 'Section',
                           border: OutlineInputBorder(
@@ -408,10 +417,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pushReplacement(
+                          Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
                               builder: (context) => const LoginScreen(),
                             ),
+                            (route) => false,
                           );
                         },
                         child: const Text(

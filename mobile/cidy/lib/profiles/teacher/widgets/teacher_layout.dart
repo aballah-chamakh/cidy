@@ -9,6 +9,10 @@ import '../../models/sidebar_menu_item.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:cidy/config.dart';
 import 'package:cidy/route_observer.dart';
+import '../screens/teacher_dashboard_screen.dart';
+import '../screens/teacher_groups_screen.dart';
+import '../screens/teacher_week_schedule_screen.dart';
+import 'package:cidy/app_state.dart';
 
 class TeacherLayout extends StatefulWidget {
   final Widget body;
@@ -20,36 +24,28 @@ class TeacherLayout extends StatefulWidget {
   State<TeacherLayout> createState() => _TeacherLayoutState();
 }
 
-class _TeacherLayoutState extends State<TeacherLayout>
-    with RouteAware, WidgetsBindingObserver {
+class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
   String _teacherFullName = '';
   String _teacherImageUrl = '';
   String _teacherEmail = '';
   int _notificationCount = 0;
-  var _notificationCountUpdaterTimer;
+  Timer? _notificationCountUpdaterTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      _notificationCount = AppState.notificationCount;
+    });
+    _loadTeacherInfo();
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    routeObserver.subscribe(this, ModalRoute.of(context)!);
-  }
-
-  @override
-  void didPushNext() {
-    _stopNotificationCountUpdater();
-  }
-
-  @override
-  void didPopNext() {
-    _startNotificationCountUpdater();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _startNotificationCountUpdater();
-    } else {
-      _stopNotificationCountUpdater();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
     }
   }
 
@@ -71,7 +67,7 @@ class _TeacherLayoutState extends State<TeacherLayout>
   Future<void> _updateNotificationCount() async {
     // Replace with your API call to fetch unread notification count
     const storage = FlutterSecureStorage();
-    final token = await storage.read(key: 'auth_token');
+    final token = await storage.read(key: 'access_token');
     final response = await http.get(
       Uri.parse('${Config.backendUrl}/api/teacher/notifications/unread_count/'),
       headers: {'Authorization': 'Bearer $token'},
@@ -82,6 +78,7 @@ class _TeacherLayoutState extends State<TeacherLayout>
       setState(() {
         // Assuming the API returns {"unread_count": 5}
         _notificationCount = data['unread_count'];
+        AppState.notificationCount = _notificationCount;
       });
     }
   }
@@ -103,19 +100,35 @@ class _TeacherLayoutState extends State<TeacherLayout>
     }
   }
 
+  // -------- RouteAware Callbacks --------
   @override
-  void initState() {
-    super.initState();
-    _loadTeacherInfo();
+  void didPush() {
+    // This screen was just pushed onto the stack
     _startNotificationCountUpdater();
-    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didPop() {
+    // This screen is being popped off
+    _stopNotificationCountUpdater();
+  }
+
+  @override
+  void didPushNext() {
+    // Another screen has been pushed on top of this one
+    _stopNotificationCountUpdater();
+  }
+
+  @override
+  void didPopNext() {
+    // The screen above this one was popped, revealing this screen again
+    _startNotificationCountUpdater();
   }
 
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
     _stopNotificationCountUpdater();
-    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
@@ -140,6 +153,18 @@ class _TeacherLayoutState extends State<TeacherLayout>
             icon: Icons.dashboard,
             onTap: () {
               // Navigate to the dashboard screen
+              if (ModalRoute.of(context)?.settings.name ==
+                  '/teacher_dashboard') {
+                // Navigator.of(context).pop(); // Just close the drawer
+                return; // Already on the dashboard
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: '/teacher_dashboard'),
+                    builder: (context) => const TeacherDashboardScreen(),
+                  ),
+                );
+              }
             },
           ),
           SidebarMenuItem(
@@ -147,6 +172,18 @@ class _TeacherLayoutState extends State<TeacherLayout>
             icon: Icons.calendar_today,
             onTap: () {
               // Navigate to the week schedule screen
+              if (ModalRoute.of(context)?.settings.name ==
+                  '/teacher_week_schedule') {
+                //Navigator.of(context).pop(); // Just close the drawer
+                return; // Already on the week schedule
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: '/teacher_week_schedule'),
+                    builder: (context) => const TeacherWeekScheduleScreen(),
+                  ),
+                );
+              }
             },
           ),
           SidebarMenuItem(
@@ -154,6 +191,17 @@ class _TeacherLayoutState extends State<TeacherLayout>
             icon: Icons.group,
             onTap: () {
               // Navigate to the groups screen
+              if (ModalRoute.of(context)?.settings.name == '/teacher_groups') {
+                //Navigator.of(context).pop(); // Just close the drawer
+                return; // Already on the groups screen
+              } else {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: '/teacher_groups'),
+                    builder: (context) => const TeacherGroupsScreen(),
+                  ),
+                );
+              }
             },
           ),
           SidebarMenuItem(
@@ -189,9 +237,12 @@ class _TeacherLayoutState extends State<TeacherLayout>
           // Handle logout
           const storage = FlutterSecureStorage();
           await storage.deleteAll();
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-          );
+          if (context.mounted) {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+          }
         },
         onClose: () {
           Navigator.of(context).pop();

@@ -1,6 +1,8 @@
 from django.db import models
 from account.models import User
 from teacher.models import Level, Section
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Student(models.Model):
     image = models.ImageField(default='defaults/student.png',upload_to='student_images/')
@@ -29,3 +31,8 @@ class StudentNotification(models.Model):
 
     def __str__(self):
         return f"Notification for {self.student.fullname} - {self.created_at}"
+    
+@receiver(post_save, sender=Student)
+def create_student_unread_notification(sender, instance, created, **kwargs):
+    if created:
+        StudentUnreadNotification.objects.create(student=instance)

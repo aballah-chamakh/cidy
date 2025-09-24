@@ -1,5 +1,7 @@
 from django.db import models
 from account.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Level(models.Model):
     name = models.CharField(max_length=100)
@@ -134,6 +136,9 @@ class TeacherUnreadNotification(models.Model):
     teacher = models.OneToOneField(Teacher, on_delete=models.CASCADE)
     unread_notifications = models.PositiveIntegerField(default=0)
 
+    def __str__(self):
+        return f"{self.teacher.fullname} - Unread Notifications: {self.unread_notifications}"
+
 class TeacherNotification(models.Model):
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     image = models.ImageField(default='defaults/due_payment_notification.png')
@@ -145,3 +150,8 @@ class TeacherNotification(models.Model):
     def __str__(self):
         return f"Notification for {self.teacher.fullname} - {self.created_at}"
     
+
+@receiver(post_save, sender=Teacher)
+def create_teacher_unread_notification(sender, instance, created, **kwargs):
+    if created:
+        TeacherUnreadNotification.objects.create(teacher=instance)

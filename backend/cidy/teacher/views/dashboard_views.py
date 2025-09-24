@@ -43,10 +43,10 @@ def get_dashboard_data(request):
     
     # If explicit start and end dates are provided, use them
     if start_date_param and end_date_param:
-            start_date = datetime.strptime(start_date_param, '%Y-%m-%d')
-            end_date = datetime.strptime(end_date_param, '%Y-%m-%d')
-            # Add time to end_date to include the full day
-            end_date = datetime.combine(end_date.date(), datetime.max.time())
+        start_date = datetime.strptime(start_date_param, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_param, '%Y-%m-%d')
+        # Add time to end_date to include the full day
+        end_date = datetime.combine(end_date.date(), datetime.max.time())
     elif date_range_preset:
         # Use preset if no explicit dates
         start_date, end_date = get_date_range(date_range_preset)
@@ -54,12 +54,15 @@ def get_dashboard_data(request):
         start_date = None 
         end_date = None
     
-    # Get all active group_enrollments within date range   
-    group_enrollments = GroupEnrollment.objects.filter(
+    # Get all active group_enrollments bounded only by the end_date 
+    all_group_enrollments = GroupEnrollment.objects.filter(
         group__teacher=teacher
     )
     if end_date :
-        group_enrollments = group_enrollments.filter(date__lte=end_date)
+        all_group_enrollmentsgroup_enrollments = group_enrollments.filter(date__lte=end_date)
+    
+    if start_date :
+        group_enrollments_ = all_group_enrollments.filter(date__gte=start_date)
 
     dashboard = {
         'total_paid_amount': 0,
@@ -117,7 +120,7 @@ def get_dashboard_data(request):
             dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_paid_amount'] += paid_classes_of_this_group_enrollment.count() * class_price
             dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_unpaid_amount'] += group_enrollment.unpaid_amount
             dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_active_students'] += 1
-
+    print(dashboard)
     return Response({
         'has_groups': True,
         'dashboard': dashboard

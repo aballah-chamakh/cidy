@@ -45,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: jsonEncode(requestBody),
     );
 
-    if (!mounted) return;
+    if (!context.mounted) return;
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       const storage = FlutterSecureStorage();
@@ -60,25 +60,33 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       Widget profileScreen;
-
+      String profileRouteName;
       switch (data['user']['profile_type']) {
         case 'student':
           profileScreen = const StudentEntry();
+          profileRouteName = '/student';
           break;
         case 'teacher':
           profileScreen = const TeacherDashboardScreen();
+          profileRouteName = '/teacher_dashboard';
           break;
         case 'parent':
           profileScreen = const ParentEntry();
+          profileRouteName = '/parent';
           break;
         default:
           profileScreen = const LoginScreen();
+          profileRouteName = '/login';
       }
 
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (context) => profileScreen));
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          settings: RouteSettings(name: profileRouteName),
+          builder: (context) => profileScreen,
+        ),
+        (route) => false,
+      );
     } else {
       if (!mounted) return;
       final error = jsonDecode(response.body);
@@ -194,11 +202,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             TextButton(
                               onPressed: () {
-                                Navigator.of(context).pushReplacement(
+                                Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
                                     builder: (context) =>
                                         const RegisterScreen(),
                                   ),
+                                  (route) => false,
                                 );
                               },
                               child: const Text(

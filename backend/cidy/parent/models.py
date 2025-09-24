@@ -2,6 +2,8 @@ from django.db import models
 from account.models import User
 from teacher.models import TeacherEnrollment
 from teacher.models import Level, Section
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Parent(models.Model):
     image = models.ImageField(default='defaults/parent.png', upload_to='parent_images/', null=True, blank=True)
@@ -42,3 +44,7 @@ class ParentNotification(models.Model):
     def __str__(self):
         return f"Notification for {self.teacher.fullname} - {self.created_at}"
     
+@receiver(post_save, sender=Parent)
+def create_parent_unread_notification(sender, instance, created, **kwargs):
+    if created:
+        ParentUnreadNotification.objects.create(parent=instance)

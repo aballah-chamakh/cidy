@@ -112,7 +112,7 @@ class ProfileSidebar extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12.0),
                           ),
                           child: Text(
-                            '$notificationCount',
+                            '${notificationCount > 99 ? '+99' : notificationCount}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16.0,
