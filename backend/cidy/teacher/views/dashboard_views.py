@@ -2,6 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from ..models import Class, Group, GroupEnrollment, TeacherSubject
+from student.models import Student
 from datetime import datetime, timedelta
 
 
@@ -47,79 +48,106 @@ def get_dashboard_data(request):
         end_date = datetime.strptime(end_date_param, '%Y-%m-%d')
         # Add time to end_date to include the full day
         end_date = datetime.combine(end_date.date(), datetime.max.time())
-    elif date_range_preset:
+    elif date_range_preset: # this month, this week ...
         # Use preset if no explicit dates
         start_date, end_date = get_date_range(date_range_preset)
     else : 
         start_date = None 
         end_date = None
     
-    # Get all active group_enrollments bounded only by the end_date 
-    all_group_enrollments = GroupEnrollment.objects.filter(
-        group__teacher=teacher
-    )
+    # Get the students enrolled in at least one of groups of the teacher
+    students = Student.objects.filter(
+        groups__teacher=teacher
+    ).distinct()
+
+    # get the active students in the selected daterange
+    # notes : 
+    #   we did filter only by the end_date because we want the cumulative number of active students until 
+    #   the selected end_date and we don't want only the students joined in selected date range, so to get 
+    #   the active students in the selected daterange we need to get all of the student joined maximun 
+    #   at the select end_date.
     if end_date :
-        all_group_enrollmentsgroup_enrollments = group_enrollments.filter(date__lte=end_date)
-    
-    if start_date :
-        group_enrollments_ = all_group_enrollments.filter(date__gte=start_date)
+        students = students.filter(groupenrollment__date__lte=end_date).distinct()
 
     dashboard = {
         'total_paid_amount': 0,
         'total_unpaid_amount': 0,
-        'total_active_students': group_enrollments.count(),
+        'total_active_students': students.count(),
         'levels' : {}
     }
-    for group_enrollment in group_enrollments:
-        group = group_enrollment.group
-        paid_classes_of_this_group_enrollment = Class.objects.filter(
-            group_enrollment=group_enrollment,
-            status='attended_and_paid'
-        )
-        if start_date:
-            paid_classes_of_this_group_enrollment = paid_classes_of_this_group_enrollment.filter(
-            last_status_update__gte=start_date
-            )
-        if end_date:
-            paid_classes_of_this_group_enrollment = paid_classes_of_this_group_enrollment.filter(
-            last_status_update__lte=end_date
-            )
-        teacher_subject = TeacherSubject.objects.get(teacher=teacher, 
-                                                        level=group.level,
-                                                        section=group.section,
-                                                        subject=group.subject)
-        class_price = teacher_subject.price
-        dashboard['total_paid_amount'] += paid_classes_of_this_group_enrollment.count() * class_price
-        dashboard['total_unpaid_amount'] += group_enrollment.unpaid_amount
 
-        dashboard['levels'][group.level.name] = dashboard['levels'].get(group.level.name, {
-            'total_paid_amount': 0,
-            'total_unpaid_amount': 0,
-            'total_active_students': 0
-        })
-        dashboard['levels'][group.level.name]['total_paid_amount'] += paid_classes_of_this_group_enrollment.count() * class_price
-        dashboard['levels'][group.level.name]['total_unpaid_amount'] += group_enrollment.unpaid_amount
-        dashboard['levels'][group.level.name]['total_active_students'] += 1
-        if group.section :
-            dashboard['levels'][group.level.name]['sections'] = dashboard['levels'][group.level.name].get('sections', {})
-            dashboard['levels'][group.level.name]['sections'][group.section.name] = dashboard['levels'][group.level.name]['sections'].get(group.section.name, {
+    for student in students :
+
+        student_group_enrollments = student.group_enrollment_set.all()
+
+        # since the student can have group enrollment that surpass the end_date we have to filter 
+        # student group enrollements by the end_date if the client specify it 
+        if end_date : 
+            student_group_enrollments.filter(date__lte=end_date)
+
+        for student_group_enrollment in student_group_enrollments : 
+            
+            # get paid classes
+            paid_classes_of_student_group_enrollment = student_group_enrollment.class_set.filter(status='attended_and_paid')
+
+            # get unpaid classes 
+            unpaid_classes_of_student_group_enrollment = student_group_enrollment.class_set.filter(status='attended_and_the_payment_due')
+
+            # filter the paid and the unpaid classes by the start_date
+            if start_date:
+                paid_classes_of_student_group_enrollment = paid_classes_of_student_group_enrollment.filter(
+                    last_status_date__gte=start_date
+                )
+                unpaid_classes_of_student_group_enrollment = unpaid_classes_of_student_group_enrollment.filter(
+                    last_status_date__gte=start_date
+                )
+
+            # filter the paid and the unpaid classes by the end_date
+            if end_date:
+                paid_classes_of_student_group_enrollment = paid_classes_of_student_group_enrollment.filter(
+                    last_status_date__lte=end_date
+                )
+                unpaid_classes_of_student_group_enrollment = unpaid_classes_of_student_group_enrollment.filter(
+                    last_status_date__lte=end_date
+                )
+
+            teacher_subject = student_group_enrollment.group.teacher_subject 
+            class_price = teacher_subject.price
+            group_enrollment_level = teacher_subject.level
+            group_enrollment_section = teacher_subject.section
+            group_enrollment_subject = teacher_subject.subject
+
+            dashboard['total_paid_amount'] += paid_classes_of_this_group_enrollment.count() * class_price
+            dashboard['total_unpaid_amount'] += unpaid_classes_of_this_group_enrollment.count() * class_price
+
+            dashboard['levels'][group_enrollment_level] = dashboard['levels'].get(group_enrollment_level, {
                 'total_paid_amount': 0,
                 'total_unpaid_amount': 0,
                 'total_active_students': 0
             })
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['total_paid_amount'] += paid_classes_of_this_group_enrollment.count() * class_price
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['total_unpaid_amount'] += group_enrollment.unpaid_amount
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['total_active_students'] += 1
+            dashboard['levels'][group_enrollment_level]['total_paid_amount'] += dashboard['total_paid_amount']
+            dashboard['levels'][group_enrollment_level]['total_unpaid_amount'] += dashboard['total_unpaid_amount']
+            dashboard['levels'][group.level.name]['total_active_students'] += 1
+            if group.section :
+                dashboard['levels'][group.level.name]['sections'] = dashboard['levels'][group.level.name].get('sections', {})
+                dashboard['levels'][group.level.name]['sections'][group.section.name] = dashboard['levels'][group.level.name]['sections'].get(group.section.name, {
+                    'total_paid_amount': 0,
+                    'total_unpaid_amount': 0,
+                    'total_active_students': 0
+                })
+                dashboard['levels'][group.level.name]['sections'][group.section.name]['total_paid_amount'] += paid_classes_of_this_group_enrollment.count() * class_price
+                dashboard['levels'][group.level.name]['sections'][group.section.name]['total_unpaid_amount'] += group_enrollment.unpaid_amount
+                dashboard['levels'][group.level.name]['sections'][group.section.name]['total_active_students'] += 1
 
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'] = dashboard['levels'][group.level.name]['sections'][group.section.name].get('subjects', {})
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name] = dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'].get(group.subject.name, {
-                'total_paid_amount': 0,
-                'total_unpaid_amount': 0,
-                'total_active_students': 0
-            })
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_paid_amount'] += paid_classes_of_this_group_enrollment.count() * class_price
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_unpaid_amount'] += group_enrollment.unpaid_amount
-            dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_active_students'] += 1
+                dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'] = dashboard['levels'][group.level.name]['sections'][group.section.name].get('subjects', {})
+                dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name] = dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'].get(group.subject.name, {
+                    'total_paid_amount': 0,
+                    'total_unpaid_amount': 0,
+                    'total_active_students': 0
+                })
+                dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_paid_amount'] += paid_classes_of_this_group_enrollment.count() * class_price
+                dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_unpaid_amount'] += group_enrollment.unpaid_amount
+                dashboard['levels'][group.level.name]['sections'][group.section.name]['subjects'][group.subject.name]['total_active_students'] += 1
     print(dashboard)
     return Response({
         'has_groups': True,
