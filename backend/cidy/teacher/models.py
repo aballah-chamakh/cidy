@@ -128,7 +128,7 @@ class Class(models.Model):
     absence_start_time = models.TimeField(null=True, blank=True)
     absence_end_time = models.TimeField(null=True, blank=True)
     #paid_at = models.DateTimeField(null=True, blank=True)
-    last_status_date = models.DateTimeField(auto_now=True,auto_now_add=True)
+    last_status_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Class for {self.group_enrollment.group.name} - {self.status}"
