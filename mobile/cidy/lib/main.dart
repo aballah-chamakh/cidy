@@ -1,5 +1,6 @@
 import 'package:cidy/splash.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'route_observer.dart';
 
 void main() {
@@ -15,6 +16,13 @@ class MyApp extends StatelessWidget {
     const primaryColor = Color(0xFF384059);
     return MaterialApp(
       title: 'Cidy',
+      locale: const Locale('fr'),
+      supportedLocales: const [Locale('fr'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         primaryColor: primaryColor,
         visualDensity: VisualDensity.adaptivePlatformDensity,
