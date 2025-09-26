@@ -21,6 +21,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
 
+  // UI Colors
+  static const Color primaryColor = Color(0xFF384059);
+  static const Color paidColor = Color(0xFF27AE60);
+  static const Color unpaidColor = Color(0xFFC0392B);
+  static const Color studentsColor = Color(0xFF2980B9);
+  static const Color cardBackgroundColor = Colors.white;
+  static const Color scaffoldBackgroundColor = Color(0xFFF5F7FA);
+
   @override
   void initState() {
     super.initState();
@@ -28,11 +36,17 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Future<void> _fetchDashboardData() async {
-    print("=================== fetch dashboard data");
+    setState(() {
+      _isLoading = true;
+    });
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'access_token');
     if (token == null) {
-      // Handle not logged in
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       return;
     }
 
@@ -52,29 +66,39 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         Uri.parse(url),
         headers: {'Authorization': 'Bearer $token'},
       );
-      print("=========== Response status: ${response.statusCode}");
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _hasGroups = data['has_groups'];
-          if (_hasGroups) {
-            _dashboardData = data['dashboard'];
-          }
-        });
-      } else {
-        // Handle error
-        if (mounted) {
+      if (mounted) {
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          setState(() {
+            _hasGroups = data['has_groups'];
+            if (_hasGroups) {
+              _dashboardData = data['dashboard'];
+            }
+          });
+        } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur: ${response.reasonPhrase}')),
+            SnackBar(
+              content: Text('Erreur: ${response.reasonPhrase}'),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
     } catch (e) {
-      // Handle exception
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Une erreur est survenue: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -88,6 +112,21 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       initialDateRange: initialDateRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: primaryColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: primaryColor),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (newDateRange != null) {
@@ -104,147 +143,298 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   Widget build(BuildContext context) {
     return TeacherLayout(
       title: "Tableau de bord",
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _hasGroups
-          ? _buildDashboard()
-          : _buildNoGroupsWidget(),
+      body: Container(
+        color: scaffoldBackgroundColor,
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+                ),
+              )
+            : _hasGroups
+            ? _buildDashboard()
+            : _buildNoGroupsWidget(),
+      ),
     );
   }
 
   Widget _buildNoGroupsWidget() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.dashboard_outlined, size: 80, color: Colors.grey),
-          SizedBox(height: 20),
-          Text(
-            "Vous n'avez aucun KPI de tableau de bord car vous n'avez aucun groupe.",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16),
-          ),
-        ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.sentiment_dissatisfied_outlined,
+              size: 100,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "Aucune donnée de tableau de bord",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              "Il semble que vous n'ayez encore aucun groupe. Créez un groupe pour commencer à suivre vos performances.",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDashboard() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildDateRangePicker(),
-          const SizedBox(height: 20),
-          _buildOverallPerformance(),
-          const SizedBox(height: 20),
-          _buildLevelsBreakdown(),
-        ],
+    return RefreshIndicator(
+      onRefresh: _fetchDashboardData,
+      color: primaryColor,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDateRangePicker(),
+            const SizedBox(height: 24),
+            _buildOverallPerformance(),
+            const SizedBox(height: 24),
+            _buildLevelsBreakdown(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildDateRangePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Sélectionnez la plage de dates",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8.0,
-          runSpacing: 4.0,
-          children: [
-            ChoiceChip(
-              label: const Text("Cette semaine"),
-              selected: _selectedRange == 'this_week',
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedRange = 'this_week';
-                    _startDate = null;
-                    _endDate = null;
-                  });
-                  _fetchDashboardData();
-                }
-              },
-            ),
-            ChoiceChip(
-              label: const Text("Ce mois-ci"),
-              selected: _selectedRange == 'this_month',
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedRange = 'this_month';
-                    _startDate = null;
-                    _endDate = null;
-                  });
-                  _fetchDashboardData();
-                }
-              },
-            ),
-            ChoiceChip(
-              label: const Text("Cette année"),
-              selected: _selectedRange == 'this_year',
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedRange = 'this_year';
-                    _startDate = null;
-                    _endDate = null;
-                  });
-                  _fetchDashboardData();
-                }
-              },
-            ),
-            ActionChip(
-              avatar: const Icon(Icons.calendar_today),
-              label: const Text("Personnalisé"),
-              onPressed: () => _selectDateRange(context),
-            ),
-          ],
-        ),
-        if (_startDate != null && _endDate != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              "Plage personnalisée: ${DateFormat.yMMMd().format(_startDate!)} - ${DateFormat.yMMMd().format(_endDate!)}",
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildOverallPerformance() {
     return Card(
       elevation: 2,
+      color: cardBackgroundColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Performance globale",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              "Filtrer par date",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
+              ),
             ),
-            const SizedBox(height: 10),
-            _buildKpiRow(
-              "Montant total payé",
-              "${_dashboardData!['total_paid_amount']} DZD",
-              Colors.green,
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _selectDateRange(context),
+                icon: const Icon(
+                  Icons.calendar_today,
+                  color: primaryColor,
+                  size: 18,
+                ),
+                label: const Text("Personnalisé"),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: primaryColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  foregroundColor: primaryColor,
+                ),
+              ),
             ),
-            _buildKpiRow(
-              "Montant total impayé",
-              "${_dashboardData!['total_unpaid_amount']} DZD",
-              Colors.red,
+            if (_startDate != null && _endDate != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF2F6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "${DateFormat.yMMMd('fr_FR').format(_startDate!)} → ${DateFormat.yMMMd('fr_FR').format(_endDate!)}",
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              spacing: 5,
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: SizedBox.expand(
+                      child: _buildChoiceChip("Cette semaine", 'this_week'),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: SizedBox.expand(
+                      child: _buildChoiceChip("Ce mois-ci", 'this_month'),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: SizedBox(
+                    height: 40,
+                    child: SizedBox.expand(
+                      child: _buildChoiceChip("Cette année", 'this_year'),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            _buildKpiRow(
-              "Étudiants actifs",
-              _dashboardData!['total_active_students'].toString(),
-              Colors.blue,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChoiceChip(String label, String range) {
+    final isSelected = _selectedRange == range;
+    return SizedBox(
+      width: double.infinity,
+      height: 40,
+      child: OutlinedButton(
+        onPressed: () {
+          setState(() {
+            _selectedRange = range;
+            _startDate = null;
+            _endDate = null;
+          });
+          _fetchDashboardData();
+        },
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(
+            color: isSelected ? primaryColor : Colors.grey[300]!,
+          ),
+          backgroundColor: isSelected ? primaryColor : Colors.white,
+          foregroundColor: isSelected ? Colors.white : primaryColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+          padding: EdgeInsets.zero,
+        ),
+        child: Text(label, overflow: TextOverflow.ellipsis),
+      ),
+    );
+  }
+
+  Widget _buildOverallPerformance() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Performance globale",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildKpiCard(
+                "Montant Payé",
+                "${_dashboardData!['total_paid_amount']} DZD",
+                paidColor,
+                Icons.check_circle_outline,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildKpiCard(
+                "Montant Impayé",
+                "${_dashboardData!['total_unpaid_amount']} DZD",
+                unpaidColor,
+                Icons.hourglass_empty_outlined,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildKpiCard(
+                "Étudiants Actifs",
+                _dashboardData!['total_active_students'].toString(),
+                studentsColor,
+                Icons.people_outline,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildKpiCard(String label, String value, Color color, IconData icon) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBackgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 28, color: color),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -258,158 +448,247 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          "Répartition par niveaux",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          "Performances des niveaux",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
         ),
-        const SizedBox(height: 10),
-        ...levels.entries.map((levelEntry) {
-          final levelName = levelEntry.key;
-          final levelData = levelEntry.value;
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 8.0),
-            child: ExpansionTile(
-              title: Text(
-                levelName,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    children: [
-                      _buildKpiRow(
-                        "Payé",
-                        "${levelData['total_paid_amount']} DZD",
-                        Colors.green,
-                      ),
-                      _buildKpiRow(
-                        "Impayé",
-                        "${levelData['total_unpaid_amount']} DZD",
-                        Colors.red,
-                      ),
-                      _buildKpiRow(
-                        "Étudiants actifs",
-                        levelData['total_active_students'].toString(),
-                        Colors.blue,
-                      ),
-                      if (levelData.containsKey('sections'))
-                        _buildSectionsBreakdown(
-                          levelData['sections'] as Map<String, dynamic>,
-                        ),
-                      if (levelData.containsKey('subjects') &&
-                          !levelData.containsKey('sections'))
-                        _buildSubjectsBreakdown(
-                          levelData['subjects'] as Map<String, dynamic>,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+        const SizedBox(height: 16),
+        // List of level cards (non-collapsible)
+        Column(
+          children: levels.entries.map((levelEntry) {
+            final levelName = levelEntry.key;
+            final levelData = levelEntry.value as Map<String, dynamic>;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: _buildLevelCard(levelName, levelData),
+            );
+          }).toList(),
+        ),
       ],
     );
   }
 
-  Widget _buildSectionsBreakdown(Map<String, dynamic> sections) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, top: 8.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: sections.entries.map((sectionEntry) {
-          final sectionName = sectionEntry.key;
-          final sectionData = sectionEntry.value;
-          return ExpansionTile(
-            title: Text(
-              sectionName,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+  // Card for a Level with KPIs row and optional collapsed Sections/Subjects
+  Widget _buildLevelCard(String levelName, Map<String, dynamic> levelData) {
+    return Card(
+      elevation: 2,
+      color: cardBackgroundColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              levelName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: primaryColor,
+              ),
             ),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  children: [
-                    _buildKpiRow(
-                      "Payé",
-                      "${sectionData['total_paid_amount']} DZD",
-                      Colors.green,
-                    ),
-                    _buildKpiRow(
-                      "Impayé",
-                      "${sectionData['total_unpaid_amount']} DZD",
-                      Colors.red,
-                    ),
-                    _buildKpiRow(
-                      "Étudiants actifs",
-                      sectionData['total_active_students'].toString(),
-                      Colors.blue,
-                    ),
-                    if (sectionData.containsKey('subjects'))
-                      _buildSubjectsBreakdown(
-                        sectionData['subjects'] as Map<String, dynamic>,
-                      ),
-                  ],
-                ),
+            const SizedBox(height: 12),
+            _buildMiniKpisRow(levelData),
+            const SizedBox(height: 8),
+            if (levelData.containsKey('sections'))
+              _buildSectionsCollapse(
+                levelData['sections'] as Map<String, dynamic>,
               ),
-            ],
-          );
-        }).toList(),
+            if (!levelData.containsKey('sections') &&
+                levelData.containsKey('subjects'))
+              _buildSubjectsCollapse(
+                levelData['subjects'] as Map<String, dynamic>,
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSubjectsBreakdown(Map<String, dynamic> subjects) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, top: 8.0),
+  // Collapsible list for Sections inside a Level card
+  Widget _buildSectionsCollapse(Map<String, dynamic> sections) {
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      title: const Text(
+        'Sections',
+        style: TextStyle(fontWeight: FontWeight.w600, color: primaryColor),
+      ),
+      collapsedIconColor: primaryColor,
+      iconColor: primaryColor,
+      children: [
+        const SizedBox(height: 4),
+        Column(
+          children: sections.entries.map((sectionEntry) {
+            final sectionName = sectionEntry.key;
+            final sectionData = sectionEntry.value as Map<String, dynamic>;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: _buildSectionCard(sectionName, sectionData),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  // Card for a Section with KPIs row and optional collapsed Subjects
+  Widget _buildSectionCard(
+    String sectionName,
+    Map<String, dynamic> sectionData,
+  ) {
+    return Card(
+      elevation: 1,
+      color: cardBackgroundColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              sectionName,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Color(0xFF555555),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildMiniKpisRow(sectionData),
+            const SizedBox(height: 8),
+            if (sectionData.containsKey('subjects'))
+              _buildSubjectsCollapse(
+                sectionData['subjects'] as Map<String, dynamic>,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Collapsible list for Subjects inside a Section or Level card
+  Widget _buildSubjectsCollapse(Map<String, dynamic> subjects) {
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      title: const Text(
+        'Matières',
+        style: TextStyle(fontWeight: FontWeight.w600, color: primaryColor),
+      ),
+      collapsedIconColor: primaryColor,
+      iconColor: primaryColor,
+      children: [
+        const SizedBox(height: 4),
+        Column(
+          children: subjects.entries.map((subjectEntry) {
+            final subjectName = subjectEntry.key;
+            final subjectData = subjectEntry.value as Map<String, dynamic>;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: _buildSubjectCard(subjectName, subjectData),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  // Card for a Subject with KPIs row (no further collapse)
+  Widget _buildSubjectCard(
+    String subjectName,
+    Map<String, dynamic> subjectData,
+  ) {
+    return Card(
+      elevation: 1,
+      color: cardBackgroundColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              subjectName,
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF666666),
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildMiniKpisRow(subjectData),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Shared 3-KPI row used inside Level/Section/Subject cards
+  Widget _buildMiniKpisRow(Map<String, dynamic> data) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildMiniKpi(
+            label: 'Payé',
+            value: "${data['total_paid_amount']} DZD",
+            color: paidColor,
+            icon: Icons.check_circle_outline,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMiniKpi(
+            label: 'Impayé',
+            value: "${data['total_unpaid_amount']} DZD",
+            color: unpaidColor,
+            icon: Icons.hourglass_empty_outlined,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMiniKpi(
+            label: 'Étudiants actifs',
+            value: data['total_active_students'].toString(),
+            color: studentsColor,
+            icon: Icons.people_outline,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniKpi({
+    required String label,
+    required String value,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FA),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.withOpacity(0.15)),
+      ),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: subjects.entries.map((subjectEntry) {
-          final subjectName = subjectEntry.key;
-          final subjectData = subjectEntry.value;
-          return ExpansionTile(
-            title: Text(subjectName),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Column(
-                  children: [
-                    _buildKpiRow(
-                      "Payé",
-                      "${subjectData['total_paid_amount']} DZD",
-                      Colors.green,
-                    ),
-                    _buildKpiRow(
-                      "Impayé",
-                      "${subjectData['total_unpaid_amount']} DZD",
-                      Colors.red,
-                    ),
-                    _buildKpiRow(
-                      "Étudiants actifs",
-                      subjectData['total_active_students'].toString(),
-                      Colors.blue,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildKpiRow(String label, String value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+          const SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: color,
             ),
