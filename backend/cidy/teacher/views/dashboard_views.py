@@ -113,9 +113,9 @@ def get_dashboard_data(request):
 
             teacher_subject = student_group_enrollment.group.teacher_subject 
             class_price = teacher_subject.price_per_class
-            student_group_enrollment_level = teacher_subject.level
-            student_group_enrollment_section = teacher_subject.section
-            student_group_enrollment_subject = teacher_subject.subject
+            student_group_enrollment_level = teacher_subject.level.name
+            student_group_enrollment_section = teacher_subject.section.name if teacher_subject.section else None    
+            student_group_enrollment_subject = teacher_subject.subject.name 
 
             dashboard['total_paid_amount'] += paid_classes_of_student_group_enrollment.count() * class_price
             dashboard['total_unpaid_amount'] += unpaid_classes_of_student_group_enrollment.count() * class_price
