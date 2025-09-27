@@ -4,7 +4,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:cidy/config.dart';
 import '../widgets/teacher_layout.dart';
 
@@ -130,150 +129,51 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Future<void> _selectDateRange(BuildContext context) async {
-    final primaryColor = _primaryColor;
-    final List<DateTime?> initialValues = _startDate != null && _endDate != null
-        ? [_startDate!, _endDate!]
-        : <DateTime?>[];
-
-    final results = await showCalendarDatePicker2Dialog(
+    final DateTimeRange? picked = await showDateRangePicker(
       context: context,
-      config: CalendarDatePicker2WithActionButtonsConfig(
-        calendarType: CalendarDatePicker2Type.range,
-        firstDate: DateTime(2020),
-        lastDate: DateTime.now().add(const Duration(days: 365)),
-        selectedDayHighlightColor: primaryColor,
-        selectedRangeHighlightColor: primaryColor.withValues(alpha: 0.3),
-        selectedDayTextStyle: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-        dayTextStyle: const TextStyle(color: Colors.black87),
-        weekdayLabelTextStyle: TextStyle(
-          color: Colors.grey[600],
-          fontWeight: FontWeight.w600,
-        ),
-        controlsTextStyle: TextStyle(
-          color: primaryColor,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-        centerAlignModePicker: true,
-        customModePickerIcon: const SizedBox(),
-        gapBetweenCalendarAndButtons: 16,
-        cancelButtonTextStyle: TextStyle(
-          color: Colors.grey[600],
-          fontWeight: FontWeight.w600,
-        ),
-        okButtonTextStyle: TextStyle(
-          color: primaryColor,
-          fontWeight: FontWeight.bold,
-        ),
-        // Show "Effacer" button only when there's an existing date range selection
-        cancelButton: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Only show clear button if there's a current selection
-            if (initialValues.isNotEmpty) ...[
-              TextButton.icon(
-                onPressed: () {
-                  Navigator.of(
-                    context,
-                  ).pop(<DateTime?>[]); // Return empty list to trigger clear
-                },
-                icon: Icon(Icons.clear, color: Colors.red[700], size: 16),
-                label: Text(
-                  'Effacer',
-                  style: TextStyle(
-                    color: Colors.red[700],
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.red.withValues(alpha: 0.1),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
-            TextButton(
-              onPressed: () {
-                if (Navigator.of(context).canPop()) {
-                  Navigator.of(context).pop();
-                }
-              },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.grey.withValues(alpha: 0.1),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  side: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
-                ),
-              ),
-              child: Text(
-                'Annuler',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: _startDate != null && _endDate != null
+          ? DateTimeRange(start: _startDate!, end: _endDate!)
+          : null,
+      locale: const Locale('fr', 'FR'),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: _primaryColor,
+              onPrimary: Colors.white,
             ),
-          ],
-        ),
-        okButton: TextButton(
-          onPressed: null, // Will be handled by the dialog
-          style: TextButton.styleFrom(
-            backgroundColor: primaryColor.withValues(alpha: 0.1),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-              side: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
+            // Fix text overflow issues with more conservative font sizes
+            textTheme: Theme.of(context).textTheme.copyWith(
+              headlineSmall: Theme.of(context).textTheme.headlineSmall
+                  ?.copyWith(
+                    fontSize:
+                        18, // Further reduce font size to prevent overflow
+                  ),
+              titleMedium: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontSize: 13, // Reduce font size for date labels
+              ),
+              bodyLarge: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 13, // Reduce font size for input fields
+              ),
+              labelLarge: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontSize: 12, // Reduce button text size
+              ),
             ),
           ),
-          child: Text(
-            'Enregistrer',
-            style: TextStyle(
-              color: primaryColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ),
-        // Built-in clear functionality
-        openedFromDialog: true,
-        closeDialogOnOkTapped: true,
-        buttonPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
-      dialogSize: const Size(350, 450),
-      value: initialValues,
+          child: child!,
+        );
+      },
     );
 
-    if (results != null) {
-      if (results.isEmpty) {
-        // User cleared the selection
-        _clearDateRange();
-      } else if (results.length == 2 &&
-          results[0] != null &&
-          results[1] != null) {
-        // User selected a date range
-        setState(() {
-          _startDate = results[0]!;
-          _endDate = results[1]!;
-          _selectedRange = ''; // Custom range
-        });
-        _fetchDashboardData();
-      }
+    if (picked != null) {
+      setState(() {
+        _startDate = picked.start;
+        _endDate = picked.end;
+        _selectedRange = ''; // Custom range
+      });
+      _fetchDashboardData();
     }
   }
 
@@ -422,18 +322,6 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     ),
                   ),
                 ),
-                if (_startDate != null && _endDate != null) ...[
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: _clearDateRange,
-                    icon: Icon(Icons.clear, color: Colors.red[600], size: 20),
-                    tooltip: "Effacer la sélection",
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.red.withValues(alpha: 0.1),
-                      padding: const EdgeInsets.all(8),
-                    ),
-                  ),
-                ],
               ],
             ),
             if (_startDate != null && _endDate != null)
@@ -449,14 +337,36 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                     color: const Color(0xFFEFF2F6),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(
-                    "${DateFormat.yMMMd('fr_FR').format(_startDate!)} → ${DateFormat.yMMMd('fr_FR').format(_endDate!)}",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: primaryColor,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          "${DateFormat.yMMMd('fr_FR').format(_startDate!)} → ${DateFormat.yMMMd('fr_FR').format(_endDate!)}",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: primaryColor,
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: _clearDateRange,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Colors.red[600],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
