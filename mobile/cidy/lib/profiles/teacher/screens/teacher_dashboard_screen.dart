@@ -16,7 +16,7 @@ class TeacherDashboardScreen extends StatefulWidget {
 
 class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   bool _isLoading = true;
-  bool _hasGroups = false;
+  bool _hasLevels = false;
   bool _isFetchingData = false;
   Map<String, dynamic>? _dashboardData;
   String _selectedRange = 'this_month';
@@ -93,8 +93,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           setState(() {
-            _hasGroups = data['has_groups'];
-            if (_hasGroups) {
+            _hasLevels = data['has_levels'];
+            if (_hasLevels) {
               _dashboardData = data['dashboard'];
             }
           });
@@ -198,14 +198,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                   valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
                 ),
               )
-            : _hasGroups
+            : _hasLevels
             ? _buildDashboard()
-            : _buildNoGroupsWidget(),
+            : _buildNoLevelsWidget(),
       ),
     );
   }
 
-  Widget _buildNoGroupsWidget() {
+  Widget _buildNoLevelsWidget() {
     final primaryColor = _primaryColor;
     return Center(
       child: Padding(
@@ -213,11 +213,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.sentiment_dissatisfied_outlined,
-              size: 100,
-              color: Colors.grey[400],
-            ),
+            Icon(Icons.dashboard_outlined, size: 100, color: Colors.grey[400]),
             const SizedBox(height: 24),
             Text(
               "Aucune donnée de tableau de bord",
@@ -230,7 +226,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              "Il semble que vous n'ayez encore aucun groupe. Créez un groupe pour commencer à suivre vos performances.",
+              "Il semble que vous n'ayez encore aucun niveau ajouté. Créez un niveau pour commencer à suivre vos performances.",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
