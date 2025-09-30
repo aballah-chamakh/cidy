@@ -2,9 +2,21 @@ import datetime
 from account.models import User 
 from teacher.models import Teacher, TeacherSubject,Level, Section, Subject,Group, GroupEnrollment, Class
 from student.models import Student
+from teacher_app.TeacherClient import TeacherClient
 
 class TestDateRangeFilter:
 
+    # Data summary : 
+    # 1 teacher
+    # 9 teacher subjects
+    # for each teacher subject : 2 groups 
+    # for each teacher subject with a unique combination of level and section : 6 students created
+    # for each group : 6 group enrollments (students), each 2 in a different time range 
+    # for each group enrollment : 12 classes, 2 paid and 2 unpaid in each time range
+    # time ranges : 
+    #    - this week (29 and 30 sept 2025)
+    #    - this month (15 and 16 sept 2025)
+    #    - this year (10 and 14 aug 2025)
 
     def set_up(self):
         # Create a teacher 
@@ -113,13 +125,13 @@ class TestDateRangeFilter:
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_paid',
-                        attendance_date=datetime.date(2025, 9, 29)  # within this week
+                        last_status_datetime=datetime.datetime(2025, 9, 29)  # within this week
                     )
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_the_payment_due',
-                        attendance_date=datetime.date(2025, 9, 30)  # within this week
+                        last_status_datetime=datetime.datetime(2025, 9, 30)  # within this week
                     )
             elif j < 8 :
                 # create 2 paid classes and 2 unpaid classes in this month : 15 and 16 sept 2025
@@ -127,13 +139,13 @@ class TestDateRangeFilter:
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_paid',
-                        attendance_date=datetime.date(2025, 9, 15)  # within this month
+                        last_status_datetime=datetime.datetime(2025, 9, 15)  # within this month
                     )
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_the_payment_due',
-                        attendance_date=datetime.date(2025, 9, 16)  # within this month
+                        last_status_datetime=datetime.datetime(2025, 9, 16)  # within this month
                     )
             else:
                 # create 2 paid classes and 2 unpaid classes in this year : 10 and 14 aug 2025
@@ -141,15 +153,39 @@ class TestDateRangeFilter:
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_paid',
-                        attendance_date=datetime.date(2025, 8, 10)  # within this year
+                        last_status_datetime=datetime.datetime(2025, 8, 10)  # within this year
                     )
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_the_payment_due',
-                        attendance_date=datetime.date(2025, 8, 14)  # within this year
+                        last_status_datetime=datetime.datetime(2025, 8, 14)  # within this year
                     )
-    def test():
-        pass
-    
+    def test(self):
+        teacher_client = TeacherClient("teacher10@gmail.com","iloveuu")
+        teacher_client.authenticate()
 
+        # test with no filters 
+        dashboard_data = teacher_client.get_dashboard_data()
+        if dashboard_data :
+            print("Dashboard Data:", dashboard_data)
+
+        # test this week
+        dashboard_data = teacher_client.get_dashboard_data(date_range="this_week")
+        if dashboard_data:
+            print("Dashboard Data:", dashboard_data)
+
+        # test this month
+        dashboard_data = teacher_client.get_dashboard_data(date_range="this_month")
+        if dashboard_data:
+            print("Dashboard Data:", dashboard_data)
+
+        # test this year
+        dashboard_data = teacher_client.get_dashboard_data(date_range="this_year")
+        if dashboard_data:
+            print("Dashboard Data:", dashboard_data)
+
+        # test in a specific date range 
+        dashboard_data = teacher_client.get_dashboard_data(start_date="2025-09-10",end_date="2025-09-21")
+        if dashboard_data :
+            print("Dashboard Data:", dashboard_data)

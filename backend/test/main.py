@@ -25,7 +25,8 @@ User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234
 # Start testing
 
 
-from teacher_app.dashboard_views.get_dashboard_data import TestDateRangeFilter
+from teacher_app.dashboard_views.get_dashboard_data import TestDateRangeFilter,TestNoClasses,TestNoTeacherSubjects,TestNoGroupEnrollments
 
 test = TestDateRangeFilter()
 test.set_up()
+test.test()

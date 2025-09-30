@@ -105,7 +105,7 @@ class GroupEnrollment(models.Model):
     unpaid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     attended_non_paid_classes = models.IntegerField(default=0)
     def __str__(self):
-        return f"{self.student.fullname} enrolled in {self.group.name}"
+        return f"{self.student.fullname} enrolled in {self.group.name} at : {self.date}"
     
     class Meta:
         unique_together = ('student', 'group')
@@ -129,10 +129,10 @@ class Class(models.Model):
     absence_start_time = models.TimeField(null=True, blank=True)
     absence_end_time = models.TimeField(null=True, blank=True)
     #paid_at = models.DateTimeField(null=True, blank=True)
-    last_status_date = models.DateTimeField(default=timezone.now)
+    last_status_datetime = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
-        return f"Class for {self.group_enrollment.group.name} - {self.status}"
+        return f"Class for {self.group_enrollment.group.name} - {self.status} - {self.last_status_datetime}"
 
 class TeacherUnreadNotification(models.Model):
     teacher = models.OneToOneField(Teacher, on_delete=models.CASCADE)

@@ -226,7 +226,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              "Il semble que vous n'ayez encore aucun niveau ajouté. Créez un niveau pour commencer à suivre vos performances.",
+              "Il semble que vous n’ayez pas encore ajouté de niveau. Créez-en un pour commencer à suivre vos performances.",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
@@ -412,9 +412,14 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       child: OutlinedButton(
         onPressed: () {
           setState(() {
-            _selectedRange = range;
-            _startDate = null;
-            _endDate = null;
+            // Toggle off if already selected
+            if (isSelected) {
+              _selectedRange = '';
+            } else {
+              _selectedRange = range;
+              _startDate = null;
+              _endDate = null;
+            }
           });
           _fetchDashboardData();
         },

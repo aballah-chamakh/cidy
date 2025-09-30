@@ -1,16 +1,14 @@
-import datetime
 from account.models import User 
-from teacher.models import Teacher, TeacherSubject,Level, Section, Subject,Group, GroupEnrollment, Class
+from teacher.models import Teacher, TeacherSubject,Level, Section, Subject,Group
 from student.models import Student
 
-class TestNoClasses:
-
+class TestNoGroupEnrollments:
+ 
     # Data summary : 
     # 1 teacher
     # 9 teacher subjects
     # for each teacher subject : 2 groups 
-    # for each teacher subject with a unique combination of level and section : 6 students created
-    # for each group : 6 group enrollments (students), each 2 in a different time range 
+    # for each unique combination of level and section : 6 students created
     def set_up(self):
         # Create a teacher 
         user  = User.objects.create_user("teacher10@gmail.com", "44558866", "iloveuu")
@@ -88,22 +86,6 @@ class TestNoClasses:
                                     start_time="18:00",
                                     end_time="20:00",
                                     name=f"{teacher_subject.level.name} {teacher_subject.section.name if teacher_subject.section else ''} {teacher_subject.subject.name} ({group_name})")
-                
-                # enroll the 6 students in this group in different date ranges
-                for i, student in enumerate(students):
-                    print(f"student_id : {student.id} -- group id : {group.id}")
-                    # date range for this week  : 29 and 30 sept 2025
-                    if i < 2 : 
-                        GroupEnrollment.objects.create(group=group,student=student,date=datetime.date(2025, 9, 29))
-
-                    # date range for this month : 15 and 16 sept 2025
-                    elif i < 4 :
-                        GroupEnrollment.objects.create(group=group,student=student,date=datetime.date(2025, 9, 15))
-
-                    # date range for this year : 10 and 14 aug 2025
-                    else:
-                        GroupEnrollment.objects.create(group=group,student=student,date=datetime.date(2025, 8, 10))
-
+     
     def test():
         pass
-    

@@ -40,12 +40,13 @@ def get_dashboard_data(request):
     # Parse date parameters from request
     start_date_param = request.GET.get('start_date')
     end_date_param = request.GET.get('end_date')
-    date_range_preset = request.GET.get('date_range', 'this_month')
-    
+    date_range_preset = request.GET.get('date_range')
+    print(f"start_date_param : {start_date_param}")
+    print(f"end_date_param : {end_date_param}")
     # If explicit start and end dates are provided, use them
     if start_date_param and end_date_param:
-        start_date = datetime.fromisoformat(start_date_param, '%Y-%m-%d')
-        end_date = datetime.fromisoformat(end_date_param, '%Y-%m-%d')
+        start_date = datetime.fromisoformat(start_date_param)
+        end_date = datetime.fromisoformat(end_date_param)
         # Add time to end_date to include the full day
         #end_date = datetime.combine(end_date, datetime.max.time())
     elif date_range_preset: # this month, this week ...
@@ -54,7 +55,9 @@ def get_dashboard_data(request):
     else : 
         start_date = None 
         end_date = None
-        
+    
+    print(type(start_date))
+    print(type(end_date))
     print('Start Date:', start_date)
     print('End Date:', end_date)
 
@@ -65,8 +68,11 @@ def get_dashboard_data(request):
         'levels' : {}
     }
 
-    total_active_students_cnt = GroupEnrollment.objects.filter(group__teacher=teacher).distinct('student').count()
-    dashboard['total_active_students'] = total_active_students_cnt
+    teacher_group_enrollements = GroupEnrollment.objects.filter(group__teacher=teacher)
+    if end_date : 
+        teacher_group_enrollements = teacher_group_enrollements.filter(date__lte=end_date)
+    students_cnt = teacher_group_enrollements.distinct('student').count()
+    dashboard['total_active_students'] = students_cnt
 
 
     for teacher_subject in teacher_subjects:
@@ -78,6 +84,7 @@ def get_dashboard_data(request):
         # if the date range is specified, filter the group enrollments only by the end date 
         # because i want the active students till that date not the new new students in that date range
         if end_date : 
+            print("Filtering group enrollments by end date:", end_date)
             teacher_subject_group_enrollments = teacher_subject_group_enrollments.filter(
                 date__lte=end_date
             )
@@ -92,26 +99,26 @@ def get_dashboard_data(request):
         # because i need to calculate the paid and unpaid amounts of all of the enrollments of the students 
         for teacher_subject_group_enrollment in teacher_subject_group_enrollments:
             
-            paid_classes_of_student_group_enrollment = Class.objects.filter(
+            paid_classes_of_teacher_subject = Class.objects.filter(
                 group_enrollment=teacher_subject_group_enrollment,
                 status='attended_and_paid'
             )
 
-            unpaid_classes_of_student_group_enrollment = Class.objects.filter(
+            unpaid_classes_of_teacher_subject = Class.objects.filter(
                 group_enrollment=teacher_subject_group_enrollment,
                 status='attended_and_the_payment_due'
             )
             
             if start_date and end_date:
-                paid_classes_of_student_group_enrollment = paid_classes_of_student_group_enrollment.filter(
-                    last_status_date__range=(start_date, end_date)
-                )
-                unpaid_classes_of_student_group_enrollment = unpaid_classes_of_student_group_enrollment.filter(
-                    last_status_date__range=(start_date, end_date)
-                )
+                paid_classes_of_teacher_subject = paid_classes_of_teacher_subject.filter(
+                    last_status_datetime__date__gte=start_date, last_status_datetime__date__lte=end_date)
                 
-            paid_amount += paid_classes_of_student_group_enrollment.count() * class_price
-            unpaid_amount += unpaid_classes_of_student_group_enrollment.count() * class_price
+                unpaid_classes_of_teacher_subject = unpaid_classes_of_teacher_subject.filter(
+                    last_status_datetime__date__gte=start_date, last_status_datetime__date__lte=end_date)
+
+
+            paid_amount += paid_classes_of_teacher_subject.count() * class_price
+            unpaid_amount += unpaid_classes_of_teacher_subject.count() * class_price
 
         teacher_subject_level = teacher_subject.level.name
         teacher_subject_section = teacher_subject.section.name if teacher_subject.section else None    
