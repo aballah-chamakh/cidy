@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db import models
 from account.models import User
 from django.db.models.signals import post_save
@@ -12,15 +13,15 @@ class Level(models.Model):
 class Section(models.Model):
     image = models.ImageField(null=True, blank=True)
     name = models.CharField(max_length=100)
-    level = models.ForeignKey(Level, on_delete=models.CASCADE)
+    #level = models.ForeignKey(Level, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
 
 class Subject(models.Model):
     name = models.CharField(max_length=100)
-    level = models.ForeignKey(Level, on_delete=models.CASCADE,null=True, blank=True)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True, blank=True)
+    #level = models.ForeignKey(Level, on_delete=models.CASCADE,null=True, blank=True)
+    #section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -99,7 +100,7 @@ class Group(models.Model):
 class GroupEnrollment(models.Model):
     student = models.ForeignKey('student.Student', on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(default=timezone.now)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     unpaid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     attended_non_paid_classes = models.IntegerField(default=0)
@@ -128,7 +129,7 @@ class Class(models.Model):
     absence_start_time = models.TimeField(null=True, blank=True)
     absence_end_time = models.TimeField(null=True, blank=True)
     #paid_at = models.DateTimeField(null=True, blank=True)
-    last_status_date = models.DateTimeField(auto_now=True)
+    last_status_date = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"Class for {self.group_enrollment.group.name} - {self.status}"

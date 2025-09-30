@@ -15,14 +15,17 @@ django.setup()
 
 # Add the super user if he does not exist
 from account.models import User
-if not User.objects.filter(email="chamakhabdallah8@gmail.com").exists():
-    User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234",)
+from teacher.models import Level 
+
+User.objects.all().delete()
+Level.objects.all().delete()
+
+User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234",)
 
 # Start testing
 
 
-from teacher_tests import TestDashboardViews
+from teacher_app.dashboard_views.get_dashboard_data import TestDateRangeFilter
 
-test = TestDashboardViews()
-teachers = test.get_teachers()
-print(teachers)
+test = TestDateRangeFilter()
+test.set_up()

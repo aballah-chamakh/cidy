@@ -3,25 +3,24 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from ..models import Class, Group, GroupEnrollment, TeacherSubject
 from student.models import Student
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date 
 
 
 def get_date_range(range_preset):
-    """Helper function to convert preset to actual date range"""
-    today = datetime.now()
-    
+    """Helper function to convert preset to actual date range (returns dates only)"""
+    today = date.today()  # use date object directly
+
     if range_preset == 'this_week':
         # Start of current week (Monday)
         start_date = today - timedelta(days=today.weekday())
-        start_date = datetime(start_date.year, start_date.month, start_date.day)
         end_date = today
     elif range_preset == 'this_year':
-        start_date = datetime(today.year, 1, 1)
+        start_date = date(today.year, 1, 1)
         end_date = today
     else:  # default to this_month
-        start_date = datetime(today.year, today.month, 1)
+        start_date = date(today.year, today.month, 1)
         end_date = today
-    
+
     return start_date, end_date
 
 @api_view(['GET'])
@@ -45,17 +44,19 @@ def get_dashboard_data(request):
     
     # If explicit start and end dates are provided, use them
     if start_date_param and end_date_param:
-        start_date = datetime.strptime(start_date_param, '%Y-%m-%d')
-        end_date = datetime.strptime(end_date_param, '%Y-%m-%d')
+        start_date = datetime.fromisoformat(start_date_param, '%Y-%m-%d')
+        end_date = datetime.fromisoformat(end_date_param, '%Y-%m-%d')
         # Add time to end_date to include the full day
-        end_date = datetime.combine(end_date.date(), datetime.max.time())
+        #end_date = datetime.combine(end_date, datetime.max.time())
     elif date_range_preset: # this month, this week ...
         # Use preset if no explicit dates
         start_date, end_date = get_date_range(date_range_preset)
     else : 
         start_date = None 
         end_date = None
-    
+        
+    print('Start Date:', start_date)
+    print('End Date:', end_date)
 
     dashboard = {
         'total_paid_amount': 0,
@@ -63,6 +64,10 @@ def get_dashboard_data(request):
         'total_active_students': 0,
         'levels' : {}
     }
+
+    total_active_students_cnt = GroupEnrollment.objects.filter(group__teacher=teacher).distinct('student').count()
+    dashboard['total_active_students'] = total_active_students_cnt
+
 
     for teacher_subject in teacher_subjects:
         # Get all group enrollments of the groups of this teacher subject
@@ -113,29 +118,28 @@ def get_dashboard_data(request):
         teacher_subject_subject = teacher_subject.subject.name 
 
         # add to the dashboard the the kpis of this teacher subject
-        dashboard['total_active_students'] += active_students_count
         dashboard['total_paid_amount'] += paid_amount
         dashboard['total_unpaid_amount'] += unpaid_amount
 
         dashboard['levels'][teacher_subject_level] = dashboard['levels'].get(teacher_subject_level, {
             'total_paid_amount': 0,
             'total_unpaid_amount': 0,
-            'total_active_students': 0
+            'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level,**({"date__lte": end_date} if end_date else {} )).distinct('student').count(),
         })
         dashboard['levels'][teacher_subject_level]['total_paid_amount'] += paid_amount
         dashboard['levels'][teacher_subject_level]['total_unpaid_amount'] += unpaid_amount
-        dashboard['levels'][teacher_subject_level]['total_active_students'] += active_students_count
+        #dashboard['levels'][teacher_subject_level]['total_active_students'] += active_students_count
         
         if teacher_subject_section :
             dashboard['levels'][teacher_subject_level]['sections'] = dashboard['levels'][teacher_subject_level].get('sections', {})
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section] = dashboard['levels'][teacher_subject_level]['sections'].get(teacher_subject_section, {
                 'total_paid_amount': 0,
                 'total_unpaid_amount': 0,
-                'total_active_students': 0
+                'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level, group__teacher_subject__section=teacher_subject.section,**({"date__lte": end_date} if end_date else {} )).distinct('student').count()
             })
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_paid_amount'] += paid_amount
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_unpaid_amount'] += unpaid_amount
-            dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_active_students'] += active_students_count
+            #dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_active_students'] += active_students_count
 
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['subjects'] = dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section].get('subjects', {})
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['subjects'][teacher_subject_subject] = dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['subjects'].get(teacher_subject_subject, {
@@ -146,7 +150,17 @@ def get_dashboard_data(request):
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['subjects'][teacher_subject_subject]['total_paid_amount'] += paid_amount
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['subjects'][teacher_subject_subject]['total_unpaid_amount'] += unpaid_amount
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['subjects'][teacher_subject_subject]['total_active_students'] += active_students_count
-    print(dashboard)
+        else : 
+            dashboard['levels'][teacher_subject_level]['subjects'] = dashboard['levels'][teacher_subject_level].get('subjects', {})
+            dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject] = dashboard['levels'][teacher_subject_level]['subjects'].get(teacher_subject_subject, {
+                'total_paid_amount': 0,
+                'total_unpaid_amount': 0,
+                'total_active_students': 0
+            })
+            dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_paid_amount'] += paid_amount
+            dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_unpaid_amount'] += unpaid_amount
+            dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_active_students'] += active_students_count
+
     return Response({
         'has_levels': True,
         'dashboard': dashboard
