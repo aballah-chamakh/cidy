@@ -29,29 +29,31 @@ def get_week_schedule(request):
     
     schedule_data = []
     for group in groups:
-        section_name = group.section.name if group.section else None
-        
+        teacher_subject = group.teacher_subject
+        level = teacher_subject.level
+        section = teacher_subject.section
+        subject = teacher_subject.subject
         schedule_data.append({
             'id': group.id,
             'name': group.name,
             'subject': {
-                'id': group.subject.id,
-                'name': group.subject.name
+                'id': subject.id,
+                'name': subject.name
             },
             'level': {
-                'id': group.level.id,
-                'name': group.level.name
+                'id': level.id,
+                'name': level.name
             },
             'section': {
-                'id': group.section.id,
-                'name': section_name
-            } if section_name else None,
+                'id': section.id,
+                'name': section.name
+            } if section else None,
             'week_day': group.week_day,
-            'start_time_range': group.start_time_range,
-            'end_time_range': group.end_time_range,
+            'start_time': group.start_time.strftime("%H:%M"),
+            'end_time': group.end_time.strftime("%H:%M"),
             'students_count': group.students.count()
         })
-    
+    print(schedule_data)
     return Response({'groups': schedule_data})
 
 # review it
@@ -76,6 +78,40 @@ def update_group_schedule(request, group_id):
         return Response({'error': serializer.errors}, status=400)
     
     # update the group
+    serializer.save()
+    
+    # get the data from the serializer
+    change_type = serializer.validated_data.get('schedule_change_type')
+    
+    # get the students of the group
+    students = group.get_students()
+    
+    # create the notification message
+    if change_type == 'permanent':
+        message = f"The schedule for your {group.teacher_subject.subject.name} group has been permanently changed. Please check the new schedule."
+    else: # temporary
+        message = f"The schedule for your {group.teacher_subject.subject.name} group has been temporarily changed for this week. Please check the new schedule."
+    
+    # send notifications to students and parents
+    for student in students:
+        # create student notification
+        StudentNotification.objects.create(student=student, message=message)
+        # increment student unread notifications
+        increment_student_unread_notifications(student)
+        
+        # check if the student has a parent and send notification
+        try:
+            # A student can be linked to a Son entry, which in turn is linked to a Parent.
+            son_record = Son.objects.filter(student_teacher_enrollments__student=student).first()
+            if son_record:
+                parent = son_record.parent
+                ParentNotification.objects.create(parent=parent, message=message)
+                increment_parent_unread_notifications(parent)
+        except Exception: 
+            # Continue even if there's an issue finding a parent or creating a notification
+            continue
+            
+    return Response(serializer.data)
     group = serializer.save()
 
     schedule_change_type = request.data.get("schedule_change_type")

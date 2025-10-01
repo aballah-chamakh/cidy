@@ -16,12 +16,17 @@ django.setup()
 
 # Start testing
 from teacher_app.dashboard_views.get_dashboard_data import TestDateRangeFilter,TestNoClasses,TestNoTeacherSubjects,TestNoGroupEnrollments
+from teacher_app.week_schedule_views.get_week_schedule import TestListingWeekSchedule
+
 
 def test_runner(test_class):
     test = test_class()
     test.set_up()
     test.test()
 
+
+test_runner(TestListingWeekSchedule)
+quit()
 test_runner(TestNoClasses)
 test_runner(TestNoTeacherSubjects)
 test_runner(TestNoGroupEnrollments)
