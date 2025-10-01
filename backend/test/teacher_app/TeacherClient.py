@@ -17,9 +17,9 @@ class TeacherClient:
         response = requests.post(url, data=data)
         if response.status_code == 200:
             self.access_token = response.json().get("access")
-            print("Authentication successful.")
         else:
             print("Authentication failed:", response.json())
+            quit()
 
     def get_dashboard_data(self, start_date="", end_date="", date_range=""):
         """Fetch the dashboard data for the teacher."""

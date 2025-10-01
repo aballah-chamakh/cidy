@@ -19,7 +19,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   bool _hasLevels = false;
   bool _isFetchingData = false;
   Map<String, dynamic>? _dashboardData;
-  String _selectedRange = 'this_month';
+  String _selectedRange = '';
   DateTime? _startDate;
   DateTime? _endDate;
 
@@ -181,7 +181,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     setState(() {
       _startDate = null;
       _endDate = null;
-      _selectedRange = 'this_month'; // Reset to default
+      _selectedRange = ''; // Reset to default
     });
     _fetchDashboardData();
   }

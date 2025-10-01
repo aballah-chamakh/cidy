@@ -1,15 +1,22 @@
+import datetime
+from teacher_app.TeacherClient import TeacherClient
 from account.models import User 
 from teacher.models import Teacher, TeacherSubject,Level, Section, Subject,Group
 from student.models import Student
 
 class TestNoGroupEnrollments:
  
+
     # Data summary : 
     # 1 teacher
     # 9 teacher subjects
     # for each teacher subject : 2 groups 
     # for each unique combination of level and section : 6 students created
     def set_up(self):
+        User.objects.all().delete()
+        Level.objects.all().delete()
+        User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234")
+
         # Create a teacher 
         user  = User.objects.create_user("teacher10@gmail.com", "44558866", "iloveuu")
         teacher = Teacher.objects.create(user=user,fullname="teacher10",gender="M")
@@ -87,5 +94,18 @@ class TestNoGroupEnrollments:
                                     end_time="20:00",
                                     name=f"{teacher_subject.level.name} {teacher_subject.section.name if teacher_subject.section else ''} {teacher_subject.subject.name} ({group_name})")
      
-    def test():
-        pass
+    def test(self):
+        print("START TESTING LOADING DASHBOARD DATA WITH NO GROUP ENROLLMENTS :")
+        teacher_client = TeacherClient("teacher10@gmail.com","iloveuu")
+        teacher_client.authenticate() 
+        
+        dashboard_data = teacher_client.get_dashboard_data()
+ 
+        expected_dashboard_data = {'has_levels': True, 'dashboard': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0, 'levels': {'Quatrième année secondaire': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0, 'sections': {'Technique': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0, 'subjects': {'Mathématiques': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}, 'Physique': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}}}, 'Informatique': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0, 'subjects': {'Mathématiques': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}}}}}, 'Huitième année de base': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0, 'subjects': {'Mathématiques': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}, 'Physique': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}}}, 'Septième année de base': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0, 'subjects': {'Mathématiques': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}}}, 'Sixième année primaire': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0, 'subjects': {'Mathématiques': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}, 'Éveil scientifique': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}}}, 'Première année primaire': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0, 'subjects': {'Mathématiques': {'total_paid_amount': 0, 'total_unpaid_amount': 0, 'total_active_students': 0}}}}}}
+        
+        if dashboard_data == expected_dashboard_data:
+            print("    SUCCESSFUL TEST : LOADING DASHBOARD DATA WITH NO GROUP ENROLLMENTS")
+        else : 
+            print("    FAILED TEST : LOADING DASHBOARD DATA WITH NO GROUP ENROLLMENTS")
+            print("    RETURNED DASHBOARD DATA:", dashboard_data)
+    

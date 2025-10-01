@@ -13,20 +13,16 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cidy.settings")
 django.setup()
 
 
-# Add the super user if he does not exist
-from account.models import User
-from teacher.models import Level 
-
-User.objects.all().delete()
-Level.objects.all().delete()
-
-User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234",)
 
 # Start testing
-
-
 from teacher_app.dashboard_views.get_dashboard_data import TestDateRangeFilter,TestNoClasses,TestNoTeacherSubjects,TestNoGroupEnrollments
 
-test = TestDateRangeFilter()
-test.set_up()
-test.test()
+def test_runner(test_class):
+    test = test_class()
+    test.set_up()
+    test.test()
+
+test_runner(TestNoClasses)
+test_runner(TestNoTeacherSubjects)
+test_runner(TestNoGroupEnrollments)
+test_runner(TestDateRangeFilter)
