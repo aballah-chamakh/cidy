@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:cidy/config.dart';
-import 'package:cidy/profiles/teacher/models/level_model.dart';
-import 'package:cidy/profiles/teacher/models/section_model.dart';
-import 'package:cidy/profiles/teacher/models/subject_model.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -25,9 +23,9 @@ class _AddGroupFormState extends State<AddGroupForm> {
   bool _isCreating = false;
   bool _isLoadingDependencies = true;
 
-  List<Level> _levels = [];
-  List<Section> _sections = [];
-  List<Subject> _subjects = [];
+  List _levels = [];
+  List _sections = [];
+  List _subjects = [];
   String? _errorMessage;
 
   @override
@@ -71,17 +69,13 @@ class _AddGroupFormState extends State<AddGroupForm> {
         if (mounted) {
           setState(() {
             final levelsData = json.decode(levelsResponse.body) as List;
-            _levels = levelsData.map((data) => Level.fromJson(data)).toList();
+            _levels = levelsData;
 
             final sectionsData = json.decode(sectionsResponse.body) as List;
-            _sections = sectionsData
-                .map((data) => Section.fromJson(data))
-                .toList();
+            _sections = sectionsData;
 
             final subjectsData = json.decode(subjectsResponse.body) as List;
-            _subjects = subjectsData
-                .map((data) => Subject.fromJson(data))
-                .toList();
+            _subjects = subjectsData;
           });
         }
       } else {

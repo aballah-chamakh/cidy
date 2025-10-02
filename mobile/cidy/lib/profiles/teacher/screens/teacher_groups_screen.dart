@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:cidy/config.dart';
-import 'package:cidy/profiles/teacher/models/group_model.dart';
+
 import 'package:cidy/profiles/teacher/screens/teacher_group_detail_screen.dart';
 import 'package:cidy/profiles/teacher/widgets/add_group_form.dart';
 import 'package:cidy/profiles/teacher/widgets/group_filter_form.dart';
@@ -20,7 +20,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
   final Set<int> _selectedGroupIds = {};
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
-  List<Group> _groups = [];
+  List<dynamic> _groups = [];
   String? _errorMessage;
   Map<String, dynamic> _currentFilters = {};
 
@@ -76,7 +76,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         final List<dynamic> groupList = data['groups'];
         if (mounted) {
           setState(() {
-            _groups = groupList.map((json) => Group.fromJson(json)).toList();
+            _groups = groupList;
           });
         }
       } else {
@@ -161,7 +161,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Create New Group'),
+          title: const Text('Créer un nouveau groupe'),
           content: AddGroupForm(
             onGroupCreated: () {
               _fetchGroups(); // Refresh list after creation
@@ -215,7 +215,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return TeacherLayout(title: 'Groups', body: _buildBody());
+    return TeacherLayout(title: 'Groupes', body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -252,7 +252,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search by group name...',
+                hintText: 'Rechercher par nom de groupe...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30.0),
@@ -263,7 +263,15 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 contentPadding: EdgeInsets.zero,
               ),
               onChanged: (value) {
-                _fetchGroups(name: value);
+                _fetchGroups(
+                  name: value,
+                  levelId: _currentFilters['level'],
+                  sectionId: _currentFilters['section'],
+                  subjectId: _currentFilters['subject'],
+                  day: _currentFilters['day'],
+                  timeRange: _currentFilters['time_range'],
+                  sortBy: _currentFilters['sort_by'],
+                );
               },
             ),
           ),
@@ -276,12 +284,12 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                   : null,
             ),
             onPressed: _showFilterModal,
-            tooltip: 'Filter Groups',
+            tooltip: 'Filtrer les groupes',
           ),
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
             onPressed: _showAddGroupDialog,
-            tooltip: 'Add Group',
+            tooltip: 'Ajouter un groupe',
           ),
         ],
       ),
@@ -299,19 +307,19 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
           ),
           const SizedBox(height: 24),
           Text(
-            "No Groups Found",
+            "Aucun groupe trouvé",
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
           const Text(
-            "You haven't created any groups yet.",
+            "Vous n'avez encore créé aucun groupe.",
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _showAddGroupDialog,
             icon: const Icon(Icons.add),
-            label: const Text('Create Your First Group'),
+            label: const Text('Créez votre premier groupe'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -324,7 +332,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     );
   }
 
-  Widget _buildGroupsListUI(List<Group> groups) {
+  Widget _buildGroupsListUI(List<dynamic> groups) {
     return Stack(
       children: [
         Column(
@@ -338,11 +346,11 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '${groups.length} Group(s)',
+                    '${groups.length} Groupe(s)',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   if (_selectedGroupIds.isNotEmpty)
-                    Text('${_selectedGroupIds.length} selected'),
+                    Text('${_selectedGroupIds.length} sélectionné(s)'),
                 ],
               ),
             ),
@@ -367,8 +375,8 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     );
   }
 
-  Widget _buildGroupCard(Group group) {
-    final isSelected = _selectedGroupIds.contains(group.id);
+  Widget _buildGroupCard(dynamic group) {
+    final isSelected = _selectedGroupIds.contains(group['id']);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       elevation: 2,
@@ -381,28 +389,20 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          if (_selectedGroupIds.isNotEmpty) {
-            setState(() {
-              if (isSelected) {
-                _selectedGroupIds.remove(group.id);
-              } else {
-                _selectedGroupIds.add(group.id);
-              }
-            });
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    TeacherGroupDetailScreen(groupId: group.id),
-              ),
-            );
-          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  TeacherGroupDetailScreen(groupId: group['id']),
+            ),
+          );
         },
         onLongPress: () {
           setState(() {
-            if (!isSelected) {
-              _selectedGroupIds.add(group.id);
+            if (isSelected) {
+              _selectedGroupIds.remove(group['id']);
+            } else {
+              _selectedGroupIds.add(group['id']);
             }
           });
         },
@@ -410,13 +410,13 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
-                      group.name,
+                      group['name'] ?? 'Groupe sans nom',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -424,42 +424,16 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (isSelected)
-                    Icon(
-                      Icons.check_circle,
-                      color: Theme.of(context).primaryColor,
-                    ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                '${group.level} ${group.section != null ? ' - ${group.section}' : ''}',
-                style: Theme.of(context).textTheme.bodyMedium,
+                '${group['level'] ?? 'N/A'} ${group['section'] != null ? ' - ${group['section']}' : ''}',
+                style: TextStyle(fontSize: 15),
               ),
               const SizedBox(height: 4),
-              Text(group.subject, style: Theme.of(context).textTheme.bodySmall),
+              Text(group['subject'] ?? 'N/A', style: TextStyle(fontSize: 15)),
               const Divider(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildInfoChip(
-                    Icons.person,
-                    '${group.studentCount} Students',
-                    Colors.blue,
-                  ),
-                  _buildInfoChip(
-                    Icons.calendar_today,
-                    group.day,
-                    Colors.purple,
-                  ),
-                  _buildInfoChip(
-                    Icons.access_time,
-                    '${group.startTime.format(context)} - ${group.endTime.format(context)}',
-                    Colors.orange,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
@@ -467,11 +441,16 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Paid',
+                          'Payé',
                           style: TextStyle(color: Colors.green),
                         ),
                         Text(
-                          _formatAmount(group.paid),
+                          _formatAmount(
+                            double.tryParse(
+                                  group['total_paid']?.toString() ?? '0',
+                                ) ??
+                                0,
+                          ),
                           style: const TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -486,11 +465,16 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         const Text(
-                          'Unpaid',
+                          'Non payé',
                           style: TextStyle(color: Colors.red),
                         ),
                         Text(
-                          _formatAmount(group.unpaid),
+                          _formatAmount(
+                            double.tryParse(
+                                  group['total_unpaid']?.toString() ?? '0',
+                                ) ??
+                                0,
+                          ),
                           style: const TextStyle(
                             color: Colors.red,
                             fontWeight: FontWeight.bold,
@@ -503,13 +487,24 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value:
-                    group.paid /
-                    (group.paid + group.unpaid).clamp(1, double.infinity),
-                backgroundColor: Colors.red[100],
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
-              ),
+              () {
+                final double paid =
+                    double.tryParse(group['total_paid']?.toString() ?? '0') ??
+                    0;
+                final double unpaid =
+                    double.tryParse(group['total_unpaid']?.toString() ?? '0') ??
+                    0;
+                final double total = paid + unpaid;
+                final double progress = total == 0 ? 0.0 : paid / total;
+
+                return LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: total == 0
+                      ? Theme.of(context).primaryColor
+                      : Colors.red,
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                );
+              }(),
             ],
           ),
         ),
@@ -517,71 +512,100 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String label, Color color) {
-    return Chip(
-      avatar: Icon(icon, color: color, size: 16),
-      label: Text(label),
-      backgroundColor: color.withOpacity(0.1),
-      padding: EdgeInsets.zero,
-      labelStyle: const TextStyle(fontSize: 12),
-    );
-  }
-
   Widget _buildStickyFooter() {
     return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(15.0),
+          topRight: Radius.circular(15.0),
+        ),
+        boxShadow: const [BoxShadow(color: Colors.black, blurRadius: 1.0)],
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 5.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _selectedGroupIds.clear();
-              });
-            },
-            child: const Text('Cancel'),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+              ),
+              onPressed: () {
+                _showDeleteConfirmationDialog();
+              },
+              icon: const Icon(Icons.delete_outline),
+              label: Text(
+                'Supprimer (${_selectedGroupIds.length})',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
           ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              _showDeleteConfirmationDialog();
-            },
-            icon: const Icon(Icons.delete_outline),
-            label: Text('Delete (${_selectedGroupIds.length})'),
+          const SizedBox(height: 5),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () {
+                setState(() {
+                  _selectedGroupIds.clear();
+                });
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).primaryColor,
+                backgroundColor: Theme.of(context).cardColor,
+                minimumSize: const Size(double.infinity, 50),
+                side: BorderSide(
+                  color: Theme.of(context).primaryColor,
+                  width: 1.5,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+              ),
+              child: const Text('Annuler', style: TextStyle(fontSize: 16)),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _showDeleteConfirmationDialog() {
-    showDialog(
+  Future<void> _showDeleteConfirmationDialog() async {
+    final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Deletion'),
+          title: const Text('Confirmer la suppression'),
           content: Text(
-            'Are you sure you want to delete ${_selectedGroupIds.length} group(s)? This action cannot be undone.',
+            'Êtes-vous sûr de vouloir supprimer ${_selectedGroupIds.length} groupe(s) ? Cette action est irréversible.',
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: const Text('Annuler'),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(false);
               },
             ),
             TextButton(
               style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
+              child: const Text('Supprimer'),
               onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                _deleteGroups(_selectedGroupIds.toList());
+                Navigator.of(context).pop(true);
               },
             ),
           ],
         );
       },
     );
+
+    if (confirmed == true) {
+      await _deleteGroups(_selectedGroupIds.toList());
+    }
   }
 }

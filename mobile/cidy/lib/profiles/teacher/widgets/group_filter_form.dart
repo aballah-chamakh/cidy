@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:cidy/config.dart';
-import 'package:cidy/profiles/teacher/models/level_model.dart';
-import 'package:cidy/profiles/teacher/models/section_model.dart';
-import 'package:cidy/profiles/teacher/models/subject_model.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -28,9 +26,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   String? _errorMessage;
 
   // Data for dropdowns
-  List<Level> _levels = [];
-  List<Section> _sections = [];
-  List<Subject> _subjects = [];
+  List _levels = [];
+  List _sections = [];
+  List _subjects = [];
 
   // Selected filter values
   int? _selectedLevelId;
@@ -112,17 +110,13 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       if (mounted) {
         setState(() {
           final levelsData = json.decode(responses[0].body) as List;
-          _levels = levelsData.map((data) => Level.fromJson(data)).toList();
+          _levels = levelsData;
 
           final sectionsData = json.decode(responses[1].body) as List;
-          _sections = sectionsData
-              .map((data) => Section.fromJson(data))
-              .toList();
+          _sections = sectionsData;
 
           final subjectsData = json.decode(responses[2].body) as List;
-          _subjects = subjectsData
-              .map((data) => Subject.fromJson(data))
-              .toList();
+          _subjects = subjectsData;
         });
       }
     } catch (e) {
@@ -152,12 +146,10 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
           : null,
     };
     widget.onApplyFilter(filters);
-    Navigator.of(context).pop();
   }
 
   void _resetFilters() {
     widget.onResetFilter();
-    Navigator.of(context).pop();
   }
 
   int _countActiveFilters() {
@@ -272,7 +264,7 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
 
   Widget _buildSectionDropdown() {
     final filteredSections = _selectedLevelId == null
-        ? <Section>[]
+        ? []
         : _sections.where((s) => s.level == _selectedLevelId).toList();
     final bool isEnabled = filteredSections.isNotEmpty;
 
@@ -305,7 +297,7 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   }
 
   Widget _buildSubjectDropdown() {
-    List<Subject> filteredSubjects = [];
+    List filteredSubjects = [];
     bool isEnabled = false;
 
     if (_selectedLevelId != null) {

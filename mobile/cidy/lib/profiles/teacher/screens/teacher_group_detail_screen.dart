@@ -1,7 +1,7 @@
 import 'dart:convert';
+
 import 'package:cidy/config.dart';
-import 'package:cidy/profiles/teacher/models/group_model.dart';
-import 'package:cidy/profiles/teacher/models/student_model.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -18,8 +18,7 @@ class TeacherGroupDetailScreen extends StatefulWidget {
 
 class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   bool _isLoading = true;
-  Group? _group;
-  List<Student> _students = [];
+  Map<String, dynamic>? _groupDetail;
   String? _errorMessage;
   final Set<int> _selectedStudentIds = {};
 
@@ -46,19 +45,17 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       final url = Uri.parse(
         '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/',
       );
+
       final response = await http.get(
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+        final data = json.decode(utf8.decode(response.bodyBytes));
         if (mounted) {
           setState(() {
-            _group = Group.fromJson(data['group']);
-            _students = (data['students'] as List)
-                .map((studentJson) => Student.fromJson(studentJson))
-                .toList();
+            _groupDetail = data;
             _isLoading = false;
           });
         }
@@ -81,7 +78,9 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isLoading ? 'Loading...' : 'Group: ${_group!.name}'),
+        title: Text(
+          _isLoading ? 'Chargement...' : 'Groupe: ${_groupDetail!['name']}',
+        ),
       ),
       body: _buildBody(),
     );
@@ -96,8 +95,8 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       return Center(child: Text('Error: $_errorMessage'));
     }
 
-    if (_group == null) {
-      return const Center(child: Text('Group not found.'));
+    if (_groupDetail == null) {
+      return const Center(child: Text('Groupe non trouvé.'));
     }
 
     return _buildGroupDetails();
@@ -130,7 +129,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Group Details',
+                  'Détails du groupe',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Row(
@@ -152,16 +151,15 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               ],
             ),
             const Divider(),
-            _buildDetailRow('Name', _group!.name),
-            if (_group!.section != null)
-              _buildDetailRow(
-                'Level & Section',
-                '${_group!.level} - ${_group!.section}',
-              ),
-            _buildDetailRow('Subject', _group!.subject),
+            _buildDetailRow('Nom', _groupDetail!['name']),
             _buildDetailRow(
-              'Week day and time range',
-              '${_group!.day}, ${_group!.startTime.format(context)} - ${_group!.endTime.format(context)}',
+              'Niveau & Section',
+              '${_groupDetail!['level']} - ${_groupDetail!['section']}',
+            ),
+            _buildDetailRow('Matière', _groupDetail!['subject']),
+            _buildDetailRow(
+              'Jour de la semaine et plage horaire',
+              '${_groupDetail!['day']}, ${_groupDetail!['start_time']} - ${_groupDetail!['end_time']}',
             ),
           ],
         ),
@@ -182,12 +180,16 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   }
 
   Widget _buildKpiCards() {
+    // These values should come from the API if they are relevant for the detail view
+    // For now, using student count as an example
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildKpiCard(_group!.paid.toString(), 'Paid', Colors.green),
-        _buildKpiCard(_group!.unpaid.toString(), 'Unpaid', Colors.red),
-        _buildKpiCard(_group!.studentCount.toString(), 'Students', Colors.blue),
+        _buildKpiCard(
+          _groupDetail!['student_count'].toString(),
+          'Élèves',
+          Colors.blue,
+        ),
       ],
     );
   }
@@ -214,6 +216,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   }
 
   Widget _buildStudentListCard() {
+    final students = _groupDetail!['students'] as List;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -224,7 +227,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${_students.length} Student(s)',
+                  '${students.length} Élève(s)',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -234,23 +237,39 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                   onPressed: () {
                     // TODO: Implement add student
                   },
-                  child: const Text('Add'),
+                  child: const Text('Ajouter'),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             // Filters will go here
-            _students.isEmpty
+            students.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Center(child: Text('No students in this group.')),
+                    child: Text('Aucun élève dans ce groupe.'),
                   )
                 : ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _students.length,
+                    itemCount: students.length,
                     itemBuilder: (context, index) {
-                      return _buildStudentCard(_students[index]);
+                      final student = students[index];
+                      final paymentStatus =
+                          student['payment_status'] ?? 'unpaid';
+                      final isPaid = paymentStatus == 'paid';
+                      return ListTile(
+                        title: Text(student['name'] ?? 'N/A'),
+                        subtitle: Text(
+                          'Montant: ${student['amount_to_pay'] ?? '0'}',
+                        ),
+                        trailing: Text(
+                          isPaid ? 'Payé' : 'Non payé',
+                          style: TextStyle(
+                            color: isPaid ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
                     },
                   ),
           ],
@@ -259,27 +278,27 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     );
   }
 
-  Widget _buildStudentCard(Student student) {
-    final isSelected = _selectedStudentIds.contains(student.id);
+  Widget _buildStudentCard(Map<String, dynamic> student) {
+    final isSelected = _selectedStudentIds.contains(student['id']);
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: student.image != null
-              ? NetworkImage('${Config.backendUrl}${student.image}')
+          backgroundImage: student['image'] != null
+              ? NetworkImage('${Config.backendUrl}${student['image']}')
               : null,
-          child: student.image == null ? const Icon(Icons.person) : null,
+          child: student['image'] == null ? const Icon(Icons.person) : null,
         ),
-        title: Text(student.fullname),
+        title: Text(student['fullname']),
         subtitle: Row(
           children: [
             Text(
-              '${student.paid} paid',
+              '${student['paid']} paid',
               style: const TextStyle(color: Colors.green),
             ),
             const SizedBox(width: 8),
             Text(
-              '${student.unpaid} unpaid',
+              '${student['unpaid']} unpaid',
               style: const TextStyle(color: Colors.red),
             ),
           ],
@@ -289,9 +308,9 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           onChanged: (bool? value) {
             setState(() {
               if (value == true) {
-                _selectedStudentIds.add(student.id);
+                _selectedStudentIds.add(student['id']);
               } else {
-                _selectedStudentIds.remove(student.id);
+                _selectedStudentIds.remove(student['id']);
               }
             });
           },

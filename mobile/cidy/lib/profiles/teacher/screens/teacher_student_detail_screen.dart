@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:cidy/config.dart';
-import 'package:cidy/profiles/teacher/models/student_model.dart';
 
 class TeacherStudentDetailScreen extends StatefulWidget {
   final int studentId;
@@ -17,7 +16,7 @@ class TeacherStudentDetailScreen extends StatefulWidget {
 
 class _TeacherStudentDetailScreenState
     extends State<TeacherStudentDetailScreen> {
-  Student? _student;
+  var _student;
   bool _isLoading = true;
   String _error = '';
   final _storage = const FlutterSecureStorage();
