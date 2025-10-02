@@ -120,15 +120,16 @@ def get_groups(request):
 
     # get teacher levels sections subjects hierarchy to use them as options for the filters
     teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level','section','subject')
-    teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects,many=True)
-
-    return Response({
+    teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects)
+    response = {
         'has_groups': True,
         'groups_total_count': paginator.count,
         'current_page': page,
         'groups': serializer.data,
         'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy.data
-    })
+    }
+    print(response)
+    return Response(response)
 
 
 @api_view(['POST'])

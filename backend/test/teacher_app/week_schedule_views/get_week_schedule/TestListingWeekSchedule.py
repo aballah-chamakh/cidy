@@ -1,3 +1,4 @@
+import datetime
 from account.models import User 
 from teacher.models import Teacher, TeacherSubject,Level, Section, Subject,Group
 
@@ -50,6 +51,8 @@ class TestListingWeekSchedule:
         # primary 1st : math
         teacher_subjects.append(TeacherSubject.objects.create(teacher=teacher,level=primary_1st,subject=math_subject,price_per_class=10))
 
+        clear_temporary_schedule_at = datetime.date.today() + datetime.timedelta(days=10)
+        clear_temporary_schedule_expired = datetime.date.today()
         for idx,ts in enumerate(teacher_subjects[:7]): 
             group = Group.objects.create( 
                     teacher=teacher,
@@ -57,15 +60,19 @@ class TestListingWeekSchedule:
                     week_day=TestListingWeekSchedule.WEEKDAYS[idx],
                     start_time="10:00",
                     end_time="12:00",
-                    name=f"{ts.level.name} {ts.section.name if ts.section else ''} {ts.subject.name} (A)") 
+                    name="Group A") 
             
             group = Group.objects.create( 
                     teacher=teacher,
                     teacher_subject=ts,
                     week_day=TestListingWeekSchedule.WEEKDAYS[idx],
-                    start_time="15:00",
-                    end_time="17:00",
-                    name=f"{ts.level.name} {ts.section.name if ts.section else ''} {ts.subject.name} (B)")
+                    start_time="14:00",
+                    end_time="16:00",
+                    temporary_week_day=TestListingWeekSchedule.WEEKDAYS[idx],
+                    temporary_start_time="12:00",
+                    temporary_end_time="15:00",
+                    clear_temporary_schedule_at = clear_temporary_schedule_expired if idx % 2 == 0 else clear_temporary_schedule_at,
+                    name=f"Groupe B")
             
             group = Group.objects.create( 
                     teacher=teacher,
@@ -73,7 +80,7 @@ class TestListingWeekSchedule:
                     week_day=TestListingWeekSchedule.WEEKDAYS[idx],
                     start_time="20:00",
                     end_time="22:00",
-                    name=f"{ts.level.name} {ts.section.name if ts.section else ''} {ts.subject.name} (C)")
+                    name=f"Groupe C")
 
     def test(self):
         pass 

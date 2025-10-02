@@ -1,10 +1,14 @@
 import 'package:cidy/splash.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
 import 'route_observer.dart';
 
 void main() {
-  runApp(const MyApp());
+  initializeDateFormatting('fr_FR', null).then((_) {
+    runApp(const MyApp());
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -17,12 +21,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Cidy',
       locale: const Locale('fr'),
-      supportedLocales: const [Locale('fr'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
       theme: ThemeData(
         primaryColor: primaryColor,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -57,6 +55,12 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [Locale('fr', 'FR')],
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],

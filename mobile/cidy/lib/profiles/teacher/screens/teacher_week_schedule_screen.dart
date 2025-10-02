@@ -112,8 +112,14 @@ class _TeacherWeekScheduleScreenState extends State<TeacherWeekScheduleScreen> {
           String levelName = groupData['level']['name'] ?? 'N/A';
           String subjectName = groupData['subject']['name'] ?? 'N/A';
           String groupName = groupData['name'] ?? 'No Name';
+          bool temporarySchedule = groupData['temporary_schedule'] ?? false;
 
-          final subject = '$levelName$section\n$subjectName\n$groupName';
+          String subject = '$levelName$section\n';
+          subject += '$subjectName\n';
+          subject += '$groupName';
+          if (temporarySchedule) {
+            subject += '\n(Temporaire)';
+          }
 
           final appointment = Appointment(
             startTime: startDateTime,
@@ -161,7 +167,7 @@ class _TeacherWeekScheduleScreenState extends State<TeacherWeekScheduleScreen> {
   @override
   Widget build(BuildContext context) {
     return TeacherLayout(
-      title: 'Week Schedule',
+      title: 'Planning de la semaine',
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : PageView.builder(
@@ -189,65 +195,87 @@ class _TeacherWeekScheduleScreenState extends State<TeacherWeekScheduleScreen> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
-                        DateFormat('EEEE, MMMM d').format(day),
+                        DateFormat('EEEE, d MMMM', 'fr_FR').format(day),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
                     Expanded(
-                      child: Listener(
-                        onPointerMove: (pointerMoveEvent) {
-                          if (pointerMoveEvent.delta.dx.abs() >
-                              pointerMoveEvent.delta.dy.abs()) {
-                            _pageController.position.jumpTo(
-                              _pageController.position.pixels -
-                                  pointerMoveEvent.delta.dx,
-                            );
-                          }
-                        },
-                        child: SfCalendar(
-                          view: CalendarView.day,
-                          dataSource: dailyDataSource,
-                          initialDisplayDate: day,
-                          allowDragAndDrop: false,
-                          minDate: _startOfWeek,
-                          maxDate: _endOfWeek,
-                          firstDayOfWeek: 1, // Monday
-                          timeSlotViewSettings: const TimeSlotViewSettings(
-                            startHour: 8,
-                            endHour: 24,
-                            nonWorkingDays: <int>[
-                              DateTime.saturday,
-                              DateTime.sunday,
-                            ],
-                          ),
-                          viewNavigationMode: ViewNavigationMode.none,
-                          headerHeight: 0,
-                          viewHeaderHeight: 0,
-                          appointmentBuilder:
-                              (context, calendarAppointmentDetails) {
-                                final appointment =
-                                    calendarAppointmentDetails
-                                            .appointments
-                                            .first
-                                        as Appointment;
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    color: appointment.color,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  padding: const EdgeInsets.all(4),
-                                  child: Text(
-                                    appointment.subject,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 3,
-                                  ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final availableHeight = constraints.maxHeight;
+                          const double startHour = 8;
+                          const double endHour = 24;
+                          // The calendar displays time slots for each hour.
+                          final double numberOfHours = endHour - startHour;
+
+                          // Calculate the height for each time slot to fill the available space.
+                          // We subtract a small amount (e.g., 1) to account for borders/dividers
+                          // to prevent the calendar from becoming scrollable due to a single pixel overflow.
+                          final double calculatedIntervalHeight =
+                              (availableHeight - 1) / numberOfHours;
+
+                          // Ensure the height is at least 40, as requested.
+                          final double finalIntervalHeight =
+                              calculatedIntervalHeight > 40
+                              ? calculatedIntervalHeight
+                              : 40;
+
+                          return Listener(
+                            onPointerMove: (PointerMoveEvent event) {
+                              // Check if the primary movement is horizontal
+                              if (event.delta.dx.abs() > event.delta.dy.abs()) {
+                                // Manually adjust the PageView's position
+                                _pageController.position.jumpTo(
+                                  _pageController.position.pixels -
+                                      event.delta.dx,
                                 );
-                              },
-                        ),
+                              }
+                            },
+                            child: SfCalendar(
+                              view: CalendarView.day,
+                              dataSource: dailyDataSource,
+                              initialDisplayDate: day,
+                              allowDragAndDrop: false,
+                              minDate: _startOfWeek,
+                              maxDate: _endOfWeek,
+                              firstDayOfWeek: 1, // Monday
+                              timeSlotViewSettings: TimeSlotViewSettings(
+                                startHour: startHour,
+                                endHour: endHour,
+                                timeIntervalHeight: finalIntervalHeight,
+                                nonWorkingDays: const <int>[],
+                              ),
+                              viewNavigationMode: ViewNavigationMode.none,
+                              headerHeight: 0,
+                              viewHeaderHeight: 0,
+                              appointmentBuilder:
+                                  (context, calendarAppointmentDetails) {
+                                    final appointment =
+                                        calendarAppointmentDetails
+                                                .appointments
+                                                .first
+                                            as Appointment;
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        color: appointment.color,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      padding: const EdgeInsets.all(4),
+                                      child: SingleChildScrollView(
+                                        scrollDirection: Axis.vertical,
+                                        child: Text(
+                                          appointment.subject,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],

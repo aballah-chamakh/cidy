@@ -1,3 +1,5 @@
+import datetime
+from tracemalloc import start
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -28,11 +30,23 @@ def get_week_schedule(request):
     groups = Group.objects.filter(teacher=teacher)
     
     schedule_data = []
+    today = datetime.date.today()
     for group in groups:
         teacher_subject = group.teacher_subject
         level = teacher_subject.level
         section = teacher_subject.section
         subject = teacher_subject.subject
+        temporary_schedule = False 
+        week_day = group.week_day
+        start_time = group.start_time
+        end_time = group.end_time
+
+        if group.clear_temporary_schedule_at and today < group.clear_temporary_schedule_at : 
+            temporary_schedule = True
+            week_day = group.temporary_week_day
+            start_time = group.temporary_start_time
+            end_time = group.temporary_end_time
+
         schedule_data.append({
             'id': group.id,
             'name': group.name,
@@ -48,10 +62,10 @@ def get_week_schedule(request):
                 'id': section.id,
                 'name': section.name
             } if section else None,
-            'week_day': group.week_day,
-            'start_time': group.start_time.strftime("%H:%M"),
-            'end_time': group.end_time.strftime("%H:%M"),
-            'students_count': group.students.count()
+            'temporary_schedule' : temporary_schedule,
+            'week_day': week_day,
+            'start_time': start_time.strftime("%H:%M"),
+            'end_time': end_time.strftime("%H:%M"),
         })
     print(schedule_data)
     return Response({'groups': schedule_data})

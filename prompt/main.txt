@@ -227,9 +227,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - Dynamics :
                             - clicking on the "Create a group"  : 
                               - sends a request to the server that checks if the teacher has the ability to create a new group throught ensuring that 
-                                the teacher has at least one of the following in the prices screen (see below) : 
-                                    - a level that doesn't have sections according to the tunisian education system and he has at least one subject.
-                                    - a level with at least one section and that section with at least one subject.
+                                the teacher has at least one teacher subject 
 
                                 - if the teacher doesn't have the ability to create a new group, opens up a popup that inform the teacher about that and about the minimum requirements to create a new group
                                 - if the teacher has the ability to create a new group, opens up a popup form which the same as the one open when clicking on the "Add" button in the groups screen when the teacher has groups (see below)

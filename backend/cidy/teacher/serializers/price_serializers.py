@@ -51,10 +51,9 @@ class TeacherSubjectSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class TeacherLevelsSectionsSubjectsHierarchySerializer(serializers.Serializer):
+class TeacherLevelsSectionsSubjectsHierarchySerializer:
 
-
-    def to_representation(self, queryset):
+    def __init__(self, queryset):
         levels = {}
 
         for ts in queryset:
@@ -90,7 +89,7 @@ class TeacherLevelsSectionsSubjectsHierarchySerializer(serializers.Serializer):
                     "price": ts.price_per_class
                 })
 
-        return levels
+        self.data = levels
 
 class StudentListToReplaceBySerializer(serializers.ModelSerializer):
     
