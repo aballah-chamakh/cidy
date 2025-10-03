@@ -131,7 +131,7 @@ def get_dashboard_data(request):
         dashboard['levels'][teacher_subject_level] = dashboard['levels'].get(teacher_subject_level, {
             'total_paid_amount': 0,
             'total_unpaid_amount': 0,
-            'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level,**({"date__lte": end_date} if end_date else {} )).distinct('student').count(),
+            'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level__name=teacher_subject.level.name,**({"date__lte": end_date} if end_date else {} )).distinct('student').count(),
         })
         dashboard['levels'][teacher_subject_level]['total_paid_amount'] += paid_amount
         dashboard['levels'][teacher_subject_level]['total_unpaid_amount'] += unpaid_amount
@@ -142,7 +142,7 @@ def get_dashboard_data(request):
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section] = dashboard['levels'][teacher_subject_level]['sections'].get(teacher_subject_section, {
                 'total_paid_amount': 0,
                 'total_unpaid_amount': 0,
-                'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level, group__teacher_subject__level__section=teacher_subject.section,**({"date__lte": end_date} if end_date else {} )).distinct('student').count()
+                'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level,**({"date__lte": end_date} if end_date else {} )).distinct('student').count()
             })
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_paid_amount'] += paid_amount
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_unpaid_amount'] += unpaid_amount

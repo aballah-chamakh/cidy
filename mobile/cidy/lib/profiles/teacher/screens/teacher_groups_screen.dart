@@ -33,7 +33,6 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
   Future<void> _fetchGroups({
     String? name,
     int? levelId,
-    int? sectionId,
     int? subjectId,
     String? day,
     String? timeRange,
@@ -56,7 +55,6 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       final Map<String, String> queryParams = {};
       if (name != null && name.isNotEmpty) queryParams['name'] = name;
       if (levelId != null) queryParams['level'] = levelId.toString();
-      if (sectionId != null) queryParams['section'] = sectionId.toString();
       if (subjectId != null) queryParams['subject'] = subjectId.toString();
       if (day != null) queryParams['day'] = day;
       if (timeRange != null) queryParams['time_range'] = timeRange;
@@ -191,7 +189,6 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
               _fetchGroups(
                 name: _searchController.text,
                 levelId: filters['level'],
-                sectionId: filters['section'],
                 subjectId: filters['subject'],
                 day: filters['day'],
                 timeRange: filters['time_range'],
@@ -266,7 +263,6 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 _fetchGroups(
                   name: value,
                   levelId: _currentFilters['level'],
-                  sectionId: _currentFilters['section'],
                   subjectId: _currentFilters['subject'],
                   day: _currentFilters['day'],
                   timeRange: _currentFilters['time_range'],
@@ -427,12 +423,9 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(
-                '${group['level'] ?? 'N/A'} ${group['section'] != null ? ' - ${group['section']}' : ''}',
-                style: TextStyle(fontSize: 15),
-              ),
+              Text(group['level'], style: TextStyle(fontSize: 15)),
               const SizedBox(height: 4),
-              Text(group['subject'] ?? 'N/A', style: TextStyle(fontSize: 15)),
+              Text(group['subject'], style: TextStyle(fontSize: 15)),
               const Divider(height: 24),
               Row(
                 children: [

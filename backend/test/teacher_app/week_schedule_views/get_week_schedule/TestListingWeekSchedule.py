@@ -6,6 +6,9 @@ class TestListingWeekSchedule:
     WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
     def set_up(self):
+        User.objects.all().delete()
+        User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234")
+
         # Create a teacher 
         user  = User.objects.create_user("teacher10@gmail.com", "44558866", "iloveuu")
         teacher = Teacher.objects.create(user=user,fullname="teacher10",gender="M")

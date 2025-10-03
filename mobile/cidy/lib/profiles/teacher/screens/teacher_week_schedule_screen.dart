@@ -106,15 +106,12 @@ class _TeacherWeekScheduleScreenState extends State<TeacherWeekScheduleScreen> {
             endTime.minute,
           );
 
-          String section = groupData['section'] != null
-              ? ' - ${groupData['section']['name']}'
-              : '';
-          String levelName = groupData['level']['name'] ?? 'N/A';
-          String subjectName = groupData['subject']['name'] ?? 'N/A';
-          String groupName = groupData['name'] ?? 'No Name';
+          String levelName = groupData['level'];
+          String subjectName = groupData['subject'];
+          String groupName = groupData['name'];
           bool temporarySchedule = groupData['temporary_schedule'] ?? false;
 
-          String subject = '$levelName$section\n';
+          String subject = '$levelName\n';
           subject += '$subjectName\n';
           subject += '$groupName';
           if (temporarySchedule) {

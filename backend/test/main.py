@@ -24,9 +24,10 @@ def test_runner(test_class):
     test.set_up()
     test.test()
 
-test_runner(TestDateRangeFilter)
-quit()
+
 test_runner(TestListingWeekSchedule)
+quit()
+test_runner(TestDateRangeFilter)
 test_runner(TestNoClasses)
 test_runner(TestNoTeacherSubjects)
 test_runner(TestNoGroupEnrollments)
