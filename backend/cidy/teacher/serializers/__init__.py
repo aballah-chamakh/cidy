@@ -1,7 +1,7 @@
 from .price_serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
                                 TeacherSubjectSerializer,
                                 StudentListToReplaceBySerializer,
-                                LevelSerializer, SectionSerializer,
+                                LevelSerializer,
                                 SubjectSerializer)
 from .group_serializers import (GroupListSerializer,GroupCreateUpdateSerializer,
                                 GroupDetailsSerializer,GroupStudentListSerializer,

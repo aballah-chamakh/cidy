@@ -1,12 +1,11 @@
 from django.contrib import admin
-from .models import (Level,Section,Subject,Teacher,
+from .models import (Level,Subject,Teacher,
                      TeacherSubject,TeacherEnrollment,Group,
                      GroupEnrollment,Class,TeacherUnreadNotification,
                      TeacherNotification)
 # Register your models here.
 
 admin.site.register(Level)
-admin.site.register(Section)
 admin.site.register(Subject)
 admin.site.register(Teacher)
 admin.site.register(TeacherSubject)

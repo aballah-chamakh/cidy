@@ -5,7 +5,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import UserRegistrationSerializer
 from rest_framework_simplejwt.tokens import AccessToken
 from teacher.models import Level
-from .serializers import LevelsAndSectionsSerializer, MyAccessTokenSerializer
+from .serializers import LevelsSerializer, MyAccessTokenSerializer
 
 
 @api_view(['POST'])
@@ -63,9 +63,9 @@ def register_user(request):
 
 
 @api_view(['GET'])
-def get_levels_and_sections(request):
+def get_levels(request):
     levels = Level.objects.all()
-    serializer = LevelsAndSectionsSerializer(levels, many=True)
+    serializer = LevelsSerializer(levels, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 

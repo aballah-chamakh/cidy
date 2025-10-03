@@ -51,7 +51,7 @@ def get_groups(request):
         })
     
     # Apply search filter
-    search_term = request.GET.get('search', '')
+    search_term = request.GET.get('name', '')
     if search_term:
         groups = groups.filter(name__icontains=search_term)
     

@@ -9,7 +9,6 @@ class TestNoTeacherSubjects:
     # 1 teacher
     def set_up(self):
         User.objects.all().delete()
-        Level.objects.all().delete()
         User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234")
         # Create a teacher 
         user  = User.objects.create_user("teacher10@gmail.com", "44558866", "iloveuu")

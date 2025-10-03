@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from ..models import TeacherSubject, Level, Section, Subject, Group, GroupEnrollment
+from ..models import TeacherSubject, Level, Subject, Group, GroupEnrollment
 from ..serializers import TeacherLevelsSectionsSubjectsHierarchySerializer,TeacherSubjectSerializer
 from student.models import StudentNotification, StudentUnreadNotification
 from parent.models import ParentNotification, ParentUnreadNotification,Son 

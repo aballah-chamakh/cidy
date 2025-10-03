@@ -1,15 +1,10 @@
 from rest_framework import serializers
-from ..models import Level, Section, Subject, TeacherSubject
+from ..models import Level, Subject, TeacherSubject
 from student.models import Student
 
 class LevelSerializer(serializers.ModelSerializer):
     class Meta:
         model = Level
-        fields = ['id', 'name']
-
-class SectionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Section
         fields = ['id', 'name']
 
 class SubjectSerializer(serializers.ModelSerializer):

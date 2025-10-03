@@ -1,6 +1,6 @@
 import datetime
 from account.models import User 
-from teacher.models import Teacher, TeacherSubject,Level, Section, Subject,Group, GroupEnrollment, Class
+from teacher.models import Teacher, TeacherSubject,Level, Subject,Group, GroupEnrollment, Class
 from student.models import Student
 from teacher_app.TeacherClient import TeacherClient
 
@@ -24,7 +24,6 @@ class TestDateRangeFilter:
 
     def set_up(self):
         User.objects.all().delete()
-        Level.objects.all().delete()
         User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234")
 
         # Create a teacher 
@@ -32,27 +31,26 @@ class TestDateRangeFilter:
         teacher = Teacher.objects.create(user=user,fullname="teacher10",gender="M")
 
         # Add the levels, sections and subjects
-        bac_level = Level.objects.create(name="Quatrième année secondaire")
-        tech_section = Section.objects.create(name="Technique")
-        info_section = Section.objects.create(name="Informatique")
+        bac_tech = Level.objects.get(name="Quatrième année secondaire",section="Technique")
+        bac_info = Level.objects.get(name="Quatrième année secondaire",section="Informatique")
 
-        basic_8th = Level.objects.create(name="Huitième année de base")
-        basic_7th = Level.objects.create(name="Septième année de base")
+        basic_8th = Level.objects.get(name="Huitième année de base")
+        basic_7th = Level.objects.get(name="Septième année de base")
 
-        primary_1st = Level.objects.create(name="Première année primaire")
-        primary_6th = Level.objects.create(name="Sixième année primaire")
+        primary_1st = Level.objects.get(name="Première année primaire")
+        primary_6th = Level.objects.get(name="Sixième année primaire")
 
-        math_subject = Subject.objects.create(name="Mathématiques")
-        physics_subject = Subject.objects.create(name="Physique")
-        science_subject = Subject.objects.create(name="Éveil scientifique")
+        math_subject = Subject.objects.get(name="Mathématiques")
+        physics_subject = Subject.objects.get(name="Physique")
+        science_subject = Subject.objects.get(name="Éveil scientifique")
 
         # add the teacher subjects 
         teacher_subjects = []
         # bac technique  : math, physics
-        teacher_subjects.append(TeacherSubject.objects.create(teacher=teacher,level=bac_level,section=tech_section,subject=math_subject,price_per_class=20))
-        teacher_subjects.append(TeacherSubject.objects.create(teacher=teacher,level=bac_level,section=tech_section,subject=physics_subject,price_per_class=25))
+        teacher_subjects.append(TeacherSubject.objects.create(teacher=teacher,level=bac_tech,subject=math_subject,price_per_class=20))
+        teacher_subjects.append(TeacherSubject.objects.create(teacher=teacher,level=bac_tech,subject=physics_subject,price_per_class=25))
         # bac info : math
-        teacher_subjects.append(TeacherSubject.objects.create(teacher=teacher,level=bac_level,section=info_section,subject=math_subject,price_per_class=20))
+        teacher_subjects.append(TeacherSubject.objects.create(teacher=teacher,level=bac_info,subject=math_subject,price_per_class=20))
 
         # basic 8th : math, physics
         teacher_subjects.append(TeacherSubject.objects.create(teacher=teacher,level=basic_8th,subject=math_subject,price_per_class=15))
@@ -72,12 +70,10 @@ class TestDateRangeFilter:
         # add related records to each teacher subject
         for teacher_subject in teacher_subjects:
 
-            # create 6 student for each unique combination of level and section 
+            # create 6 student for each level  
             ## if they don't exit
-            if teacher_subject.section:
-                students = Student.objects.filter(level=teacher_subject.level,section=teacher_subject.section)
-            else:
-                students = Student.objects.filter(level=teacher_subject.level,section__isnull=True)
+
+            students = Student.objects.filter(level=teacher_subject.level)
             
             if not students.exists():
                 students = []
@@ -88,8 +84,7 @@ class TestDateRangeFilter:
                         fullname = f"student{student_cnt}",
                         phone_number=phone_number,
                         gender="M",
-                        level=teacher_subject.level,
-                        section=teacher_subject.section
+                        level=teacher_subject.level
                     )
                     student_cnt += 1
                     students.append(student)
@@ -102,7 +97,7 @@ class TestDateRangeFilter:
                                     week_day="Saturday",
                                     start_time="18:00",
                                     end_time="20:00",
-                                    name=f"{teacher_subject.level.name} {teacher_subject.section.name if teacher_subject.section else ''} {teacher_subject.subject.name} ({group_name})")
+                                    name=f"Groupe {group_name}")
                 
                 # enroll the 6 students in this group in different date ranges
                 for i, student in enumerate(students):

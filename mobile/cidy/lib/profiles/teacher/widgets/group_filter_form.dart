@@ -90,15 +90,15 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       // Fetch in parallel
       final responses = await Future.wait([
         http.get(
-          Uri.parse('${Config.backendUrl}/api/common/teacher-levels/'),
+          Uri.parse('${Config.backendUrl}/api/teacher/levels/'),
           headers: headers,
         ),
         http.get(
-          Uri.parse('${Config.backendUrl}/api/common/teacher-sections/'),
+          Uri.parse('${Config.backendUrl}/api/teacher/sections/'),
           headers: headers,
         ),
         http.get(
-          Uri.parse('${Config.backendUrl}/api/common/teacher-subjects/'),
+          Uri.parse('${Config.backendUrl}/api/teacher/subjects/'),
           headers: headers,
         ),
       ]);
@@ -248,8 +248,10 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       items: [
         const DropdownMenuItem<int>(value: null, child: Text('Any Level')),
         ..._levels.map(
-          (level) =>
-              DropdownMenuItem<int>(value: level.id, child: Text(level.name)),
+          (level) => DropdownMenuItem<int>(
+            value: level['id'],
+            child: Text(level['name']),
+          ),
         ),
       ],
       onChanged: (value) {
@@ -265,7 +267,7 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget _buildSectionDropdown() {
     final filteredSections = _selectedLevelId == null
         ? []
-        : _sections.where((s) => s.level == _selectedLevelId).toList();
+        : _sections.where((s) => s['level'] == _selectedLevelId).toList();
     final bool isEnabled = filteredSections.isNotEmpty;
 
     return DropdownButtonFormField<int>(
@@ -280,8 +282,8 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
         const DropdownMenuItem<int>(value: null, child: Text('Any Section')),
         ...filteredSections.map(
           (section) => DropdownMenuItem<int>(
-            value: section.id,
-            child: Text(section.name),
+            value: section['id'],
+            child: Text(section['name']),
           ),
         ),
       ],

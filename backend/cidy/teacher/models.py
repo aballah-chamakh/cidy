@@ -6,22 +6,15 @@ from django.dispatch import receiver
 
 class Level(models.Model):
     name = models.CharField(max_length=100)
+    section = models.CharField(max_length=100, null=True, blank=True)
+    subjects = models.ManyToManyField('Subject', related_name='levels', blank=True)
 
     def __str__(self):
         return self.name
 
-class Section(models.Model):
-    image = models.ImageField(null=True, blank=True)
-    name = models.CharField(max_length=100)
-    #level = models.ForeignKey(Level, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.name
 
 class Subject(models.Model):
     name = models.CharField(max_length=100)
-    #level = models.ForeignKey(Level, on_delete=models.CASCADE,null=True, blank=True)
-    #section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -40,7 +33,6 @@ class Teacher(models.Model):
 class TeacherSubject(models.Model): 
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     level = models.ForeignKey(Level, on_delete=models.CASCADE)
-    section = models.ForeignKey(Section, on_delete=models.CASCADE,null=True,blank=True)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     price_per_class = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 

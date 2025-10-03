@@ -1,6 +1,6 @@
 from django.db import models
 from account.models import User
-from teacher.models import Level, Section
+from teacher.models import Level
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -11,7 +11,6 @@ class Student(models.Model):
     phone_number = models.CharField(max_length=8,default='00000000')
     gender = models.CharField(max_length=10, choices=(('M', 'Male'), ('F', 'Female')), default='M')
     level = models.ForeignKey(Level, on_delete=models.CASCADE) 
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, null=True, blank=True)
     join_date = models.DateField(auto_now_add=True)
 
     def __str__(self):

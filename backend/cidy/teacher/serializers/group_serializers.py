@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.db.models import Sum, Q
 from ..models import Group
 from student.models import Student
-from .price_serializers import LevelSerializer, SectionSerializer, SubjectSerializer
+from .price_serializers import LevelSerializer, SubjectSerializer
 from django.core.paginator import Paginator
 
 
@@ -30,7 +30,6 @@ class GroupStudentListSerializer(serializers.Serializer):
 
 class GroupDetailsSerializer(serializers.ModelSerializer):
     level = LevelSerializer(source='teacher_subject.level', read_only=True)
-    section = SectionSerializer(source='teacher_subject.section', read_only=True)
     subject = SubjectSerializer(source='teacher_subject.subject', read_only=True)    
     start_time = serializers.TimeField(
         format="%H:%M", 

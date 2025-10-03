@@ -34,7 +34,6 @@ def get_week_schedule(request):
     for group in groups:
         teacher_subject = group.teacher_subject
         level = teacher_subject.level
-        section = teacher_subject.section
         subject = teacher_subject.subject
         temporary_schedule = False 
         week_day = group.week_day
@@ -50,18 +49,8 @@ def get_week_schedule(request):
         schedule_data.append({
             'id': group.id,
             'name': group.name,
-            'subject': {
-                'id': subject.id,
-                'name': subject.name
-            },
-            'level': {
-                'id': level.id,
-                'name': level.name
-            },
-            'section': {
-                'id': section.id,
-                'name': section.name
-            } if section else None,
+            'level': level.name+(f" {level.section}" if level.section else ""),
+            'subject':  subject.name,
             'temporary_schedule' : temporary_schedule,
             'week_day': week_day,
             'start_time': start_time.strftime("%H:%M"),

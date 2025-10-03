@@ -1,30 +1,17 @@
 from rest_framework import serializers
-from teacher.models import Level,Section
+from teacher.models import Level
 from teacher.serializers import SubjectSerializer
 from teacher.models import Teacher, TeacherSubject
 
 
-class SectionSerializer(serializers.ModelSerializer):
-    subjects = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Section
-        fields = ['id', 'name', 'subjects']
-
-    def get_subjects(self, section):
-        subjects = section.subject_set.all()
-        return SubjectSerializer(subjects, many=True).data
 
 class TesLevelsSectionsSubjectsSerializer(serializers.ModelSerializer):
-    sections = serializers.SerializerMethodField()
-
+    subjects = SubjectSerializer(many=True)
     class Meta:
         model = Level
-        fields = ['id', 'name', 'sections']
+        fields = ['id', 'name', 'section','subjects']
 
-    def get_sections(self, level):
-        sections = level.section_set.all()
-        return SectionSerializer(sections, many=True).data
+
 
 
 

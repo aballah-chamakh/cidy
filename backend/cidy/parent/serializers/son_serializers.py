@@ -1,7 +1,7 @@
 from datetime import datetime 
 from rest_framework import serializers
 from teacher.models import GroupEnrollment,Level
-from teacher.serializers import TeacherClassListSerializer,SectionSerializer
+from teacher.serializers import TeacherClassListSerializer
 from ..models import Son
 
 class SonListSerializer(serializers.ModelSerializer):
@@ -112,15 +112,10 @@ class SonSubjectDetailSerializer(serializers.ModelSerializer):
 
 
 class TesLevelsSectionsSerializer(serializers.ModelSerializer):
-    sections = serializers.SerializerMethodField()
 
     class Meta:
         model = Level
-        fields = ['id', 'name', 'sections']
-
-    def get_sections(self, level):
-        sections = level.section_set.all()
-        return SectionSerializer(sections, many=True).data
+        fields = ['id', 'name', 'section']
     
 
 class SonCreateEditSerializer(serializers.ModelSerializer):

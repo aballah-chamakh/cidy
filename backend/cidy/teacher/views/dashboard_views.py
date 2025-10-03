@@ -121,7 +121,7 @@ def get_dashboard_data(request):
             unpaid_amount += unpaid_classes_of_teacher_subject.count() * class_price
 
         teacher_subject_level = teacher_subject.level.name
-        teacher_subject_section = teacher_subject.section.name if teacher_subject.section else None    
+        teacher_subject_section = teacher_subject.level.section if teacher_subject.level.section else None
         teacher_subject_subject = teacher_subject.subject.name 
 
         # add to the dashboard the the kpis of this teacher subject
@@ -142,7 +142,7 @@ def get_dashboard_data(request):
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section] = dashboard['levels'][teacher_subject_level]['sections'].get(teacher_subject_section, {
                 'total_paid_amount': 0,
                 'total_unpaid_amount': 0,
-                'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level, group__teacher_subject__section=teacher_subject.section,**({"date__lte": end_date} if end_date else {} )).distinct('student').count()
+                'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level, group__teacher_subject__level__section=teacher_subject.section,**({"date__lte": end_date} if end_date else {} )).distinct('student').count()
             })
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_paid_amount'] += paid_amount
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_unpaid_amount'] += unpaid_amount

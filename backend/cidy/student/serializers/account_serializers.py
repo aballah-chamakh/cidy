@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from teacher.serializers import LevelSerializer, SectionSerializer
+from teacher.serializers import LevelSerializer
 from teacher.models import Level 
 from ..models import Student
 
@@ -11,9 +11,6 @@ class LevelsAndSectionsSerializer(serializers.ModelSerializer):
         model = Level
         fields = ['id', 'name', 'sections']
 
-    def get_sections(self, level):
-        sections = level.section_set.all()
-        return SectionSerializer(sections, many=True).data
 
 
 class StudentAccountInfoSerializer(serializers.ModelSerializer):
@@ -22,13 +19,15 @@ class StudentAccountInfoSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
     phone_number = serializers.CharField(source='user.phone_number', read_only=True)
     level = LevelSerializer()
-    section = SectionSerializer()
-    levels_and_sections = LevelsAndSectionsSerializer()
+    level_options = serializers.SerializerMethodField()
     
     class Meta:
         model = Student
-        fields = ['image', 'fullname', 'email', 'phone_number', 'gender', 'level', 'section', 'levels_and_sections']
+        fields = ['image', 'fullname', 'email', 'phone_number', 'gender', 'level', 'section', 'level_options']
 
+    def get_level_options(self, student):
+        levels = Level.objects.all()
+        return LevelSerializer(levels, many=True).data
 
 class UpdateStudentAccountInfoSerializer(serializers.ModelSerializer):
     """ModelSerializer for updating student account information."""

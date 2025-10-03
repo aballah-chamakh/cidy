@@ -3,9 +3,8 @@ from .models import User
 from student.models import Student
 from teacher.models import Teacher
 from parent.models import Parent 
-from teacher.serializers import SectionSerializer
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from teacher.models import Level,Section 
+from teacher.models import Level 
 
 
 
@@ -72,8 +71,7 @@ class UserRegistrationSerializer(serializers.Serializer):
         }
     )
 
-    level = serializers.CharField(required=False)
-    section = serializers.CharField(required=False, allow_blank=True)
+    level_id = serializers.IntegerField(required=False)
     
     password = serializers.CharField(
         min_length=8,
@@ -124,19 +122,15 @@ class UserRegistrationSerializer(serializers.Serializer):
         gender = validated_data.get('gender')
         if profile_type == 'student':
             print("create a student")
-            level = validated_data.get('level')
-            section = validated_data.get('section')
+            level = validated_data.get('level_id')
             if level : 
-                level = Level.objects.get(name=level)
-                if section : 
-                    section = Section.objects.get(name=section,level = level)
+                level = Level.objects.get(id=level)
             Student.objects.create(
                 user=user,
                 fullname=fullname,
                 gender=gender,
                 phone_number=user.phone_number,
-                level = level,
-                section = section if isinstance(section,Section) else None
+                level = level
             )
         elif profile_type == 'teacher':
             Teacher.objects.create(
@@ -152,22 +146,6 @@ class UserRegistrationSerializer(serializers.Serializer):
             )
 
         return user
-
-
-
-
-class LevelsAndSectionsSerializer(serializers.ModelSerializer):
-
-    sections = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = Level
-        fields = ['id', 'name', 'sections']
-
-    def get_sections(self, level):
-        sections = level.section_set.all()
-        return SectionSerializer(sections, many=True).data
-
 
 
 class MyAccessTokenSerializer(TokenObtainPairSerializer):
@@ -193,3 +171,9 @@ class MyAccessTokenSerializer(TokenObtainPairSerializer):
             'profile_type': profile_type
         }
         return {'access': data['access'],'user': user_data}
+    
+
+class LevelsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Level
+        fields = ['id', 'name','section']
