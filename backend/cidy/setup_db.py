@@ -465,16 +465,17 @@ levels_sections_subjects = {
         }
     }
 }
-
+order = 1 
 for level_name, level_data in levels_sections_subjects.items():
     if "sections" in level_data:
         for section_name, section_data in level_data["sections"].items():
-            level= Level.objects.create(name=level_name, section=section_name)
+            level= Level.objects.create(name=level_name, section=section_name, order=order)
             for subject_name in section_data["subjects"]:
                 subject,created = Subject.objects.get_or_create(name=subject_name)
                 level.subjects.add(subject)
     else : 
-        level = Level.objects.create(name=level_name)
+        level = Level.objects.create(name=level_name, order=order)
         for subject_name in level_data["subjects"] :
             subject,created = Subject.objects.get_or_create(name=subject_name)
             level.subjects.add(subject)
+    order += 1

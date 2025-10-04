@@ -48,10 +48,25 @@ class TeacherSubjectSerializer(serializers.ModelSerializer):
 
 class TeacherLevelsSectionsSubjectsHierarchySerializer:
 
-    def __init__(self, queryset):
+    def __init__(self, teacher_subjects_qs):
         levels = {}
+        print(teacher_subjects_qs)
+        for index, ts in enumerate(teacher_subjects_qs):
+            print(f"level : {ts.level.name}")
+            level = ts.level.name
+            section = ts.level.section  
+            levels[level] = levels.get(level, {})
+            if section : 
+                levels[level]['sections'] = levels[level].get('sections', {})
+                levels[level]['sections'][section] = levels[level]['sections'].get(section, {})
+                levels[level]['sections'][section]['subjects'] = levels[level]['sections'][section].get('subjects', [])
+                levels[level]['sections'][section]['subjects'].append(ts.subject.name)
+            else : 
+                levels[level]['subjects'] = levels[level].get('subjects', [])
+                levels[level]['subjects'].append(ts.subject.name)
+        self.data = levels
 
-        for ts in queryset:
+"""
             level_id = ts.level.id
             section_id = ts.section.id if ts.section else None
             subject_id = ts.subject.id
@@ -83,8 +98,8 @@ class TeacherLevelsSectionsSubjectsHierarchySerializer:
                     "name": ts.subject.name,
                     "price": ts.price_per_class
                 })
-
-        self.data = levels
+"""
+        
 
 class StudentListToReplaceBySerializer(serializers.ModelSerializer):
     

@@ -8,9 +8,9 @@ class Level(models.Model):
     name = models.CharField(max_length=100)
     section = models.CharField(max_length=100, null=True, blank=True)
     subjects = models.ManyToManyField('Subject', related_name='levels', blank=True)
-
+    order = models.PositiveIntegerField(default=0)
     def __str__(self):
-        return self.name
+        return self.name + (' ' + self.section if self.section else '') + f" (Order: {self.order})"
 
 
 class Subject(models.Model):
@@ -37,7 +37,7 @@ class TeacherSubject(models.Model):
     price_per_class = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
-        return f"{self.teacher.fullname} teaches {self.subject.name}"
+        return f"{self.teacher.fullname} teaches {self.level.name}{' '+self.level.section if self.level.section else ''} {self.subject.name}"
     
 
 class TeacherEnrollment(models.Model):

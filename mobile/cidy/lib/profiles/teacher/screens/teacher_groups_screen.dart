@@ -23,6 +23,33 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
   List<dynamic> _groups = [];
   String? _errorMessage;
   Map<String, dynamic> _currentFilters = {};
+  Map<String, dynamic> _filterOptions = {};
+
+  String _convertWeekDayToFrench(String englishDay) {
+    const Map<String, String> dayTranslations = {
+      'Monday': 'Lundi',
+      'Tuesday': 'Mardi',
+      'Wednesday': 'Mercredi',
+      'Thursday': 'Jeudi',
+      'Friday': 'Vendredi',
+      'Saturday': 'Samedi',
+      'Sunday': 'Dimanche',
+    };
+    return dayTranslations[englishDay] ?? englishDay;
+  }
+
+  String _convertWeekDayToEnglish(String frenchDay) {
+    const Map<String, String> dayTranslations = {
+      'Lundi': 'Monday',
+      'Mardi': 'Tuesday',
+      'Mercredi': 'Wednesday',
+      'Jeudi': 'Thursday',
+      'Vendredi': 'Friday',
+      'Samedi': 'Saturday',
+      'Dimanche': 'Sunday',
+    };
+    return dayTranslations[frenchDay] ?? frenchDay;
+  }
 
   @override
   void initState() {
@@ -32,10 +59,12 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
 
   Future<void> _fetchGroups({
     String? name,
-    int? levelId,
-    int? subjectId,
+    String? level,
+    String? section,
+    String? subject,
     String? day,
-    String? timeRange,
+    String? startTime,
+    String? endTime,
     String? sortBy,
   }) async {
     if (!mounted) return;
@@ -54,11 +83,27 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       var url = Uri.parse('${Config.backendUrl}/api/teacher/groups/');
       final Map<String, String> queryParams = {};
       if (name != null && name.isNotEmpty) queryParams['name'] = name;
-      if (levelId != null) queryParams['level'] = levelId.toString();
-      if (subjectId != null) queryParams['subject'] = subjectId.toString();
-      if (day != null) queryParams['day'] = day;
-      if (timeRange != null) queryParams['time_range'] = timeRange;
-      if (sortBy != null) queryParams['sort_by'] = sortBy;
+      if (level != null) queryParams['level'] = level;
+      if (section != null) queryParams['section'] = section;
+      if (subject != null) queryParams['subject'] = subject;
+      if (day != null) {
+        queryParams['week_day'] = _convertWeekDayToEnglish(day);
+      }
+      if (startTime != null && startTime.isNotEmpty) {
+        queryParams['start_time'] = startTime.replaceFirst(':', '_');
+      }
+      if (endTime != null && endTime.isNotEmpty) {
+        queryParams['end_time'] = endTime.replaceFirst(':', '_');
+      }
+      if (sortBy != null) {
+        const Map<String, String> sortKeyMap = {
+          'paid_desc': 'paid_amount_desc',
+          'paid_asc': 'paid_amount_asc',
+          'unpaid_desc': 'unpaid_amount_desc',
+          'unpaid_asc': 'unpaid_amount_asc',
+        };
+        queryParams['sort_by'] = sortKeyMap[sortBy] ?? sortBy;
+      }
 
       if (queryParams.isNotEmpty) {
         url = url.replace(queryParameters: queryParams);
@@ -71,10 +116,12 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final List<dynamic> groupList = data['groups'];
         if (mounted) {
           setState(() {
-            _groups = groupList;
+            _groups = data['groups'] as List<dynamic>;
+            _filterOptions =
+                data['teacher_levels_sections_subjects_hierarchy']
+                    as Map<String, dynamic>;
           });
         }
       } else {
@@ -164,6 +211,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
             onGroupCreated: () {
               _fetchGroups(); // Refresh list after creation
             },
+            filterOptions: _filterOptions,
           ),
           // Make it scrollable and constrained
           scrollable: true,
@@ -182,16 +230,19 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
           heightFactor: 0.75, // Take up 75% of the screen height
           child: GroupFilterForm(
             currentFilters: _currentFilters,
+            filterOptions: _filterOptions,
             onApplyFilter: (filters) {
               setState(() {
                 _currentFilters = filters;
               });
               _fetchGroups(
                 name: _searchController.text,
-                levelId: filters['level'],
-                subjectId: filters['subject'],
+                level: filters['level']?.toString(),
+                section: filters['section']?.toString(),
+                subject: filters['subject']?.toString(),
                 day: filters['day'],
-                timeRange: filters['time_range'],
+                startTime: filters['start_time'],
+                endTime: filters['end_time'],
                 sortBy: filters['sort_by'],
               );
               Navigator.pop(context); // Close the modal
@@ -262,10 +313,12 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
               onChanged: (value) {
                 _fetchGroups(
                   name: value,
-                  levelId: _currentFilters['level'],
-                  subjectId: _currentFilters['subject'],
+                  level: _currentFilters['level'],
+                  section: _currentFilters['section'],
+                  subject: _currentFilters['subject'],
                   day: _currentFilters['day'],
-                  timeRange: _currentFilters['time_range'],
+                  startTime: _currentFilters['start_time'],
+                  endTime: _currentFilters['end_time'],
                   sortBy: _currentFilters['sort_by'],
                 );
               },
@@ -423,9 +476,51 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(group['level'], style: TextStyle(fontSize: 15)),
+              Row(
+                children: [
+                  Icon(
+                    Icons.school,
+                    size: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${group['level']} ${group['section'] != null ? ' ${group['section']}' : ''}",
+                    style: TextStyle(fontSize: 15),
+                  ),
+                ],
+              ),
               const SizedBox(height: 4),
-              Text(group['subject'], style: TextStyle(fontSize: 15)),
+              Row(
+                children: [
+                  Icon(
+                    Icons.book,
+                    size: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(group['subject'], style: TextStyle(fontSize: 15)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.access_time,
+                    size: 16,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _convertWeekDayToFrench(group['week_day']) +
+                        " " +
+                        group['start_time'].substring(0, 5) +
+                        " - " +
+                        group['end_time'].substring(0, 5),
+                    style: TextStyle(fontSize: 15),
+                  ),
+                ],
+              ),
               const Divider(height: 24),
               Row(
                 children: [

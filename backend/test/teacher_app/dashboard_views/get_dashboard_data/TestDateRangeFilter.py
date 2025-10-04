@@ -68,7 +68,7 @@ class TestDateRangeFilter:
 
         student_cnt = 1 
         # add related records to each teacher subject
-        for teacher_subject in teacher_subjects:
+        for index, teacher_subject in enumerate(teacher_subjects, start=1):
 
             # create 6 student for each level  
             ## if they don't exit
@@ -94,10 +94,12 @@ class TestDateRangeFilter:
                 group = Group.objects.create( 
                                     teacher=teacher,
                                     teacher_subject=teacher_subject,
-                                    week_day="Saturday",
-                                    start_time="18:00",
-                                    end_time="20:00",
-                                    name=f"Groupe {group_name}")
+                                    week_day="Monday" if group_name == "A" else "Tuesday",
+                                    start_time="18:00" if group_name == "A" else "20:00",
+                                    end_time="20:00" if group_name == "A" else "22:00",
+                                    name=f"Groupe {group_name}",
+                                    total_paid= index * 100,
+                                    total_unpaid= index * 100 )
                 
                 # enroll the 6 students in this group in different date ranges
                 for i, student in enumerate(students):

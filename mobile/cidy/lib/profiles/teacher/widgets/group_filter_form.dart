@@ -1,20 +1,18 @@
-import 'dart:convert';
-import 'package:cidy/config.dart';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 
 class GroupFilterForm extends StatefulWidget {
   final void Function(Map<String, dynamic> filters) onApplyFilter;
   final VoidCallback onResetFilter;
   final Map<String, dynamic> currentFilters;
+  final Map<String, dynamic> filterOptions;
 
   const GroupFilterForm({
     super.key,
     required this.onApplyFilter,
     required this.onResetFilter,
     required this.currentFilters,
+    required this.filterOptions,
   });
 
   @override
@@ -22,130 +20,115 @@ class GroupFilterForm extends StatefulWidget {
 }
 
 class _GroupFilterFormState extends State<GroupFilterForm> {
-  bool _isLoading = true;
-  String? _errorMessage;
-
   // Data for dropdowns
-  List _levels = [];
-  List _sections = [];
-  List _subjects = [];
+  Map<String, dynamic> _levels = {};
+  Map<String, dynamic> _sections = {};
+  List<dynamic> _subjects = [];
 
   // Selected filter values
-  int? _selectedLevelId;
-  int? _selectedSectionId;
-  int? _selectedSubjectId;
+  String? _selectedLevelName;
+  String? _selectedSectionName;
+  String? _selectedSubjectName;
   String? _selectedDay;
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
   String? _sortBy;
 
-  final List<String> _weekDays = [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
+  final _startTimeController = TextEditingController();
+  final _endTimeController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
+  final List<Map<String, String>> _weekDays = [
+    {'value': 'Monday', 'name': 'Lundi'},
+    {'value': 'Tuesday', 'name': 'Mardi'},
+    {'value': 'Wednesday', 'name': 'Mercredi'},
+    {'value': 'Thursday', 'name': 'Jeudi'},
+    {'value': 'Friday', 'name': 'Vendredi'},
+    {'value': 'Saturday', 'name': 'Samedi'},
+    {'value': 'Sunday', 'name': 'Dimanche'},
   ];
 
   final Map<String, String> _sortOptions = {
-    'paid_desc': 'Paid Amount (High to Low)',
-    'paid_asc': 'Paid Amount (Low to High)',
-    'unpaid_desc': 'Unpaid Amount (High to Low)',
-    'unpaid_asc': 'Unpaid Amount (Low to High)',
+    'paid_desc': 'Montant payé (décroissant)',
+    'paid_asc': 'Montant payé (croissant)',
+    'unpaid_desc': 'Montant impayé (décroissant)',
+    'unpaid_asc': 'Montant impayé (croissant)',
   };
 
   @override
   void initState() {
     super.initState();
     _loadInitialFilters();
-    _fetchDependencies();
+    _processFilterOptions();
   }
 
-  void _loadInitialFilters() {
-    _selectedLevelId = widget.currentFilters['level'];
-    _selectedSectionId = widget.currentFilters['section'];
-    _selectedSubjectId = widget.currentFilters['subject'];
-    _selectedDay = widget.currentFilters['day'];
-    _sortBy = widget.currentFilters['sort_by'];
-    // Note: Time range parsing from string would be needed if persisted
+  @override
+  void dispose() {
+    _startTimeController.dispose();
+    _endTimeController.dispose();
+    super.dispose();
   }
 
-  Future<void> _fetchDependencies() async {
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) {
-        throw Exception('Authentication token not found.');
-      }
-      final headers = {'Authorization': 'Bearer $token'};
-
-      // Fetch in parallel
-      final responses = await Future.wait([
-        http.get(
-          Uri.parse('${Config.backendUrl}/api/teacher/levels/'),
-          headers: headers,
-        ),
-        http.get(
-          Uri.parse('${Config.backendUrl}/api/teacher/sections/'),
-          headers: headers,
-        ),
-        http.get(
-          Uri.parse('${Config.backendUrl}/api/teacher/subjects/'),
-          headers: headers,
-        ),
-      ]);
-
-      if (responses.any((res) => res.statusCode != 200)) {
-        throw Exception('Failed to load filter dependencies.');
-      }
-
-      if (mounted) {
-        setState(() {
-          final levelsData = json.decode(responses[0].body) as List;
-          _levels = levelsData;
-
-          final sectionsData = json.decode(responses[1].body) as List;
-          _sections = sectionsData;
-
-          final subjectsData = json.decode(responses[2].body) as List;
-          _subjects = subjectsData;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.toString();
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+  void _processFilterOptions() {
+    _levels = widget.filterOptions;
+    // Pre-fill sections if a level is already selected
+    if (_selectedLevelName != null && _levels.containsKey(_selectedLevelName)) {
+      _sections = _levels[_selectedLevelName]['sections'] ?? {};
+    }
+    // Pre-fill subjects if a section is already selected
+    if (_selectedSectionName != null &&
+        _sections.containsKey(_selectedSectionName)) {
+      _subjects = _sections[_selectedSectionName]['subjects'] ?? [];
     }
   }
 
+  void _loadInitialFilters() {
+    _selectedLevelName = widget.currentFilters['level'];
+    _selectedSectionName = widget.currentFilters['section'];
+    _selectedSubjectName = widget.currentFilters['subject'];
+    _selectedDay = widget.currentFilters['day'];
+    _sortBy = widget.currentFilters['sort_by'];
+
+    // Load start_time and end_time independently (each optional)
+    final String? startTimeStr = widget.currentFilters['start_time'];
+    final String? endTimeStr = widget.currentFilters['end_time'];
+    if (startTimeStr != null && startTimeStr.isNotEmpty) {
+      _startTime = _parseTime(startTimeStr);
+      _startTimeController.text = startTimeStr;
+    }
+    if (endTimeStr != null && endTimeStr.isNotEmpty) {
+      _endTime = _parseTime(endTimeStr);
+      _endTimeController.text = endTimeStr;
+    }
+  }
+
+  TimeOfDay? _parseTime(String time) {
+    final parts = time.split(':');
+    if (parts.length == 2) {
+      return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    }
+    return null;
+  }
+
   void _applyFilters() {
-    final filters = {
-      'level': _selectedLevelId,
-      'section': _selectedSectionId,
-      'subject': _selectedSubjectId,
-      'day': _selectedDay,
-      'sort_by': _sortBy,
-      'time_range': _startTime != null && _endTime != null
-          ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}-${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
-          : null,
-    };
-    widget.onApplyFilter(filters);
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+      final filters = {
+        'level': _selectedLevelName,
+        'section': _selectedSectionName,
+        'subject': _selectedSubjectName,
+        'day': _selectedDay,
+        'sort_by': _sortBy,
+        // send independent times; each can be set alone
+        'start_time': _startTime != null
+            ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}'
+            : null,
+        'end_time': _endTime != null
+            ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}'
+            : null,
+      };
+      widget.onApplyFilter(filters);
+    }
   }
 
   void _resetFilters() {
@@ -154,9 +137,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
 
   int _countActiveFilters() {
     int count = 0;
-    if (_selectedLevelId != null) count++;
-    if (_selectedSectionId != null) count++;
-    if (_selectedSubjectId != null) count++;
+    if (_selectedLevelName != null) count++;
+    if (_selectedSectionName != null) count++;
+    if (_selectedSubjectName != null) count++;
     if (_selectedDay != null) count++;
     if (_startTime != null || _endTime != null) count++;
     if (_sortBy != null) count++;
@@ -167,25 +150,20 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(child: Text(_errorMessage!))
-          : _buildForm(),
+      child: Form(key: _formKey, child: _buildForm()),
     );
   }
 
   Widget _buildForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
         // Header
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Filter',
+              'Filtre',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             IconButton(
@@ -198,9 +176,10 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
         const SizedBox(height: 16),
 
         // Form Content
-        Expanded(
+        Flexible(
           child: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildLevelDropdown(),
                 const SizedBox(height: 16),
@@ -220,58 +199,73 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
 
         // Footer
         const SizedBox(height: 16),
-        const Divider(),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TextButton(
-              onPressed: _resetFilters,
-              child: Text('Reset (${_countActiveFilters()})'),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _applyFilters,
+            child: Text('Filtrer (${_countActiveFilters()})'),
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: _resetFilters,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Theme.of(context).primaryColor,
+              side: BorderSide(color: Theme.of(context).primaryColor),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
             ),
-            ElevatedButton(
-              onPressed: _applyFilters,
-              child: const Text('Filter'),
-            ),
-          ],
+            child: const Text('Réinitialiser'),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildLevelDropdown() {
-    return DropdownButtonFormField<int>(
-      value: _selectedLevelId,
+    return DropdownButtonFormField<String>(
+      value: _selectedLevelName,
       decoration: const InputDecoration(
-        labelText: 'Level',
+        labelText: 'Niveau',
         border: OutlineInputBorder(),
       ),
       items: [
-        const DropdownMenuItem<int>(value: null, child: Text('Any Level')),
-        ..._levels.map(
-          (level) => DropdownMenuItem<int>(
-            value: level['id'],
-            child: Text(level['name']),
+        const DropdownMenuItem<String>(
+          value: null,
+          child: Text('Tous les niveaux'),
+        ),
+        ..._levels.keys.map(
+          (levelName) => DropdownMenuItem<String>(
+            value: levelName,
+            child: Text(levelName),
           ),
         ),
       ],
       onChanged: (value) {
         setState(() {
-          _selectedLevelId = value;
-          _selectedSectionId = null;
-          _selectedSubjectId = null;
+          _selectedLevelName = value;
+          _selectedSectionName = null;
+          _selectedSubjectName = null;
+          if (value != null) {
+            _sections = _levels[value]['sections'] ?? {};
+          } else {
+            _sections = {};
+          }
+          _subjects = [];
         });
       },
     );
   }
 
   Widget _buildSectionDropdown() {
-    final filteredSections = _selectedLevelId == null
-        ? []
-        : _sections.where((s) => s['level'] == _selectedLevelId).toList();
-    final bool isEnabled = filteredSections.isNotEmpty;
+    final bool isEnabled = _sections.isNotEmpty;
 
-    return DropdownButtonFormField<int>(
-      value: _selectedSectionId,
+    return DropdownButtonFormField<String>(
+      value: _selectedSectionName,
       decoration: InputDecoration(
         labelText: 'Section',
         border: const OutlineInputBorder(),
@@ -279,19 +273,27 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
         fillColor: Colors.grey[200],
       ),
       items: [
-        const DropdownMenuItem<int>(value: null, child: Text('Any Section')),
-        ...filteredSections.map(
-          (section) => DropdownMenuItem<int>(
-            value: section['id'],
-            child: Text(section['name']),
+        const DropdownMenuItem<String>(
+          value: null,
+          child: Text('Toutes les sections'),
+        ),
+        ..._sections.keys.map(
+          (sectionName) => DropdownMenuItem<String>(
+            value: sectionName,
+            child: Text(sectionName),
           ),
         ),
       ],
       onChanged: isEnabled
           ? (value) {
               setState(() {
-                _selectedSectionId = value;
-                _selectedSubjectId = null;
+                _selectedSectionName = value;
+                _selectedSubjectName = null;
+                if (value != null) {
+                  _subjects = _sections[value]['subjects'] ?? [];
+                } else {
+                  _subjects = [];
+                }
               });
             }
           : null,
@@ -299,49 +301,55 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   }
 
   Widget _buildSubjectDropdown() {
-    List filteredSubjects = [];
     bool isEnabled = false;
+    List<dynamic> currentSubjects = [];
 
-    if (_selectedLevelId != null) {
-      final levelHasSections = _sections.any(
-        (s) => s.level == _selectedLevelId,
-      );
-      if (levelHasSections) {
-        if (_selectedSectionId != null) {
-          filteredSubjects = _subjects
-              .where((s) => s.section == _selectedSectionId)
-              .toList();
-          isEnabled = filteredSubjects.isNotEmpty;
+    if (_selectedLevelName != null) {
+      final levelData = _levels[_selectedLevelName];
+      if (levelData != null) {
+        // If sections exist for the level
+        if (levelData['sections'] != null && levelData['sections'].isNotEmpty) {
+          // A section must be selected
+          if (_selectedSectionName != null) {
+            final sectionData = levelData['sections'][_selectedSectionName];
+            if (sectionData != null && sectionData['subjects'] != null) {
+              currentSubjects = sectionData['subjects'];
+              isEnabled = currentSubjects.isNotEmpty;
+            }
+          }
         }
-      } else {
-        filteredSubjects = _subjects
-            .where((s) => s.level == _selectedLevelId && s.section == null)
-            .toList();
-        isEnabled = filteredSubjects.isNotEmpty;
+        // If no sections exist, check for subjects directly under the level
+        else if (levelData['subjects'] != null) {
+          currentSubjects = levelData['subjects'];
+          isEnabled = currentSubjects.isNotEmpty;
+        }
       }
     }
 
-    return DropdownButtonFormField<int>(
-      value: _selectedSubjectId,
+    return DropdownButtonFormField<String>(
+      value: _selectedSubjectName,
       decoration: InputDecoration(
-        labelText: 'Subject',
+        labelText: 'Matière',
         border: const OutlineInputBorder(),
         filled: !isEnabled,
         fillColor: Colors.grey[200],
       ),
       items: [
-        const DropdownMenuItem<int>(value: null, child: Text('Any Subject')),
-        ...filteredSubjects.map(
-          (subject) => DropdownMenuItem<int>(
-            value: subject.id,
-            child: Text(subject.name),
+        const DropdownMenuItem<String>(
+          value: null,
+          child: Text('Toutes les matières'),
+        ),
+        ...currentSubjects.map(
+          (subjectName) => DropdownMenuItem<String>(
+            value: subjectName,
+            child: Text(subjectName),
           ),
         ),
       ],
       onChanged: isEnabled
           ? (value) {
               setState(() {
-                _selectedSubjectId = value;
+                _selectedSubjectName = value;
               });
             }
           : null,
@@ -352,83 +360,121 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
     return DropdownButtonFormField<String>(
       value: _selectedDay,
       decoration: const InputDecoration(
-        labelText: 'Week Day',
+        labelText: 'Jour de la semaine',
         border: OutlineInputBorder(),
       ),
       items: [
-        const DropdownMenuItem<String>(value: null, child: Text('Any Day')),
+        const DropdownMenuItem<String>(
+          value: null,
+          child: Text('Tous les jours'),
+        ),
         ..._weekDays.map(
-          (day) => DropdownMenuItem<String>(value: day, child: Text(day)),
+          (day) => DropdownMenuItem<String>(
+            value: day['value'],
+            child: Text(day['name']!),
+          ),
         ),
       ],
       onChanged: (value) {
         setState(() {
           _selectedDay = value;
-          if (value == null) {
-            _startTime = null;
-            _endTime = null;
-          }
         });
       },
     );
   }
 
   Widget _buildTimeRangeSelector() {
-    final bool isEnabled = _selectedDay != null;
+    final bool isEnabled =
+        true; // Always enable time filters, even for 'Tous les jours'
     return Row(
       children: [
         Expanded(
-          child: InkWell(
-            onTap: !isEnabled
-                ? null
-                : () async {
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: _startTime ?? TimeOfDay.now(),
-                    );
-                    if (time != null) setState(() => _startTime = time);
-                  },
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: 'Start Time',
-                border: const OutlineInputBorder(),
-                filled: !isEnabled,
-                fillColor: Colors.grey[200],
-              ),
-              child: Text(_startTime?.format(context) ?? 'Not set'),
+          child: TextFormField(
+            controller: _startTimeController,
+            decoration: InputDecoration(
+              labelText: 'Heure de début',
+              border: const OutlineInputBorder(),
+              filled: !isEnabled,
+              fillColor: Colors.grey[200],
+              hintText: 'HH:MM',
             ),
+            enabled: isEnabled,
+            keyboardType: TextInputType.datetime,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+              _TimeTextInputFormatter(),
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) return null;
+              final time = _parseTime(value);
+              if (time == null) return 'Format invalide';
+              if (time.hour < 8) return 'Min 08:00';
+              if (_endTime != null &&
+                  (time.hour > _endTime!.hour ||
+                      (time.hour == _endTime!.hour &&
+                          time.minute > _endTime!.minute))) {
+                return 'Début > Fin';
+              }
+              return null;
+            },
+            onSaved: (value) {
+              if (value != null && value.isNotEmpty) {
+                _startTime = _parseTime(value);
+              } else {
+                _startTime = null;
+              }
+            },
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: InkWell(
-            onTap: !isEnabled
-                ? null
-                : () async {
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: _endTime ?? TimeOfDay.now(),
-                    );
-                    if (time != null) setState(() => _endTime = time);
-                  },
-            child: InputDecorator(
-              decoration: InputDecoration(
-                labelText: 'End Time',
-                border: const OutlineInputBorder(),
-                filled: !isEnabled,
-                fillColor: Colors.grey[200],
-              ),
-              child: Text(_endTime?.format(context) ?? 'Not set'),
+          child: TextFormField(
+            controller: _endTimeController,
+            decoration: InputDecoration(
+              labelText: 'Heure de fin',
+              border: const OutlineInputBorder(),
+              filled: !isEnabled,
+              fillColor: Colors.grey[200],
+              hintText: 'HH:MM',
             ),
+            enabled: isEnabled,
+            keyboardType: TextInputType.datetime,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+              _TimeTextInputFormatter(),
+            ],
+            validator: (value) {
+              if (value == null || value.isEmpty) return null;
+              final time = _parseTime(value);
+              if (time == null) return 'Format invalide';
+              if (time.hour == 0 && time.minute > 0) return 'Max 00:00';
+              if (_startTime != null &&
+                  (time.hour < _startTime!.hour ||
+                      (time.hour == _startTime!.hour &&
+                          time.minute < _startTime!.minute))) {
+                return 'Fin < Début';
+              }
+              return null;
+            },
+            onSaved: (value) {
+              if (value != null && value.isNotEmpty) {
+                _endTime = _parseTime(value);
+              } else {
+                _endTime = null;
+              }
+            },
           ),
         ),
-        if (_startTime != null || _endTime != null)
+        if (_startTimeController.text.isNotEmpty ||
+            _endTimeController.text.isNotEmpty)
           IconButton(
             icon: const Icon(Icons.clear),
             onPressed: () {
               setState(() {
                 _startTime = null;
                 _endTime = null;
+                _startTimeController.clear();
+                _endTimeController.clear();
               });
             },
           ),
@@ -440,11 +486,11 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
     return DropdownButtonFormField<String>(
       value: _sortBy,
       decoration: const InputDecoration(
-        labelText: 'Sort By',
+        labelText: 'Trier par',
         border: OutlineInputBorder(),
       ),
       items: [
-        const DropdownMenuItem<String>(value: null, child: Text('Default')),
+        const DropdownMenuItem<String>(value: null, child: Text('Défaut')),
         ..._sortOptions.entries.map(
           (entry) => DropdownMenuItem<String>(
             value: entry.key,
@@ -457,6 +503,43 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
           _sortBy = value;
         });
       },
+    );
+  }
+}
+
+class _TimeTextInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final newText = newValue.text;
+    if (newText.length > 5) {
+      return oldValue;
+    }
+
+    String text = newText.replaceAll(':', '');
+    if (text.length > 2) {
+      text = '${text.substring(0, 2)}:${text.substring(2)}';
+    }
+
+    // Validate hour and minute
+    if (text.contains(':')) {
+      final parts = text.split(':');
+      final hour = int.tryParse(parts[0]);
+      final minute = int.tryParse(parts[1]);
+
+      if (hour != null && hour > 23) {
+        return oldValue;
+      }
+      if (minute != null && minute > 59) {
+        return oldValue;
+      }
+    }
+
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

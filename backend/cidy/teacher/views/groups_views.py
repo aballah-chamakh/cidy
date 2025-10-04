@@ -56,20 +56,20 @@ def get_groups(request):
         groups = groups.filter(name__icontains=search_term)
     
     # Apply level filter
-    level_id = request.GET.get('level')
-    if level_id and level_id.isdigit():
-        groups = groups.filter(level__id=int(level_id))
+    level = request.GET.get('level')
+    if level :
+        groups = groups.filter(teacher_subject__level__name=level)
     
     # Apply section filter
-    section_id = request.GET.get('section')
-    if section_id and section_id.isdigit():
-        groups = groups.filter(section__id=int(section_id))
+    section = request.GET.get('section')
+    if section :
+        groups = groups.filter(teacher_subject__level__section=section)
     
     # Apply subject filter
-    subject_id = request.GET.get('subject')
-    if subject_id and subject_id.isdigit():
-        groups = groups.filter(subject__id=int(subject_id))
-    
+    subject = request.GET.get('subject')
+    if subject:
+        groups = groups.filter(teacher_subject__subject__name=subject)
+
     # Apply week day filter
     week_day = request.GET.get('week_day')
     if week_day:
@@ -77,8 +77,9 @@ def get_groups(request):
     
     # Apply time range filter
     start_time = request.GET.get('start_time')
-
+    print(f"start_time : {start_time}")
     if start_time :
+        start_time = start_time.replace('_',':')
         start_time = datetime.strptime(start_time, "%H:%M").time()
         groups = groups.filter(
             start_time__gte=start_time
@@ -87,6 +88,7 @@ def get_groups(request):
     end_time = request.GET.get('end_time')
 
     if end_time : 
+        end_time = end_time.replace('_',':')
         end_time = datetime.strptime(end_time, "%H:%M").time()
         groups = groups.filter(
             end_time__lte=end_time
@@ -104,6 +106,11 @@ def get_groups(request):
             groups = groups.order_by('-total_unpaid')
         elif sort_by == 'unpaid_amount_asc':
             groups = groups.order_by('total_unpaid')
+    else : 
+        # default sorting by level order descending
+        groups = groups.order_by('-teacher_subject__level__order','name')
+
+    
 
     # Pagination
     page = request.GET.get('page', 1)
@@ -115,11 +122,10 @@ def get_groups(request):
         # If page is out of range, deliver last page
         paginated_groups = paginator.page(paginator.num_pages)
         page = paginator.num_pages
-
     serializer = GroupListSerializer(paginated_groups, many=True)
 
     # get teacher levels sections subjects hierarchy to use them as options for the filters
-    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level','section','subject')
+    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level','subject').order_by('-level__order')
     teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects)
     response = {
         'has_groups': True,

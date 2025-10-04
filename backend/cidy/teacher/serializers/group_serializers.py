@@ -9,13 +9,13 @@ from django.core.paginator import Paginator
 
 class GroupListSerializer(serializers.ModelSerializer):
     level = serializers.CharField(source='teacher_subject.level.name', read_only=True)
-    section = serializers.CharField(source='teacher_subject.section.name', read_only=True)
+    section = serializers.CharField(source='teacher_subject.level.section', read_only=True)
     subject = serializers.CharField(source='teacher_subject.subject.name', read_only=True)
     class Meta:
         model = Group
         fields = [
             'id', 'name', 'level', 'section', 
-            'subject', 'total_paid', 'total_unpaid'
+            'subject','week_day', 'start_time', 'end_time','total_paid', 'total_unpaid'
         ]
 
 class GroupStudentListSerializer(serializers.Serializer):
