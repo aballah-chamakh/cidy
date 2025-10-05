@@ -7,6 +7,7 @@ import 'package:cidy/profiles/teacher/widgets/group_filter_form.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:cidy/authentication/login.dart';
 import '../widgets/teacher_layout.dart';
 
 class TeacherGroupsScreen extends StatefulWidget {
@@ -57,6 +58,12 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     _fetchGroups();
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
   Future<void> _fetchGroups({
     String? name,
     String? level,
@@ -66,6 +73,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     String? startTime,
     String? endTime,
     String? sortBy,
+    bool fromFilter = false,
   }) async {
     if (!mounted) return;
     setState(() {
@@ -77,7 +85,13 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
       if (token == null) {
-        throw Exception('Authentication token not found.');
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+        return;
       }
 
       var url = Uri.parse('${Config.backendUrl}/api/teacher/groups/');
@@ -114,6 +128,16 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         headers: {'Authorization': 'Bearer $token'},
       );
 
+      if (response.statusCode == 401) {
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+        return;
+      }
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (mounted) {
@@ -123,15 +147,16 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 data['teacher_levels_sections_subjects_hierarchy']
                     as Map<String, dynamic>;
           });
+          if (fromFilter) Navigator.of(context).pop();
         }
       } else {
-        throw Exception('Failed to load groups: ${response.reasonPhrase}');
+        if (fromFilter) Navigator.of(context).pop();
+        _showError("Erreur du serveur (500)");
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
+      if (fromFilter) Navigator.of(context).pop();
       if (mounted) {
-        setState(() {
-          _errorMessage = e.toString() + '\n' + stackTrace.toString();
-        });
+        _showError("Erreur du serveur (500)");
       }
     } finally {
       if (mounted) {
@@ -152,7 +177,13 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
       if (token == null) {
-        throw Exception('Authentication token not found.');
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+        return;
       }
 
       final url = Uri.parse(
@@ -166,6 +197,16 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         },
         body: json.encode({'group_ids': groupIds}),
       );
+
+      if (response.statusCode == 401) {
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+        return;
+      }
 
       if (response.statusCode == 204) {
         if (mounted) {
@@ -260,16 +301,15 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 startTime: filters['start_time'],
                 endTime: filters['end_time'],
                 sortBy: filters['sort_by'],
+                fromFilter: true,
               );
-              Navigator.pop(context); // Close the modal
             },
             onResetFilter: () {
               setState(() {
                 _currentFilters = {};
                 _searchController.clear();
               });
-              _fetchGroups();
-              Navigator.pop(context); // Close the modal
+              _fetchGroups(fromFilter: true);
             },
           ),
         );

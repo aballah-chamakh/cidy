@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:cidy/config.dart';
+import 'package:cidy/authentication/login.dart';
 import '../widgets/teacher_layout.dart';
 
 class TeacherDashboardScreen extends StatefulWidget {
@@ -63,12 +64,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final token = await storage.read(key: 'access_token');
     if (token == null) {
       if (mounted) {
-        setState(() {
-          if (showLoadingOverlay) {
-            _isLoading = false;
-          }
-          _isFetchingData = false;
-        });
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       }
       return;
     }

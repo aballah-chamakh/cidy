@@ -6,12 +6,13 @@ from django.db.models import Q
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework import status
 from student.models import Student, StudentNotification, StudentUnreadNotification
 from parent.models import ParentNotification,Son 
 from common.tools import increment_student_unread_notifications, increment_parent_unread_notifications
 
 from ..models import Group, TeacherSubject,GroupEnrollment,Class,TeacherEnrollment
+from django.http import HttpResponseServerError
 from ..serializers import (GroupCreateStudentSerializer,GroupStudentListSerializer,
                            GroupListSerializer, TeacherLevelsSectionsSubjectsHierarchySerializer,
                            GroupCreateUpdateSerializer,GroupDetailsSerializer,)
@@ -40,6 +41,7 @@ def can_create_group(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_groups(request):
+    return HttpResponseServerError("An unexpected error occurred.")
     """Get a filtered list of groups for the teacher"""
     teacher = request.user.teacher
     groups = Group.objects.filter(teacher=teacher)
@@ -141,14 +143,17 @@ def get_groups(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_group(request):
+    #Group.objects.all().delete()
     """Create a new group"""
     
     # Create a serializer with the request data
+    print(request.data)
     serializer = GroupCreateUpdateSerializer(data=request.data, context={'request': request})
     
     # Validate the data
     if not serializer.is_valid():
-        return Response({'error': serializer.errors}, status=400)
+        print(serializer.errors)
+        return Response(serializer.errors, status=400)
     
     # Create the group
     group = serializer.save()
@@ -156,7 +161,7 @@ def create_group(request):
     return Response({
         'success': True,
         'message': 'Group created successfully'
-    })
+    },status=status.HTTP_201_CREATED)
 
 
 @api_view(['DELETE'])

@@ -162,12 +162,20 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               'Filtre',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
             ),
             IconButton(
-              icon: const Icon(Icons.close),
+              icon: Icon(
+                Icons.close,
+                size: 30,
+                color: Theme.of(context).primaryColor,
+              ),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ],
@@ -229,9 +237,14 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget _buildLevelDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedLevelName,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Niveau',
-        border: OutlineInputBorder(),
+        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+        border: const OutlineInputBorder(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
       ),
       items: [
         const DropdownMenuItem<String>(
@@ -268,7 +281,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       value: _selectedSectionName,
       decoration: InputDecoration(
         labelText: 'Section',
+        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
         border: const OutlineInputBorder(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
         filled: !isEnabled,
         fillColor: Colors.grey[200],
       ),
@@ -330,7 +348,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       value: _selectedSubjectName,
       decoration: InputDecoration(
         labelText: 'Matière',
+        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
         border: const OutlineInputBorder(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
         filled: !isEnabled,
         fillColor: Colors.grey[200],
       ),
@@ -359,9 +382,14 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget _buildDayDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedDay,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Jour de la semaine',
-        border: OutlineInputBorder(),
+        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+        border: const OutlineInputBorder(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
       ),
       items: [
         const DropdownMenuItem<String>(
@@ -393,7 +421,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
             controller: _startTimeController,
             decoration: InputDecoration(
               labelText: 'Heure de début',
+              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               border: const OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
               filled: !isEnabled,
               fillColor: Colors.grey[200],
               hintText: 'HH:MM',
@@ -432,7 +465,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
             controller: _endTimeController,
             decoration: InputDecoration(
               labelText: 'Heure de fin',
+              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               border: const OutlineInputBorder(),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
               filled: !isEnabled,
               fillColor: Colors.grey[200],
               hintText: 'HH:MM',
@@ -485,9 +523,14 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget _buildSortByDropdown() {
     return DropdownButtonFormField<String>(
       value: _sortBy,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: 'Trier par',
-        border: OutlineInputBorder(),
+        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+        border: const OutlineInputBorder(),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderRadius: BorderRadius.circular(8.0),
+        ),
       ),
       items: [
         const DropdownMenuItem<String>(value: null, child: Text('Défaut')),

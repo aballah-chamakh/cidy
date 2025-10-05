@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
+import 'package:cidy/authentication/login.dart';
 
 class AddGroupForm extends StatefulWidget {
   // Return the created group's id so the caller can navigate to its details
@@ -29,6 +30,10 @@ class _AddGroupFormState extends State<AddGroupForm> {
   final _startTimeController = TextEditingController();
   final _endTimeController = TextEditingController();
   bool _isCreating = false;
+
+  // Field-specific error messages
+  String? _nameError;
+  String? _timeError;
 
   // Options derived from filterOptions hierarchy
   Map<String, dynamic> _levels = {}; // levelName -> { sections, subjects? }
@@ -78,20 +83,6 @@ class _AddGroupFormState extends State<AddGroupForm> {
   Future<void> _createGroup() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Additional frontend validations
-    final scheduleError = _validateTimeRange();
-    if (scheduleError != null) {
-      _showError(scheduleError);
-      return;
-    }
-
-    // Validate against existing groups (duplicates and overlap)
-    final preCheckError = await _checkConflicts();
-    if (preCheckError != null) {
-      _showError(preCheckError);
-      return;
-    }
-
     setState(() {
       _isCreating = true;
     });
@@ -100,7 +91,13 @@ class _AddGroupFormState extends State<AddGroupForm> {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
       if (token == null) {
-        throw Exception('Authentication token not found.');
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+        return;
       }
 
       // Use the create endpoint exposed by the backend
@@ -122,6 +119,16 @@ class _AddGroupFormState extends State<AddGroupForm> {
         }),
       );
 
+      if (response.statusCode == 401) {
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+        return;
+      }
+
       if (response.statusCode == 201) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         final int? groupId = (data is Map && data['id'] is int)
@@ -136,24 +143,33 @@ class _AddGroupFormState extends State<AddGroupForm> {
             widget.onGroupCreated(-1);
           }
         }
-      } else {
+      } else if (response.statusCode == 400) {
         final errorData = json.decode(utf8.decode(response.bodyBytes));
-        if (errorData is Map && errorData.containsKey('detail')) {
-          final detail = errorData['detail'];
-          if (detail == 'ALREADY_EXISTING_GROUP_NAME_DETECTED') {
-            throw Exception(
-              'Un groupe avec le même nom existe déjà pour ce niveau/section/matière',
-            );
-          } else if (detail == 'SCHEDULE_CONFLICT_DETECTED') {
-            throw Exception(
-              'Conflit d\'horaire: la plage choisie chevauche un autre groupe.',
-            );
+        if (errorData is Map && errorData.containsKey('non_field_errors')) {
+          final errorType = errorData['non_field_errors'][0];
+          if (errorType == 'ALREADY_EXISTING_GROUP_NAME_DETECTED') {
+            setState(() {
+              _nameError =
+                  'Un groupe avec le même nom existe déjà pour ce niveau/section/matière';
+            });
+            return;
+          } else if (errorType == 'SCHEDULE_CONFLICT_DETECTED') {
+            setState(() {
+              _timeError = 'Cet horaire entre en conflit avec un autre groupe.';
+            });
+            return;
           }
         }
-        throw Exception('Failed to create group: $errorData');
+        // For other 400 errors, show snackbar
+        if (mounted) Navigator.of(context).pop();
+        _showError('Erreur de validation (400)');
+      } else {
+        if (mounted) Navigator.of(context).pop();
+        _showError('Erreur de serveur (500).');
       }
     } catch (e) {
-      if (mounted) _showError(e.toString());
+      if (mounted) Navigator.of(context).pop();
+      _showError('Erreur de serveur (500).');
     } finally {
       if (mounted) {
         setState(() {
@@ -183,95 +199,6 @@ class _AddGroupFormState extends State<AddGroupForm> {
     return null;
   }
 
-  String? _validateTimeRange() {
-    if (_selectedDayEnglish == null) {
-      return 'Sélectionnez un jour de la semaine';
-    }
-    if (_startTime == null || _endTime == null) {
-      return 'Sélectionnez une plage horaire';
-    }
-    final startMinutes = _startTime!.hour * 60 + _startTime!.minute;
-    final endMinutes = _endTime!.hour * 60 + _endTime!.minute;
-    final minStart = 8 * 60; // 08:00
-    final maxEnd = 24 * 60; // 24:00
-    if (startMinutes < minStart) {
-      return 'L\'heure de début doit être à partir de 08:00';
-    }
-    if (endMinutes > maxEnd) {
-      return 'L\'heure de fin ne doit pas dépasser 24:00';
-    }
-    if (endMinutes <= startMinutes) {
-      return 'L\'heure de fin doit être supérieure à l\'heure de début';
-    }
-    return null;
-  }
-
-  Future<String?> _checkConflicts() async {
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) {
-        return 'Authentication token not found.';
-      }
-
-      // Fetch candidates with same name/level/section/subject
-      final query1 = <String, String>{'name': _nameController.text.trim()};
-      if (_selectedLevelName != null) query1['level'] = _selectedLevelName!;
-      if (_selectedSectionName != null && _selectedSectionName!.isNotEmpty) {
-        query1['section'] = _selectedSectionName!;
-      }
-      if (_selectedSubjectName != null)
-        query1['subject'] = _selectedSubjectName!;
-
-      final uri1 = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/',
-      ).replace(queryParameters: query1);
-      final resp1 = await http.get(
-        uri1,
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (resp1.statusCode == 200) {
-        final List<dynamic> groups = json.decode(utf8.decode(resp1.bodyBytes));
-        if (groups.isNotEmpty) {
-          return 'Un groupe avec le même nom existe déjà pour ce niveau/section/matière';
-        }
-      }
-
-      // Check time overlap on the same day
-      final query2 = <String, String>{'day': _selectedDayEnglish!};
-      final uri2 = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/',
-      ).replace(queryParameters: query2);
-      final resp2 = await http.get(
-        uri2,
-        headers: {'Authorization': 'Bearer $token'},
-      );
-      if (resp2.statusCode == 200) {
-        final List<dynamic> groups = json.decode(utf8.decode(resp2.bodyBytes));
-        for (final g in groups) {
-          final String st = (g['start_time'] ?? '').toString();
-          final String et = (g['end_time'] ?? '').toString();
-          if (st.isEmpty || et.isEmpty) continue;
-          final partsS = st.split(':');
-          final partsE = et.split(':');
-          if (partsS.length < 2 || partsE.length < 2) continue;
-          final gStart = int.parse(partsS[0]) * 60 + int.parse(partsS[1]);
-          final gEnd = int.parse(partsE[0]) * 60 + int.parse(partsE[1]);
-          final startMinutes = _startTime!.hour * 60 + _startTime!.minute;
-          final endMinutes = _endTime!.hour * 60 + _endTime!.minute;
-          final bool overlap = startMinutes < gEnd && endMinutes > gStart;
-          if (overlap) {
-            return 'Conflit d\'horaire: la plage choisie chevauche un autre groupe (${st} - ${et}).';
-          }
-        }
-      }
-      return null;
-    } catch (_) {
-      // If pre-check fails, defer to backend validation
-      return null;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -298,13 +225,21 @@ class _AddGroupFormState extends State<AddGroupForm> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
+        Text(
           'Ajouter un groupe',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
           textAlign: TextAlign.left,
         ),
         IconButton(
-          icon: const Icon(Icons.close, size: 24),
+          icon: Icon(
+            Icons.close,
+            size: 30,
+            color: Theme.of(context).primaryColor,
+          ),
           padding: EdgeInsets.zero, // 👈 removes default padding
           constraints: BoxConstraints(), // 👈 removes default constraints
           onPressed: () => Navigator.of(context).pop(),
@@ -342,7 +277,22 @@ class _AddGroupFormState extends State<AddGroupForm> {
         const SizedBox(height: 10),
         TextFormField(
           controller: _nameController,
-          decoration: const InputDecoration(labelText: 'Nom du groupe'),
+          decoration: InputDecoration(
+            labelText: 'Nom du groupe',
+            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            errorText: _nameError,
+          ),
+          onChanged: (value) {
+            if (_nameError != null) {
+              setState(() {
+                _nameError = null;
+              });
+            }
+          },
           validator: (value) {
             if (value == null || value.trim().isEmpty) {
               return 'Veuillez saisir un nom de groupe';
@@ -521,115 +471,152 @@ class _AddGroupFormState extends State<AddGroupForm> {
 
   Widget _buildTimeRangeSelector() {
     final bool isEnabled = _selectedDayEnglish != null;
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: TextFormField(
-            controller: _startTimeController,
-            decoration: InputDecoration(
-              labelText: 'Heure de début',
-              border: const OutlineInputBorder(),
-              filled: !isEnabled,
-              fillColor: !isEnabled ? Colors.grey[200] : null,
-              hintText: 'HH:MM',
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _startTimeController,
+                decoration: InputDecoration(
+                  labelText: 'Heure de début',
+                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  filled: !isEnabled,
+                  fillColor: !isEnabled ? Colors.grey[200] : null,
+                  hintText: 'HH:MM',
+                ),
+                enabled: isEnabled,
+                keyboardType: TextInputType.datetime,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                  _TimeTextInputFormatter(),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir une heure de début';
+                  }
+                  final time = _parseTime(value);
+                  if (time == null) return 'Format invalide';
+                  if (time.hour < 8) return 'Min 08:00';
+                  if (_endTime != null &&
+                      (time.hour > _endTime!.hour ||
+                          (time.hour == _endTime!.hour &&
+                              time.minute > _endTime!.minute))) {
+                    return 'Début > Fin';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  if (_timeError != null) {
+                    setState(() {
+                      _timeError = null;
+                    });
+                  }
+                  if (value.isNotEmpty) {
+                    final time = _parseTime(value);
+                    if (time != null) {
+                      setState(() {
+                        _startTime = time;
+                      });
+                    }
+                  } else {
+                    setState(() {
+                      _startTime = null;
+                    });
+                  }
+                },
+              ),
             ),
-            enabled: isEnabled,
-            keyboardType: TextInputType.datetime,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
-              _TimeTextInputFormatter(),
-            ],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Veuillez saisir une heure de début';
-              }
-              final time = _parseTime(value);
-              if (time == null) return 'Format invalide';
-              if (time.hour < 8) return 'Min 08:00';
-              if (_endTime != null &&
-                  (time.hour > _endTime!.hour ||
-                      (time.hour == _endTime!.hour &&
-                          time.minute > _endTime!.minute))) {
-                return 'Début > Fin';
-              }
-              return null;
-            },
-            onChanged: (value) {
-              if (value.isNotEmpty) {
-                final time = _parseTime(value);
-                if (time != null) {
-                  setState(() {
-                    _startTime = time;
-                  });
-                }
-              } else {
-                setState(() {
-                  _startTime = null;
-                });
-              }
-            },
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            controller: _endTimeController,
-            decoration: InputDecoration(
-              labelText: 'Heure de fin',
-              border: const OutlineInputBorder(),
-              filled: !isEnabled,
-              fillColor: !isEnabled ? Colors.grey[200] : null,
-              hintText: 'HH:MM',
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _endTimeController,
+                decoration: InputDecoration(
+                  labelText: 'Heure de fin',
+                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  filled: !isEnabled,
+                  fillColor: !isEnabled ? Colors.grey[200] : null,
+                  hintText: 'HH:MM',
+                ),
+                enabled: isEnabled,
+                keyboardType: TextInputType.datetime,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                  _TimeTextInputFormatter(),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir une heure de fin';
+                  }
+                  final time = _parseTime(value);
+                  if (time == null) return 'Format invalide';
+                  if (time.hour == 0 && time.minute > 0) return 'Max 00:00';
+                  if (_startTime != null &&
+                      (time.hour < _startTime!.hour ||
+                          (time.hour == _startTime!.hour &&
+                              time.minute < _startTime!.minute))) {
+                    return 'Fin < Début';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  if (_timeError != null) {
+                    setState(() {
+                      _timeError = null;
+                    });
+                  }
+                  if (value.isNotEmpty) {
+                    final time = _parseTime(value);
+                    if (time != null) {
+                      setState(() {
+                        _endTime = time;
+                      });
+                    }
+                  } else {
+                    setState(() {
+                      _endTime = null;
+                    });
+                  }
+                },
+              ),
             ),
-            enabled: isEnabled,
-            keyboardType: TextInputType.datetime,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
-              _TimeTextInputFormatter(),
-            ],
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Veuillez saisir une heure de fin';
-              }
-              final time = _parseTime(value);
-              if (time == null) return 'Format invalide';
-              if (time.hour == 0 && time.minute > 0) return 'Max 00:00';
-              if (_startTime != null &&
-                  (time.hour < _startTime!.hour ||
-                      (time.hour == _startTime!.hour &&
-                          time.minute < _startTime!.minute))) {
-                return 'Fin < Début';
-              }
-              return null;
-            },
-            onChanged: (value) {
-              if (value.isNotEmpty) {
-                final time = _parseTime(value);
-                if (time != null) {
+            if (_startTimeController.text.isNotEmpty ||
+                _endTimeController.text.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
                   setState(() {
-                    _endTime = time;
+                    _startTime = null;
+                    _endTime = null;
+                    _startTimeController.clear();
+                    _endTimeController.clear();
                   });
-                }
-              } else {
-                setState(() {
-                  _endTime = null;
-                });
-              }
-            },
-          ),
+                },
+              ),
+          ],
         ),
-        if (_startTimeController.text.isNotEmpty ||
-            _endTimeController.text.isNotEmpty)
-          IconButton(
-            icon: const Icon(Icons.clear),
-            onPressed: () {
-              setState(() {
-                _startTime = null;
-                _endTime = null;
-                _startTimeController.clear();
-                _endTimeController.clear();
-              });
-            },
+        if (_timeError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              _timeError!,
+              style: const TextStyle(color: Colors.red, fontSize: 15),
+            ),
           ),
       ],
     );

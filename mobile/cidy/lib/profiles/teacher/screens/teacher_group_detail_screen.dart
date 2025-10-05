@@ -5,6 +5,7 @@ import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:cidy/authentication/login.dart';
 
 class TeacherGroupDetailScreen extends StatefulWidget {
   final int groupId;
@@ -39,7 +40,13 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
       if (token == null) {
-        throw Exception('Authentication token not found.');
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+        return;
       }
 
       final url = Uri.parse(

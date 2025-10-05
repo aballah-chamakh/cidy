@@ -107,7 +107,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         input_formats=["%H:%M", "%H:%M"]
     )
     level = serializers.CharField(write_only=True, required=True)
-    section = serializers.CharField(write_only=True, required=False)
+    section = serializers.CharField(write_only=True, required=False, allow_null=True, allow_blank=True)
     subject = serializers.CharField(write_only=True, required=True)
 
     class Meta:
@@ -119,7 +119,8 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
             'subject',
             'week_day',
             'start_time',
-            'end_time'
+            'end_time',
+            'schedule_change_type'
         ]
 
     def validate(self, data):
@@ -127,9 +128,9 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         # Check for schedule conflicts
         # for the edit and create case bring the name and the teacher from the request 
         name = data.get('name')
-        level = data.get('level')
-        section = data.get('section')
-        subject = data.get('subject')
+        level = data.pop('level')
+        section = data.pop('section')
+        subject = data.pop('subject')
         teacher = self.context['request'].user.teacher
         if section : 
             teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section=section, subject__name=subject).first()
@@ -158,15 +159,18 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
             teacher=teacher,
             week_day=week_day
         ).filter(
-            (Q(start_time__lte=start_time) & Q(end_time__gte=start_time)) |
-            (Q(start_time__lte=end_time) & Q(end_time__gte=end_time)) |
-            (Q(start_time__gte=start_time) & Q(end_time__lte=end_time))
+            (Q(start_time__lt=start_time) & Q(end_time__gt=start_time)) |
+            (Q(start_time__lt=end_time) & Q(end_time__gt=end_time)) |
+            (Q(start_time__gt=start_time) & Q(end_time__lt=end_time))
         )
         # in the case of the edit, exclude the group 
         if self.instance : 
             conflicting_groups = conflicting_groups.exclude(id=self.instance.id)
         
         if conflicting_groups.exists():
+            print("Conflict detected with groups:")
+            for group in conflicting_groups:
+                print(f"- {group.name} {group.teacher_subject.level} {group.teacher_subject.level.section} ({group.start_time} - {group.end_time})")
             raise serializers.ValidationError("SCHEDULE_CONFLICT_DETECTED")
         
         data['teacher_subject'] = teacher_subject
@@ -193,7 +197,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
 
     def create(self,validated_data):
         validated_data['teacher'] = self.context['request'].user.teacher
-        super().create(validated_data)
+        return super().create(validated_data)
 
 
 class GroupCreateStudentSerializer(serializers.ModelSerializer):
