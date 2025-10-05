@@ -204,18 +204,34 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
   void _showAddGroupDialog() {
     showDialog(
       context: context,
+      barrierDismissible: true, // allows closing when tapping outside
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Créer un nouveau groupe'),
-          content: AddGroupForm(
-            onGroupCreated: () {
-              _fetchGroups(); // Refresh list after creation
-            },
-            filterOptions: _filterOptions,
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 0,
+          ), // 👈 margins on left/right
+          backgroundColor: Colors.white,
+          child: SizedBox(
+            width: double.infinity, // 👈 expand horizontally
+            child: SingleChildScrollView(
+              // 👈 allows vertical scroll if content is tall
+              child: AddGroupForm(
+                onGroupCreated: (int groupId) {
+                  _fetchGroups(); // refresh list
+                  if (groupId != -1) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            TeacherGroupDetailScreen(groupId: groupId),
+                      ),
+                    );
+                  }
+                },
+                filterOptions: _filterOptions,
+              ),
+            ),
           ),
-          // Make it scrollable and constrained
-          scrollable: true,
-          contentPadding: const EdgeInsets.fromLTRB(12.0, 20.0, 12.0, 24.0),
         );
       },
     );

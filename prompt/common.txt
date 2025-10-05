@@ -1,0 +1,4 @@
+ - don't touch the backend only work on the frontend 
+  - don't touch the backend and only work on the frontend 
+  - follow my style of making widgets and make the ui design of this popup consistent in the whole app #file:teacher_groups_screen.dart #file:group_filter_form.dart 
+  - you have the freedom to improve the ui design of popup however you want while staying consitent with ui design of the whole app

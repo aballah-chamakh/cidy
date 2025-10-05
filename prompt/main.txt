@@ -39,7 +39,6 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                 - Male
                 - Female
             - A password input for the password with the ability to show and hide the content of the input (required, min length = 8)
-            - A password input to confirm the password with the ability to show and hide the content of the input (required, must match the password)
             - A button with the name "Register"
             - A clickable text with the content: "Already have an account? Login here", which routes to the login screen
         - Dynamics:
@@ -102,6 +101,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                             - col 1 :
                                 - an icon for the notifications
                             - col 2 :
+				- the text : "Notifications"
+
                                 - row :
                                     - the text : "Notifications"
                                     - a red rectangle with some border radius that contains the number of notifications 
@@ -227,7 +228,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - Dynamics :
                             - clicking on the "Create a group"  : 
                               - sends a request to the server that checks if the teacher has the ability to create a new group throught ensuring that 
-                                the teacher has at least one teacher subject 
+                                the teacher has at least one of the following in the prices screen (see below) : 
+                                    - a level that doesn't have sections according to the tunisian education system and he has at least one subject.
+                                    - a level with at least one section and that section with at least one subject.
 
                                 - if the teacher doesn't have the ability to create a new group, opens up a popup that inform the teacher about that and about the minimum requirements to create a new group
                                 - if the teacher has the ability to create a new group, opens up a popup form which the same as the one open when clicking on the "Add" button in the groups screen when the teacher has groups (see below)
@@ -387,7 +390,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - row 5 : 
                                                     - a time range selector that allows to select a time range in the weekly scheduled day of the group
                                                         - disable this selector if the user didn't select a weekly scheduled day yet
-                                                        - validations : required , allowed time range is between 8h and 23h59
+                                                        - validations : required , allowed time range is between 8 am and 00:00 pm 
 
                                         - row 3 : in the footer of the app 
                                             - a button with the name "Create" 

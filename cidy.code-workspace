@@ -1,11 +1,14 @@
 {
 	"folders": [
-		{
-			"path": "mobile"
-		},
-		{
-			"path": "backend"
-		}
-	],
+        {
+            "path": "mobile"
+        },
+        {
+            "path": "backend"
+        },
+        {
+            "path": "prompt"
+        }
+    ],
     "settings": {}
 }

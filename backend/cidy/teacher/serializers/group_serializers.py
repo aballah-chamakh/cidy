@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from rest_framework import serializers
 from django.db.models import Sum, Q
-from ..models import Group
+from ..models import Group, TeacherSubject
 from student.models import Student
 from .price_serializers import LevelSerializer, SubjectSerializer
 from django.core.paginator import Paginator
@@ -100,17 +100,26 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
     schedule_change_type = serializers.ChoiceField(choices=['permanent', 'temporary'], write_only=True, required=False)
     start_time = serializers.TimeField(
         format="%H:%M", 
-        input_formats=["%H:%M", "%H:%M:%S"]
+        input_formats=["%H:%M", "%H:%M"]
     )
     end_time = serializers.TimeField(
         format="%H:%M", 
-        input_formats=["%H:%M", "%H:%M:%S"]
+        input_formats=["%H:%M", "%H:%M"]
     )
+    level = serializers.CharField(write_only=True, required=True)
+    section = serializers.CharField(write_only=True, required=False)
+    subject = serializers.CharField(write_only=True, required=True)
+
     class Meta:
         model = Group
         fields = [
-            'name', 'teacher_subject', 
-            'week_day', 'start_time', 'end_time'
+            'name', 
+            'level', 
+            'section', 
+            'subject',
+            'week_day',
+            'start_time',
+            'end_time'
         ]
 
     def validate(self, data):
@@ -118,14 +127,15 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         # Check for schedule conflicts
         # for the edit and create case bring the name and the teacher from the request 
         name = data.get('name')
+        level = data.get('level')
+        section = data.get('section')
+        subject = data.get('subject')
         teacher = self.context['request'].user.teacher
-        # for the edit case bring the teacher_subject from the instance
-        if self.instance:
-            teacher_subject = self.instance.teacher_subject
-        # for the create case bring the teacher_subject from the request data
-        else : 
-            teacher_subject = data.get('teacher_subject')
-
+        if section : 
+            teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section=section, subject__name=subject).first()
+        else :
+            teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section__isnull=True, subject__name=subject).first()
+        
         # Check for duplicate group name
         duplicate_query = Group.objects.filter(
             teacher=teacher,
@@ -159,6 +169,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         if conflicting_groups.exists():
             raise serializers.ValidationError("SCHEDULE_CONFLICT_DETECTED")
         
+        data['teacher_subject'] = teacher_subject
         return data
     
     def update(self,instance,**validate_data):
