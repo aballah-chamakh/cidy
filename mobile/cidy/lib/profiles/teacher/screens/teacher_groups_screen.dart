@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/teacher_layout.dart';
 
 class TeacherGroupsScreen extends StatefulWidget {
@@ -73,12 +74,15 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     String? startTime,
     String? endTime,
     String? sortBy,
-    bool fromFilter = false,
+    String source = "",
   }) async {
     if (!mounted) return;
+    if (source == "filter") {
+      Navigator.of(context).pop();
+    }
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      _groups = [];
     });
 
     try {
@@ -147,14 +151,11 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 data['teacher_levels_sections_subjects_hierarchy']
                     as Map<String, dynamic>;
           });
-          if (fromFilter) Navigator.of(context).pop();
         }
       } else {
-        if (fromFilter) Navigator.of(context).pop();
         _showError("Erreur du serveur (500)");
       }
     } catch (e) {
-      if (fromFilter) Navigator.of(context).pop();
       if (mounted) {
         _showError("Erreur du serveur (500)");
       }
@@ -186,10 +187,8 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         return;
       }
 
-      final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/delete_groups/',
-      );
-      final response = await http.post(
+      final url = Uri.parse('${Config.backendUrl}/api/teacher/groups/delete/');
+      final response = await http.delete(
         url,
         headers: {
           'Authorization': 'Bearer $token',
@@ -208,7 +207,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         return;
       }
 
-      if (response.statusCode == 204) {
+      if (response.statusCode == 200) {
         if (mounted) {
           setState(() {
             _selectedGroupIds.clear();
@@ -216,13 +215,11 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
           await _fetchGroups(); // Refresh the list
         }
       } else {
-        throw Exception('Failed to delete groups: ${response.reasonPhrase}');
+        _showError("Erreur du serveur (500)");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        _showError("Erreur du serveur (500)");
       }
     } finally {
       if (mounted) {
@@ -231,6 +228,19 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         });
       }
     }
+  }
+
+  int _countActiveFilters() {
+    int count = 0;
+    if (_currentFilters['level'] != null) count++;
+    if (_currentFilters['section'] != null) count++;
+    if (_currentFilters['subject'] != null) count++;
+    if (_currentFilters['day'] != null) count++;
+    if (_currentFilters['start_time'] != null ||
+        _currentFilters['end_time'] != null)
+      count++;
+    if (_currentFilters['sort_by'] != null) count++;
+    return count;
   }
 
   String _formatAmount(num amount) {
@@ -301,15 +311,14 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 startTime: filters['start_time'],
                 endTime: filters['end_time'],
                 sortBy: filters['sort_by'],
-                fromFilter: true,
+                source: "filter",
               );
             },
             onResetFilter: () {
               setState(() {
                 _currentFilters = {};
-                _searchController.clear();
               });
-              _fetchGroups(fromFilter: true);
+              _fetchGroups(name: _searchController.text, source: "filter");
             },
           ),
         );
@@ -323,23 +332,18 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading && _groups.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Text('Error: $_errorMessage', textAlign: TextAlign.center),
-        ),
-      );
-    }
-
     return Column(
       children: [
         _buildToolbar(),
-        if (_groups.isEmpty)
+        if (_isLoading && _groups.isEmpty)
+          Expanded(
+            child: Center(
+              child: CircularProgressIndicator(
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+          )
+        else if (_groups.isEmpty)
           Expanded(child: _buildNoGroupsUI())
         else
           Expanded(child: _buildGroupsListUI(_groups)),
@@ -348,55 +352,94 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
   }
 
   Widget _buildToolbar() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Rechercher par nom de groupe...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                  borderSide: BorderSide.none,
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(4.0),
+          topRight: Radius.circular(4.0),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Rechercher par nom de groupe...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.zero,
                 ),
-                filled: true,
-                fillColor: Colors.grey[200],
-                contentPadding: EdgeInsets.zero,
+                onChanged: (value) {
+                  _fetchGroups(
+                    name: value,
+                    level: _currentFilters['level'],
+                    section: _currentFilters['section'],
+                    subject: _currentFilters['subject'],
+                    day: _currentFilters['day'],
+                    startTime: _currentFilters['start_time'],
+                    endTime: _currentFilters['end_time'],
+                    sortBy: _currentFilters['sort_by'],
+                  );
+                },
               ),
-              onChanged: (value) {
-                _fetchGroups(
-                  name: value,
-                  level: _currentFilters['level'],
-                  section: _currentFilters['section'],
-                  subject: _currentFilters['subject'],
-                  day: _currentFilters['day'],
-                  startTime: _currentFilters['start_time'],
-                  endTime: _currentFilters['end_time'],
-                  sortBy: _currentFilters['sort_by'],
-                );
-              },
             ),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: Icon(
-              Icons.filter_list,
-              color: _currentFilters.isNotEmpty
-                  ? Theme.of(context).primaryColor
-                  : null,
+            const SizedBox(width: 8),
+            Stack(
+              children: [
+                IconButton(
+                  icon: Icon(
+                    Icons.filter_list,
+                    color: _currentFilters.isNotEmpty
+                        ? Theme.of(context).primaryColor
+                        : null,
+                  ),
+                  onPressed: _showFilterModal,
+                  tooltip: 'Filtrer les groupes',
+                ),
+                if (_countActiveFilters() > 0)
+                  Positioned(
+                    right: 3,
+                    top: 3,
+                    child: IgnorePointer(
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            _countActiveFilters().toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            onPressed: _showFilterModal,
-            tooltip: 'Filtrer les groupes',
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: _showAddGroupDialog,
-            tooltip: 'Ajouter un groupe',
-          ),
-        ],
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline),
+              onPressed: _showAddGroupDialog,
+              tooltip: 'Ajouter un groupe',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -406,32 +449,39 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
-            'assets/login_teacher_illustration.png', // Replace with a more suitable illustration
-            height: 200,
+          // try 1.1–1.3 depending on how tight you want it
+          SvgPicture.asset(
+            'assets/group.svg',
+            width: 100,
+            color: Theme.of(context).primaryColor, // optional tint
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 10),
           Text(
             "Aucun groupe trouvé",
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "Vous n'avez encore créé aucun groupe.",
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _showAddGroupDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Créez votre premier groupe'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30.0),
-              ),
+            style: TextStyle(
+              fontSize: 20,
+              color: Theme.of(context).primaryColor,
             ),
           ),
+          const SizedBox(height: 10),
+          if (_countActiveFilters() == 0 && _searchController.text.isEmpty)
+            ElevatedButton.icon(
+              onPressed: _showAddGroupDialog,
+              icon: const Icon(Icons.add),
+              label: const Text(
+                'Créez un groupe',
+                style: TextStyle(fontSize: 16),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5.0),
+                ),
+              ),
+            ),
         ],
       ),
     );

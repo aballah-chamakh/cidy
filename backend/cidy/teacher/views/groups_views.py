@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import time 
 from django.core.paginator import Paginator
 from django.db.models import Q
 
@@ -41,7 +41,8 @@ def can_create_group(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_groups(request):
-    return HttpResponseServerError("An unexpected error occurred.")
+    time.sleep(2)
+    #return HttpResponseServerError("An unexpected error occurred.")
     """Get a filtered list of groups for the teacher"""
     teacher = request.user.teacher
     groups = Group.objects.filter(teacher=teacher)

@@ -42,6 +42,7 @@ dependencies:
   syncfusion_flutter_calendar: ^31.1.22
   intl: ^0.20.2
   shared_preferences: ^2.2.3
+  flutter_svg: ^2.2.1
 
 dev_dependencies:
   flutter_test:

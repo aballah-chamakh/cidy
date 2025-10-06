@@ -211,7 +211,13 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _applyFilters,
-            child: Text('Filtrer (${_countActiveFilters()})'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: Text(
+              'Filtrer (${_countActiveFilters()})',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -225,9 +231,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
             ),
-            child: const Text('Réinitialiser'),
+            child: const Text(
+              'Réinitialiser',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ],
@@ -237,6 +246,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget _buildLevelDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedLevelName,
+      style:
+          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
+          TextStyle(fontSize: 16),
       decoration: InputDecoration(
         labelText: 'Niveau',
         labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -249,12 +261,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Tous les niveaux'),
+          child: Text('Tous les niveaux', style: TextStyle(fontSize: 16)),
         ),
         ..._levels.keys.map(
           (levelName) => DropdownMenuItem<String>(
             value: levelName,
-            child: Text(levelName),
+            child: Text(levelName, style: TextStyle(fontSize: 16)),
           ),
         ),
       ],
@@ -279,6 +291,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
 
     return DropdownButtonFormField<String>(
       value: _selectedSectionName,
+      style:
+          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
+          TextStyle(fontSize: 16),
       decoration: InputDecoration(
         labelText: 'Section',
         labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -293,12 +308,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Toutes les sections'),
+          child: Text('Toutes les sections', style: TextStyle(fontSize: 16)),
         ),
         ..._sections.keys.map(
           (sectionName) => DropdownMenuItem<String>(
             value: sectionName,
-            child: Text(sectionName),
+            child: Text(sectionName, style: TextStyle(fontSize: 16)),
           ),
         ),
       ],
@@ -346,6 +361,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
 
     return DropdownButtonFormField<String>(
       value: _selectedSubjectName,
+      style:
+          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
+          TextStyle(fontSize: 16),
       decoration: InputDecoration(
         labelText: 'Matière',
         labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -360,12 +378,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Toutes les matières'),
+          child: Text('Toutes les matières', style: TextStyle(fontSize: 16)),
         ),
         ...currentSubjects.map(
           (subjectName) => DropdownMenuItem<String>(
             value: subjectName,
-            child: Text(subjectName),
+            child: Text(subjectName, style: TextStyle(fontSize: 16)),
           ),
         ),
       ],
@@ -382,6 +400,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget _buildDayDropdown() {
     return DropdownButtonFormField<String>(
       value: _selectedDay,
+      style:
+          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
+          TextStyle(fontSize: 16),
       decoration: InputDecoration(
         labelText: 'Jour de la semaine',
         labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -394,12 +415,12 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Tous les jours'),
+          child: Text('Tous les jours', style: TextStyle(fontSize: 16)),
         ),
         ..._weekDays.map(
           (day) => DropdownMenuItem<String>(
             value: day['value'],
-            child: Text(day['name']!),
+            child: Text(day['name']!, style: TextStyle(fontSize: 16)),
           ),
         ),
       ],
@@ -419,6 +440,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
         Expanded(
           child: TextFormField(
             controller: _startTimeController,
+            style:
+                Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
+                TextStyle(fontSize: 16),
             decoration: InputDecoration(
               labelText: 'Heure de début',
               labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -463,6 +487,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
         Expanded(
           child: TextFormField(
             controller: _endTimeController,
+            style:
+                Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
+                TextStyle(fontSize: 16),
             decoration: InputDecoration(
               labelText: 'Heure de fin',
               labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -523,6 +550,9 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget _buildSortByDropdown() {
     return DropdownButtonFormField<String>(
       value: _sortBy,
+      style:
+          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
+          TextStyle(fontSize: 16),
       decoration: InputDecoration(
         labelText: 'Trier par',
         labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -533,11 +563,14 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
         ),
       ),
       items: [
-        const DropdownMenuItem<String>(value: null, child: Text('Défaut')),
+        const DropdownMenuItem<String>(
+          value: null,
+          child: Text('Défaut', style: TextStyle(fontSize: 16)),
+        ),
         ..._sortOptions.entries.map(
           (entry) => DropdownMenuItem<String>(
             value: entry.key,
-            child: Text(entry.value),
+            child: Text(entry.value, style: TextStyle(fontSize: 16)),
           ),
         ),
       ],

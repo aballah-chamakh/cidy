@@ -315,7 +315,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
             ..._levels.keys.map(
               (levelName) => DropdownMenuItem<String>(
                 value: levelName,
-                child: Text(levelName),
+                child: Text(levelName, style: TextStyle(fontSize: 16)),
               ),
             ),
           ],
