@@ -23,7 +23,6 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
   List<dynamic> _groups = [];
-  String? _errorMessage;
   Map<String, dynamic> _currentFilters = {};
   Map<String, dynamic> _filterOptions = {};
 
@@ -155,8 +154,10 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       } else {
         _showError("Erreur du serveur (500)");
       }
-    } catch (e) {
+    } catch (e, stacktrace) {
       if (mounted) {
+        print("Error: $e");
+        print("StackTrace: $stacktrace");
         _showError("Erreur du serveur (500)");
       }
     } finally {
@@ -212,13 +213,24 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
           setState(() {
             _selectedGroupIds.clear();
           });
-          await _fetchGroups(); // Refresh the list
+          await _fetchGroups(
+            name: _searchController.text,
+            level: _currentFilters['level']?.toString(),
+            section: _currentFilters['section']?.toString(),
+            subject: _currentFilters['subject']?.toString(),
+            day: _currentFilters['day'],
+            startTime: _currentFilters['start_time'],
+            endTime: _currentFilters['end_time'],
+            sortBy: _currentFilters['sort_by'],
+          ); // Refresh the list
         }
       } else {
         _showError("Erreur du serveur (500)");
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (mounted) {
+        print("Error: $e");
+        print("StackTrace: $stackTrace");
         _showError("Erreur du serveur (500)");
       }
     } finally {
@@ -252,6 +264,89 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     return amount.toString();
   }
 
+  void _showInfoModal(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Information',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.close,
+                        size: 30,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
+                const Divider(height: 10, thickness: 1),
+                const SizedBox(height: 20),
+                Icon(
+                  Icons.info_outline,
+                  size: 100,
+                  color: Theme.of(context).primaryColor,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    child: const Text(
+                      'OK',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showAddGroupDialog() {
     showDialog(
       context: context,
@@ -269,7 +364,16 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
               // 👈 allows vertical scroll if content is tall
               child: AddGroupForm(
                 onGroupCreated: (int groupId) {
-                  _fetchGroups(); // refresh list
+                  _fetchGroups(
+                    name: _searchController.text,
+                    level: _currentFilters['level']?.toString(),
+                    section: _currentFilters['section']?.toString(),
+                    subject: _currentFilters['subject']?.toString(),
+                    day: _currentFilters['day'],
+                    startTime: _currentFilters['start_time'],
+                    endTime: _currentFilters['end_time'],
+                    sortBy: _currentFilters['sort_by'],
+                  ); // refresh list
                   if (groupId != -1) {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -337,9 +441,30 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         _buildToolbar(),
         if (_isLoading && _groups.isEmpty)
           Expanded(
-            child: Center(
-              child: CircularProgressIndicator(
-                color: Theme.of(context).primaryColor,
+            child: RefreshIndicator(
+              color: Theme.of(context).primaryColor,
+              onRefresh: () async {
+                await _fetchGroups(
+                  name: _searchController.text,
+                  level: _currentFilters['level']?.toString(),
+                  section: _currentFilters['section']?.toString(),
+                  subject: _currentFilters['subject']?.toString(),
+                  day: _currentFilters['day'],
+                  startTime: _currentFilters['start_time'],
+                  endTime: _currentFilters['end_time'],
+                  sortBy: _currentFilters['sort_by'],
+                );
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                ),
               ),
             ),
           )
@@ -435,7 +560,15 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
-              onPressed: _showAddGroupDialog,
+              onPressed: () {
+                if (_filterOptions.isEmpty) {
+                  _showInfoModal(
+                    'Vous devez ajouter au moins un niveau pour pouvoir créer un groupe.',
+                  );
+                } else {
+                  _showAddGroupDialog();
+                }
+              },
               tooltip: 'Ajouter un groupe',
             ),
           ],
@@ -445,44 +578,76 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
   }
 
   Widget _buildNoGroupsUI() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // try 1.1–1.3 depending on how tight you want it
-          SvgPicture.asset(
-            'assets/group.svg',
-            width: 100,
-            color: Theme.of(context).primaryColor, // optional tint
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Aucun groupe trouvé",
-            style: TextStyle(
-              fontSize: 20,
-              color: Theme.of(context).primaryColor,
+    return RefreshIndicator(
+      color: Theme.of(context).primaryColor,
+      onRefresh: () async {
+        await _fetchGroups(
+          name: _searchController.text,
+          level: _currentFilters['level']?.toString(),
+          section: _currentFilters['section']?.toString(),
+          subject: _currentFilters['subject']?.toString(),
+          day: _currentFilters['day'],
+          startTime: _currentFilters['start_time'],
+          endTime: _currentFilters['end_time'],
+          sortBy: _currentFilters['sort_by'],
+        );
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height:
+              MediaQuery.of(context).size.height *
+              0.7, // Make it scrollable for refresh
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // try 1.1–1.3 depending on how tight you want it
+                SvgPicture.asset(
+                  'assets/group.svg',
+                  width: 100,
+                  color: Theme.of(context).primaryColor, // optional tint
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "Aucun groupe trouvé",
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (_countActiveFilters() == 0 &&
+                    _searchController.text.isEmpty)
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      if (_filterOptions.isEmpty) {
+                        _showInfoModal(
+                          'Vous devez ajouter au moins un niveau pour pouvoir créer un groupe.',
+                        );
+                      } else {
+                        _showAddGroupDialog();
+                      }
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text(
+                      'Créez un groupe',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5.0),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          if (_countActiveFilters() == 0 && _searchController.text.isEmpty)
-            ElevatedButton.icon(
-              onPressed: _showAddGroupDialog,
-              icon: const Icon(Icons.add),
-              label: const Text(
-                'Créez un groupe',
-                style: TextStyle(fontSize: 16),
-              ),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5.0),
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
@@ -510,12 +675,27 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: groups.length,
-                itemBuilder: (context, index) {
-                  final group = groups[index];
-                  return _buildGroupCard(group);
+              child: RefreshIndicator(
+                color: Theme.of(context).primaryColor,
+                onRefresh: () async {
+                  await _fetchGroups(
+                    name: _searchController.text,
+                    level: _currentFilters['level']?.toString(),
+                    section: _currentFilters['section']?.toString(),
+                    subject: _currentFilters['subject']?.toString(),
+                    day: _currentFilters['day'],
+                    startTime: _currentFilters['start_time'],
+                    endTime: _currentFilters['end_time'],
+                    sortBy: _currentFilters['sort_by'],
+                  );
                 },
+                child: ListView.builder(
+                  itemCount: groups.length,
+                  itemBuilder: (context, index) {
+                    final group = groups[index];
+                    return _buildGroupCard(group);
+                  },
+                ),
               ),
             ),
             if (_selectedGroupIds.isNotEmpty)
@@ -774,26 +954,114 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirmer la suppression'),
-          content: Text(
-            'Êtes-vous sûr de vouloir supprimer ${_selectedGroupIds.length} groupe(s) ? Cette action est irréversible.',
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Annuler'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              shape: BoxShape.rectangle,
+              borderRadius: BorderRadius.circular(16.0),
             ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Supprimer'),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Confirmer la suppression',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.close,
+                        weight: 2.0,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop(false);
+                      },
+                    ),
+                  ],
+                ),
+                const Divider(height: 5),
+                const SizedBox(height: 15.0),
+                Icon(
+                  Icons.delete,
+                  color: Theme.of(context).primaryColor,
+                  size: 100,
+                ),
+                const SizedBox(height: 15.0),
+                Text(
+                  'Êtes-vous sûr de vouloir supprimer ${_selectedGroupIds.length} groupe(s) ? Cette action est irréversible.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16.0,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
+                  ),
+                ),
+                const SizedBox(height: 10.0),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'Supprimer',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop(false);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                          side: BorderSide(
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                        child: Text(
+                          'Annuler',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(context).primaryColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

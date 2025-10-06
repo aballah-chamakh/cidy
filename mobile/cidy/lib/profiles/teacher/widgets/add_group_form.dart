@@ -131,8 +131,8 @@ class _AddGroupFormState extends State<AddGroupForm> {
 
       if (response.statusCode == 201) {
         final data = json.decode(utf8.decode(response.bodyBytes));
-        final int? groupId = (data is Map && data['id'] is int)
-            ? data['id'] as int
+        final int? groupId = (data is Map && data['group_id'] is int)
+            ? data['group_id'] as int
             : null;
         if (mounted) {
           Navigator.of(context).pop();

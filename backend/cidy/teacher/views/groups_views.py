@@ -46,12 +46,18 @@ def get_groups(request):
     """Get a filtered list of groups for the teacher"""
     teacher = request.user.teacher
     groups = Group.objects.filter(teacher=teacher)
-    
+    # get teacher levels sections subjects hierarchy to use them as options for the filters
+    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level','subject').order_by('-level__order')
+    teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects)
     # Check if teacher has any groups
     if not groups.exists():
-        return Response({
-            'has_groups': False
-        })
+        response = {
+            'has_groups': False,
+            'groups': [],
+            'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy.data
+        }
+        print(response)
+        return Response(response)
     
     # Apply search filter
     search_term = request.GET.get('name', '')
@@ -127,9 +133,7 @@ def get_groups(request):
         page = paginator.num_pages
     serializer = GroupListSerializer(paginated_groups, many=True)
 
-    # get teacher levels sections subjects hierarchy to use them as options for the filters
-    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level','subject').order_by('-level__order')
-    teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects)
+    
     response = {
         'has_groups': True,
         'groups_total_count': paginator.count,
@@ -160,6 +164,7 @@ def create_group(request):
     group = serializer.save()
     
     return Response({
+        'group_id': group.id,
         'success': True,
         'message': 'Group created successfully'
     },status=status.HTTP_201_CREATED)
