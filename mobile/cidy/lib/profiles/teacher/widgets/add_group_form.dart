@@ -201,20 +201,30 @@ class _AddGroupFormState extends State<AddGroupForm> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHeader(),
-              const Divider(height: 10, thickness: 1),
-              _buildFormContent(),
-              const SizedBox(height: 16),
-              _buildFooter(),
-            ],
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 0,
+      ), // 👈 margins on left/right
+      backgroundColor: Colors.white,
+      child: SizedBox(
+        width: double.infinity,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHeader(),
+                  const Divider(height: 10, thickness: 1),
+                  _buildFormContent(),
+                  const SizedBox(height: 16),
+                  _buildFooter(),
+                ],
+              ),
+            ),
           ),
         ),
       ),

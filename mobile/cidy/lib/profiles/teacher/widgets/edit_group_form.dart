@@ -4,6 +4,7 @@ import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 import 'package:cidy/authentication/login.dart';
 
 class EditGroupForm extends StatefulWidget {
@@ -23,6 +24,8 @@ class EditGroupForm extends StatefulWidget {
 class _EditGroupFormState extends State<EditGroupForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
+  final _startTimeController = TextEditingController();
+  final _endTimeController = TextEditingController();
 
   bool _isLoading = false;
   String? _nameError;
@@ -53,11 +56,17 @@ class _EditGroupFormState extends State<EditGroupForm> {
   void initState() {
     super.initState();
     _initializeForm();
+    _startTimeController.text = _startTime != null
+        ? _formatTime(_startTime!)
+        : '';
+    _endTimeController.text = _endTime != null ? _formatTime(_endTime!) : '';
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _startTimeController.dispose();
+    _endTimeController.dispose();
     super.dispose();
   }
 
@@ -101,31 +110,6 @@ class _EditGroupFormState extends State<EditGroupForm> {
     return _selectedDayEnglish != _originalDayEnglish ||
         _startTime != _originalStartTime ||
         _endTime != _originalEndTime;
-  }
-
-  Future<void> _selectTime(BuildContext context, bool isStartTime) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: isStartTime
-          ? (_startTime ?? const TimeOfDay(hour: 8, minute: 0))
-          : (_endTime ?? const TimeOfDay(hour: 23, minute: 59)),
-      builder: (BuildContext context, Widget? child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        if (isStartTime) {
-          _startTime = picked;
-        } else {
-          _endTime = picked;
-        }
-      });
-    }
   }
 
   Future<void> _editGroup() async {
@@ -275,242 +259,349 @@ class _EditGroupFormState extends State<EditGroupForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.9,
-      constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Modifier le groupe',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const Divider(height: 20),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHeader(),
+              const Divider(height: 10, thickness: 1),
+              _buildFormContent(),
+              const SizedBox(height: 16),
+              _buildFooter(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-            // Content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Group name
-                    const Text(
-                      'Nom',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        errorText: _nameError,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Le nom du groupe est requis';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Modifier le groupe',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+          textAlign: TextAlign.left,
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.close,
+            size: 30,
+            color: Theme.of(context).primaryColor,
+          ),
+          padding: EdgeInsets.zero, // 👈 removes default padding
+          constraints: BoxConstraints(), // 👈 removes default constraints
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
 
-                    // Week day
-                    const Text(
-                      'Jour de la semaine',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _selectedDayEnglish,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      items: _weekDays.map((day) {
-                        return DropdownMenuItem<String>(
-                          value: day['value'],
-                          child: Text(day['name']!),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedDayEnglish = value;
-                        });
-                      },
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Veuillez sélectionner un jour';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Time range
-                    const Text(
-                      'Plage horaire',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => _selectTime(context, true),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                _startTime != null
-                                    ? _formatTime(_startTime!)
-                                    : 'Heure de début',
-                                style: TextStyle(
-                                  color: _startTime != null
-                                      ? Colors.black
-                                      : Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text('à'),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () => _selectTime(context, false),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 16,
-                              ),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: Colors.grey),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                _endTime != null
-                                    ? _formatTime(_endTime!)
-                                    : 'Heure de fin',
-                                style: TextStyle(
-                                  color: _endTime != null
-                                      ? Colors.black
-                                      : Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (_timeError != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        _timeError!,
-                        style: const TextStyle(color: Colors.red, fontSize: 12),
-                      ),
-                    ],
-
-                    // Schedule change type (only if schedule changed)
-                    if (_hasScheduleChanged()) ...[
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Le changement d\'horaire est permanent ou seulement pour cette semaine',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<String>(
-                        value: _scheduleChangeType,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'temporary',
-                            child: Text('Seulement cette semaine'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'permanent',
-                            child: Text('Permanent'),
-                          ),
-                        ],
-                        onChanged: (String? value) {
-                          setState(() {
-                            _scheduleChangeType = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (_hasScheduleChanged() &&
-                              (value == null || value.isEmpty)) {
-                            return 'Veuillez spécifier le type de changement';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ],
-                ),
+  Widget _buildFooter() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _editGroup,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text(
+                'Modifier',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
+      ),
+    );
+  }
 
-            // Footer
-            const SizedBox(height: 20),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: !_isLoading ? _editGroup : null,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Modifier'),
+  Widget _buildFormContent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 10),
+        TextFormField(
+          controller: _nameController,
+          decoration: InputDecoration(
+            labelText: 'Nom du groupe',
+            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            errorText: _nameError,
+          ),
+          onChanged: (value) {
+            if (_nameError != null) {
+              setState(() {
+                _nameError = null;
+              });
+            }
+          },
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Veuillez saisir un nom de groupe';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<String>(
+          value: _selectedDayEnglish,
+          decoration: InputDecoration(
+            labelText: 'Jour de la semaine',
+            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).primaryColor),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+          ),
+          items: [
+            ..._weekDays.map(
+              (d) => DropdownMenuItem<String>(
+                value: d['value']!,
+                child: Text(d['name']!),
               ),
             ),
           ],
+          onChanged: (value) {
+            setState(() {
+              _selectedDayEnglish = value;
+            });
+          },
+          validator: (value) => value == null ? 'Sélectionnez un jour' : null,
         ),
-      ),
+        const SizedBox(height: 16),
+        _buildTimeRangeSelector(),
+        if (_hasScheduleChanged()) ...[
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _scheduleChangeType,
+            decoration: InputDecoration(
+              labelText: 'Type de changement',
+              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            items: const [
+              DropdownMenuItem(
+                value: 'temporary',
+                child: Text('Only this week'),
+              ),
+              DropdownMenuItem(value: 'permanent', child: Text('Permanently')),
+            ],
+            onChanged: (String? value) {
+              setState(() {
+                _scheduleChangeType = value;
+              });
+            },
+            validator: (value) {
+              if (_hasScheduleChanged() && (value == null || value.isEmpty)) {
+                return 'Veuillez spécifier le type de changement';
+              }
+              return null;
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildTimeRangeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: _startTimeController,
+                decoration: InputDecoration(
+                  labelText: 'Heure de début',
+                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  hintText: 'HH:MM',
+                ),
+                keyboardType: TextInputType.datetime,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                  _TimeTextInputFormatter(),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir une heure de début';
+                  }
+                  final time = _parseTime(value);
+                  if (time == null) return 'Format invalide';
+                  if (time.hour < 8) return 'Min 08:00';
+                  if (_endTime != null &&
+                      (time.hour > _endTime!.hour ||
+                          (time.hour == _endTime!.hour &&
+                              time.minute > _endTime!.minute))) {
+                    return 'Début > Fin';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  if (_timeError != null) {
+                    setState(() {
+                      _timeError = null;
+                    });
+                  }
+                  if (value.isNotEmpty) {
+                    final time = _parseTime(value);
+                    if (time != null) {
+                      setState(() {
+                        _startTime = time;
+                      });
+                    }
+                  } else {
+                    setState(() {
+                      _startTime = null;
+                    });
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextFormField(
+                controller: _endTimeController,
+                decoration: InputDecoration(
+                  labelText: 'Heure de fin',
+                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  border: const OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  hintText: 'HH:MM',
+                ),
+                keyboardType: TextInputType.datetime,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                  _TimeTextInputFormatter(),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Veuillez saisir une heure de fin';
+                  }
+                  final time = _parseTime(value);
+                  if (time == null) return 'Format invalide';
+                  if (time.hour == 0 && time.minute > 0) return 'Max 00:00';
+                  if (_startTime != null &&
+                      (time.hour < _startTime!.hour ||
+                          (time.hour == _startTime!.hour &&
+                              time.minute < _startTime!.minute))) {
+                    return 'Fin < Début';
+                  }
+                  return null;
+                },
+                onChanged: (value) {
+                  if (_timeError != null) {
+                    setState(() {
+                      _timeError = null;
+                    });
+                  }
+                  if (value.isNotEmpty) {
+                    final time = _parseTime(value);
+                    if (time != null) {
+                      setState(() {
+                        _endTime = time;
+                      });
+                    }
+                  } else {
+                    setState(() {
+                      _endTime = null;
+                    });
+                  }
+                },
+              ),
+            ),
+            if (_startTimeController.text.isNotEmpty ||
+                _endTimeController.text.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  setState(() {
+                    _startTime = null;
+                    _endTime = null;
+                    _startTimeController.clear();
+                    _endTimeController.clear();
+                  });
+                },
+              ),
+          ],
+        ),
+        if (_timeError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              _timeError!,
+              style: const TextStyle(color: Colors.red, fontSize: 15),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _TimeTextInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final newText = newValue.text;
+    if (newText.length > 5) {
+      return oldValue;
+    }
+
+    String text = newText.replaceAll(':', '');
+    if (text.length > 2) {
+      text = '${text.substring(0, 2)}:${text.substring(2)}';
+    }
+
+    // Validate hour and minute
+    if (text.contains(':')) {
+      final parts = text.split(':');
+      final hour = int.tryParse(parts[0]);
+      final minute = int.tryParse(parts[1]);
+
+      if (hour != null && hour > 23) {
+        return oldValue;
+      }
+      if (minute != null && minute > 59) {
+        return oldValue;
+      }
+    }
+
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

@@ -355,41 +355,27 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       context: context,
       barrierDismissible: true, // allows closing when tapping outside
       builder: (BuildContext context) {
-        return Dialog(
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 0,
-          ), // 👈 margins on left/right
-          backgroundColor: Colors.white,
-          child: SizedBox(
-            width: double.infinity, // 👈 expand horizontally
-            child: SingleChildScrollView(
-              // 👈 allows vertical scroll if content is tall
-              child: AddGroupForm(
-                onGroupCreated: (int groupId) {
-                  _fetchGroups(
-                    name: _searchController.text,
-                    level: _currentFilters['level']?.toString(),
-                    section: _currentFilters['section']?.toString(),
-                    subject: _currentFilters['subject']?.toString(),
-                    day: _currentFilters['day'],
-                    startTime: _currentFilters['start_time'],
-                    endTime: _currentFilters['end_time'],
-                    sortBy: _currentFilters['sort_by'],
-                  ); // refresh list
-                  if (groupId != -1) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            TeacherGroupDetailScreen(groupId: groupId),
-                      ),
-                    );
-                  }
-                },
-                filterOptions: _filterOptions,
-              ),
-            ),
-          ),
+        return AddGroupForm(
+          onGroupCreated: (int groupId) {
+            _fetchGroups(
+              name: _searchController.text,
+              level: _currentFilters['level']?.toString(),
+              section: _currentFilters['section']?.toString(),
+              subject: _currentFilters['subject']?.toString(),
+              day: _currentFilters['day'],
+              startTime: _currentFilters['start_time'],
+              endTime: _currentFilters['end_time'],
+              sortBy: _currentFilters['sort_by'],
+            ); // refresh list
+            if (groupId != -1) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => TeacherGroupDetailScreen(groupId: groupId),
+                ),
+              );
+            }
+          },
+          filterOptions: _filterOptions,
         );
       },
     );
