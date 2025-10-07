@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from rest_framework import serializers
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q,Value,DecimalField
+from django.db.models.functions import Coalesce
+
 from ..models import Group, TeacherSubject
 from student.models import Student
 from .price_serializers import LevelSerializer, SubjectSerializer
@@ -29,8 +31,9 @@ class GroupStudentListSerializer(serializers.Serializer):
         fields = ['id','image','fullname','paid_amount','unpaid_amount']
 
 class GroupDetailsSerializer(serializers.ModelSerializer):
-    level = LevelSerializer(source='teacher_subject.level', read_only=True)
-    subject = SubjectSerializer(source='teacher_subject.subject', read_only=True)    
+    level = serializers.CharField(source='teacher_subject.level.name', read_only=True)
+    section = serializers.CharField(source='teacher_subject.level.section', read_only=True)
+    subject = serializers.CharField(source='teacher_subject.subject.name', read_only=True)    
     start_time = serializers.TimeField(
         format="%H:%M", 
         input_formats=["%H:%M", "%H:%M:%S"]
@@ -57,29 +60,40 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
 
         students = group_obj.students.all()
 
+        if not students.exists():
+            return {
+                'students': [],
+                'total_students': 0,
+            }
         # Apply search filter
         if search_term:
             students = students.filter(fullname__icontains=search_term)
         
+        students = students.annotate(
+            paid_amount=Coalesce(
+                Sum('teacherenrollment__paid_amount', filter=Q(teacherenrollment__teacher=teacher)),
+                Value(0),
+                output_field=DecimalField()
+            ),
+            unpaid_amount=Coalesce(
+                Sum('teacherenrollment__paid_amount', filter=Q(teacherenrollment__teacher=teacher)),
+                Value(0),
+                output_field=DecimalField()
+            )
+        )
+
         # Apply sorting
         if sort_by:
             if sort_by == 'paid_amount_desc':
-                students = students.annotate(
-                    paid=Sum('teacherenrollment_set__paid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
-                ).order_by('-paid')
+                students = students.order_by('-paid_amount')
             elif sort_by == 'paid_amount_asc':
-                students = students.annotate(
-                    paid=Sum('teacherenrollment_set__paid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
-                ).order_by('paid')
+                students = students.order_by('paid_amount')
             elif sort_by == 'unpaid_amount_desc':
-                students = students.annotate(
-                    unpaid=Sum('teacherenrollment_set__unpaid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
-                ).order_by('-unpaid')
+                students = students.order_by('-unpaid_amount')
             elif sort_by == 'unpaid_amount_asc':
-                students = students.annotate(
-                    unpaid=Sum('teacherenrollment_set__unpaid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
-                ).order_by('unpaid')
-
+                students = students.order_by('unpaid_amount')
+        else : 
+            students = students.order_by('-id')  # Default sorting by newest
         page = request.GET.get('page', 1)
         page_size = request.GET.get('page_size', 30)
         paginator = Paginator(students, page_size)

@@ -16,6 +16,9 @@ class Student(models.Model):
     def __str__(self):
         return f"{self.fullname} -- {self.user.email}"
 
+    class Meta:
+        ordering = ['-id']
+
 class StudentUnreadNotification(models.Model):
     student = models.OneToOneField(Student, on_delete=models.CASCADE,null=True)
     unread_notifications = models.PositiveIntegerField(default=0)

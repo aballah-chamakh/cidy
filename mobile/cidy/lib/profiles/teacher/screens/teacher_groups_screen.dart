@@ -143,9 +143,12 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        //print("group id type : ${data['groups'][0]['id'].runtimeType}");
         if (mounted) {
           setState(() {
             _groups = data['groups'] as List<dynamic>;
+            //print("group id type after : ${_groups[0]['id'].runtimeType}");
+
             _filterOptions =
                 data['teacher_levels_sections_subjects_hierarchy']
                     as Map<String, dynamic>;

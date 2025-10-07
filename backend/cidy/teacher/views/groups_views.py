@@ -229,7 +229,8 @@ def get_group_details(request, group_id):
     
     
     serializer = GroupDetailsSerializer(group,context={'request':request})
-
+    print("group details : ")
+    print(serializer.data)
     
     return Response(serializer.data)
 
