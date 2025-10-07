@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:cidy/constants.dart';
 import 'package:cidy/config.dart';
 import 'package:cidy/profiles/teacher/widgets/add_student_to_group_form.dart';
 import 'package:cidy/profiles/teacher/widgets/edit_group_form.dart';
@@ -288,7 +288,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             _buildDetailRow('Matière', group['subject']),
             _buildDetailRow(
               'Jour et heure',
-              '${group['week_day']} de ${group['start_time']} à ${group['end_time']}',
+              '${weekDayEnglishToFrenchMap[group['week_day']]} de ${group['start_time']} à ${group['end_time']}  ${group['is_temporary_schedule'] ? '(Horaire temporaire)' : ''}',
             ),
           ],
         ),
@@ -595,14 +595,12 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          child: EditGroupForm(
-            group: _groupDetail!,
-            onGroupUpdated: () {
-              Navigator.of(context).pop();
-              _fetchGroupDetails();
-            },
-          ),
+        return EditGroupForm(
+          group: _groupDetail!,
+          onGroupUpdated: () {
+            Navigator.of(context).pop();
+            _fetchGroupDetails();
+          },
         );
       },
     );

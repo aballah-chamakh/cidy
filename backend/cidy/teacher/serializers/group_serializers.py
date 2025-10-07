@@ -34,24 +34,49 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
     level = serializers.CharField(source='teacher_subject.level.name', read_only=True)
     section = serializers.CharField(source='teacher_subject.level.section', read_only=True)
     subject = serializers.CharField(source='teacher_subject.subject.name', read_only=True)    
-    start_time = serializers.TimeField(
-        format="%H:%M", 
-        input_formats=["%H:%M", "%H:%M:%S"]
-    )
-    end_time = serializers.TimeField(
-        format="%H:%M", 
-        input_formats=["%H:%M", "%H:%M:%S"]
-    )
+    week_day = serializers.SerializerMethodField()
+    start_time = serializers.SerializerMethodField()
+    end_time = serializers.SerializerMethodField()
+    is_temporary_schedule = serializers.SerializerMethodField()
+    
     students = serializers.SerializerMethodField()
+    
 
     class Meta:
         model = Group
         fields = [
             'id', 'name', 'level', 'section', 'subject', 
-            'week_day', 'start_time', 'end_time',
+            'week_day', 'start_time', 'end_time','is_temporary_schedule',
             'total_paid', 'total_unpaid','students'
         ]
 
+    def get_start_time(self, group):
+        today = datetime.now().date()
+        if group.clear_temporary_schedule_at and group.clear_temporary_schedule_at >= today:
+            return group.temporary_start_time.strftime("%H:%M")
+        else : 
+            return group.start_time.strftime("%H:%M")
+    
+
+    def get_end_time(self, group):
+        today = datetime.now().date()
+        if group.clear_temporary_schedule_at and group.clear_temporary_schedule_at >= today:
+            return group.temporary_end_time.strftime("%H:%M")
+        else : 
+            return group.end_time.strftime("%H:%M")
+        
+    def get_week_day(self, group):
+        today = datetime.now().date()
+        if group.clear_temporary_schedule_at and group.clear_temporary_schedule_at >= today:
+            return group.temporary_week_day
+        else : 
+            return group.week_day
+
+    def get_is_temporary_schedule(self, group):
+        today = datetime.now().date()
+        return bool(group.clear_temporary_schedule_at and group.clear_temporary_schedule_at >= today)
+
+    
     def get_students(self, group_obj):
         request = self.context['request']
         teacher = request.user.teacher
@@ -138,26 +163,33 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        
+        print("Validating data:", data)
         # Check for schedule conflicts
         # for the edit and create case bring the name and the teacher from the request 
         name = data.get('name')
-        level = data.pop('level')
-        section = data.pop('section')
-        subject = data.pop('subject')
         teacher = self.context['request'].user.teacher
-        if section : 
-            teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section=section, subject__name=subject).first()
-        else :
-            teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section__isnull=True, subject__name=subject).first()
-        
+        # in the case of the create, get the teacher_subject from the level, section and subject
+        # specified in the request
+        if not self.instance : 
+            level = data.pop('level')
+            section = data.pop('section')
+            subject = data.pop('subject')
+            if section : 
+                teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section=section, subject__name=subject).first()
+            else :
+                teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section__isnull=True, subject__name=subject).first()
+        else : 
+            # in the case of the edit, get the teacher_subject from the instance
+            teacher_subject = self.instance.teacher_subject
+
         # Check for duplicate group name
         duplicate_query = Group.objects.filter(
             teacher=teacher,
             name=name,
             teacher_subject=teacher_subject
         )
-        
+
+        # exclude the current instance in case of update
         if self.instance:
             duplicate_query = duplicate_query.exclude(id=self.instance.id)
         
@@ -190,12 +222,12 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         data['teacher_subject'] = teacher_subject
         return data
     
-    def update(self,instance,**validate_data):
+    def update(self,instance,validate_data):
         schedule_change_type = validate_data.get('schedule_change_type')
         if schedule_change_type == 'temporary':
-            validate_data['temporary_week_day'] = validate_data['week_day']
-            validate_data['temporary_start_time'] = validate_data['start_time'] 
-            validate_data['temporary_end_time'] = validate_data['end_time']
+            validate_data['temporary_week_day'] = validate_data.pop('week_day')
+            validate_data['temporary_start_time'] = validate_data.pop('start_time')
+            validate_data['temporary_end_time'] = validate_data.pop('end_time')
             # Set the clear_temporary_schedule_at to the end of the current week
             today = datetime.now()
             end_of_week = today + timedelta(days=(6 - today.weekday()))
@@ -207,7 +239,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
             validate_data['temporary_end_time'] = None
             validate_data['clear_temporary_schedule_at'] = None 
 
-        super().update(instance,validate_data)
+        return super().update(instance,validate_data)
 
     def create(self,validated_data):
         validated_data['teacher'] = self.context['request'].user.teacher

@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'package:cidy/authentication/login.dart';
+import 'package:cidy/constants.dart';
 
 class AddGroupForm extends StatefulWidget {
   // Return the created group's id so the caller can navigate to its details
@@ -48,16 +49,6 @@ class _AddGroupFormState extends State<AddGroupForm> {
   String? _selectedDayEnglish; // store English day for API
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
-
-  final List<Map<String, String>> _weekDays = const [
-    {'value': 'Monday', 'name': 'Lundi'},
-    {'value': 'Tuesday', 'name': 'Mardi'},
-    {'value': 'Wednesday', 'name': 'Mercredi'},
-    {'value': 'Thursday', 'name': 'Jeudi'},
-    {'value': 'Friday', 'name': 'Vendredi'},
-    {'value': 'Saturday', 'name': 'Samedi'},
-    {'value': 'Sunday', 'name': 'Dimanche'},
-  ];
 
   @override
   void initState() {
@@ -207,9 +198,13 @@ class _AddGroupFormState extends State<AddGroupForm> {
         vertical: 0,
       ), // 👈 margins on left/right
       backgroundColor: Colors.white,
-      child: SizedBox(
-        width: double.infinity,
-        child: SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight:
+              MediaQuery.of(context).size.height * 0.7, // 70% of screen height
+        ),
+        child: SizedBox(
+          width: double.infinity,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Form(
@@ -219,7 +214,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
                 children: [
                   _buildHeader(),
                   const Divider(height: 10, thickness: 1),
-                  _buildFormContent(),
+                  Flexible(child: _buildFormContent()),
                   const SizedBox(height: 16),
                   _buildFooter(),
                 ],
@@ -281,201 +276,210 @@ class _AddGroupFormState extends State<AddGroupForm> {
   }
 
   Widget _buildFormContent() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: 10),
-        TextFormField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            labelText: 'Nom du groupe',
-            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            errorText: _nameError,
-          ),
-          onChanged: (value) {
-            if (_nameError != null) {
-              setState(() {
-                _nameError = null;
-              });
-            }
-          },
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Veuillez saisir un nom de groupe';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          value: _selectedLevelName,
-          decoration: InputDecoration(
-            labelText: 'Niveau',
-            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-          ),
-          items: [
-            ..._levels.keys.map(
-              (levelName) => DropdownMenuItem<String>(
-                value: levelName,
-                child: Text(levelName, style: TextStyle(fontSize: 16)),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              labelText: 'Nom du groupe',
+              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                borderRadius: BorderRadius.circular(8.0),
               ),
+              errorText: _nameError,
             ),
-          ],
-          onChanged: (value) {
-            setState(() {
-              _selectedLevelName = value;
-              _selectedSectionName = null;
-              _selectedSubjectName = null;
-              if (value != null && _levels.containsKey(value)) {
-                _sections = _levels[value]['sections'] ?? {};
-              } else {
-                _sections = {};
+            onChanged: (value) {
+              if (_nameError != null) {
+                setState(() {
+                  _nameError = null;
+                });
               }
-            });
-          },
-          validator: (value) => value == null ? 'Sélectionnez un niveau' : null,
-        ),
-        const SizedBox(height: 16),
-        Builder(
-          builder: (context) {
-            final bool hasSections = _sections.isNotEmpty;
-            return DropdownButtonFormField<String>(
-              value: _selectedSectionName,
-              decoration: InputDecoration(
-                labelText: 'Section',
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                filled: !hasSections,
-                fillColor: !hasSections ? Colors.grey[200] : null,
+            },
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Veuillez saisir un nom de groupe';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _selectedLevelName,
+            decoration: InputDecoration(
+              labelText: 'Niveau',
+              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                borderRadius: BorderRadius.circular(8.0),
               ),
-              items: [
-                if (hasSections)
-                  ..._sections.keys.map(
-                    (sectionName) => DropdownMenuItem<String>(
-                      value: sectionName,
-                      child: Text(sectionName),
-                    ),
-                  ),
-              ],
-              onChanged: hasSections
-                  ? (value) {
-                      setState(() {
-                        _selectedSectionName = value;
-                        _selectedSubjectName = null;
-                      });
-                    }
-                  : null,
-              validator: (value) {
-                if (!hasSections) return null;
-                if (value == null || value.isEmpty) {
-                  return 'Sélectionnez une section';
+            ),
+            items: [
+              ..._levels.keys.map(
+                (levelName) => DropdownMenuItem<String>(
+                  value: levelName,
+                  child: Text(levelName, style: TextStyle(fontSize: 16)),
+                ),
+              ),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedLevelName = value;
+                _selectedSectionName = null;
+                _selectedSubjectName = null;
+                if (value != null && _levels.containsKey(value)) {
+                  _sections = _levels[value]['sections'] ?? {};
+                } else {
+                  _sections = {};
                 }
-                return null;
-              },
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        Builder(
-          builder: (context) {
-            bool isEnabled = false;
-            List<dynamic> currentSubjects = [];
+              });
+            },
+            validator: (value) =>
+                value == null ? 'Sélectionnez un niveau' : null,
+          ),
+          const SizedBox(height: 16),
+          Builder(
+            builder: (context) {
+              final bool hasSections = _sections.isNotEmpty;
+              return DropdownButtonFormField<String>(
+                value: _selectedSectionName,
+                decoration: InputDecoration(
+                  labelText: 'Section',
+                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
+                    ),
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  filled: !hasSections,
+                  fillColor: !hasSections ? Colors.grey[200] : null,
+                ),
+                items: [
+                  if (hasSections)
+                    ..._sections.keys.map(
+                      (sectionName) => DropdownMenuItem<String>(
+                        value: sectionName,
+                        child: Text(sectionName),
+                      ),
+                    ),
+                ],
+                onChanged: hasSections
+                    ? (value) {
+                        setState(() {
+                          _selectedSectionName = value;
+                          _selectedSubjectName = null;
+                        });
+                      }
+                    : null,
+                validator: (value) {
+                  if (!hasSections) return null;
+                  if (value == null || value.isEmpty) {
+                    return 'Sélectionnez une section';
+                  }
+                  return null;
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 16),
+          Builder(
+            builder: (context) {
+              bool isEnabled = false;
+              List<dynamic> currentSubjects = [];
 
-            if (_selectedLevelName != null) {
-              final levelDef = _levels[_selectedLevelName];
-              final levelHasSections = (levelDef['sections'] ?? {}).isNotEmpty;
-              if (levelHasSections) {
-                if (_selectedSectionName != null &&
-                    _selectedSectionName!.isNotEmpty) {
-                  final sectionDef = _sections[_selectedSectionName!];
+              if (_selectedLevelName != null) {
+                final levelDef = _levels[_selectedLevelName];
+                final levelHasSections =
+                    (levelDef['sections'] ?? {}).isNotEmpty;
+                if (levelHasSections) {
+                  if (_selectedSectionName != null &&
+                      _selectedSectionName!.isNotEmpty) {
+                    final sectionDef = _sections[_selectedSectionName!];
+                    currentSubjects =
+                        (sectionDef?['subjects'] ?? []) as List<dynamic>;
+                    isEnabled = currentSubjects.isNotEmpty;
+                  }
+                } else {
                   currentSubjects =
-                      (sectionDef?['subjects'] ?? []) as List<dynamic>;
+                      (levelDef['subjects'] ?? []) as List<dynamic>;
                   isEnabled = currentSubjects.isNotEmpty;
                 }
-              } else {
-                currentSubjects = (levelDef['subjects'] ?? []) as List<dynamic>;
-                isEnabled = currentSubjects.isNotEmpty;
               }
-            }
 
-            return DropdownButtonFormField<String>(
-              value: _selectedSubjectName,
-              decoration: InputDecoration(
-                labelText: 'Matière',
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                filled: !isEnabled,
-                fillColor: !isEnabled ? Colors.grey[200] : null,
-              ),
-              items: [
-                if (isEnabled)
-                  ...currentSubjects.map(
-                    (s) => DropdownMenuItem<String>(
-                      value: s.toString(),
-                      child: Text(s.toString()),
+              return DropdownButtonFormField<String>(
+                value: _selectedSubjectName,
+                decoration: InputDecoration(
+                  labelText: 'Matière',
+                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(
+                      color: Theme.of(context).primaryColor,
                     ),
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-              ],
-              onChanged: isEnabled
-                  ? (value) {
-                      setState(() {
-                        _selectedSubjectName = value;
-                      });
-                    }
-                  : null,
-              validator: (value) {
-                if (!isEnabled) return null;
-                if (value == null || value.isEmpty) {
-                  return 'Sélectionnez une matière';
-                }
-                return null;
-              },
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          value: _selectedDayEnglish,
-          decoration: InputDecoration(
-            labelText: 'Jour de la semaine',
-            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
+                  filled: !isEnabled,
+                  fillColor: !isEnabled ? Colors.grey[200] : null,
+                ),
+                items: [
+                  if (isEnabled)
+                    ...currentSubjects.map(
+                      (s) => DropdownMenuItem<String>(
+                        value: s.toString(),
+                        child: Text(s.toString()),
+                      ),
+                    ),
+                ],
+                onChanged: isEnabled
+                    ? (value) {
+                        setState(() {
+                          _selectedSubjectName = value;
+                        });
+                      }
+                    : null,
+                validator: (value) {
+                  if (!isEnabled) return null;
+                  if (value == null || value.isEmpty) {
+                    return 'Sélectionnez une matière';
+                  }
+                  return null;
+                },
+              );
+            },
           ),
-          items: [
-            ..._weekDays.map(
-              (d) => DropdownMenuItem<String>(
-                value: d['value']!,
-                child: Text(d['name']!),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: _selectedDayEnglish,
+            decoration: InputDecoration(
+              labelText: 'Jour de la semaine',
+              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                borderRadius: BorderRadius.circular(8.0),
               ),
             ),
-          ],
-          onChanged: (value) {
-            setState(() {
-              _selectedDayEnglish = value;
-            });
-          },
-          validator: (value) => value == null ? 'Sélectionnez un jour' : null,
-        ),
-        const SizedBox(height: 16),
-        _buildTimeRangeSelector(),
-      ],
+            items: [
+              ...weekDays.map(
+                (d) => DropdownMenuItem<String>(
+                  value: d['value']!,
+                  child: Text(d['name']!),
+                ),
+              ),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _selectedDayEnglish = value;
+              });
+            },
+            validator: (value) => value == null ? 'Sélectionnez un jour' : null,
+          ),
+          const SizedBox(height: 16),
+          _buildTimeRangeSelector(),
+        ],
+      ),
     );
   }
 

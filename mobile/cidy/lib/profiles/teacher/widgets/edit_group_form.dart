@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'package:cidy/authentication/login.dart';
+import 'package:cidy/constants.dart';
 
 class EditGroupForm extends StatefulWidget {
   final Map<String, dynamic> group;
@@ -41,16 +42,6 @@ class _EditGroupFormState extends State<EditGroupForm> {
   String? _originalDayEnglish;
   TimeOfDay? _originalStartTime;
   TimeOfDay? _originalEndTime;
-
-  final List<Map<String, String>> _weekDays = const [
-    {'value': 'Monday', 'name': 'Lundi'},
-    {'value': 'Tuesday', 'name': 'Mardi'},
-    {'value': 'Wednesday', 'name': 'Mercredi'},
-    {'value': 'Thursday', 'name': 'Jeudi'},
-    {'value': 'Friday', 'name': 'Vendredi'},
-    {'value': 'Saturday', 'name': 'Samedi'},
-    {'value': 'Sunday', 'name': 'Dimanche'},
-  ];
 
   @override
   void initState() {
@@ -233,11 +224,19 @@ class _EditGroupFormState extends State<EditGroupForm> {
               _timeError = 'Cet horaire entre en conflit avec un autre groupe.';
             });
             return;
+          } else {
+            // For other 400 errors, show snackbar
+            if (mounted) Navigator.of(context).pop();
+            _showError('Erreur de validation (400)');
           }
+        } else {
+          // For other 400 errors, show snackbar
+          if (mounted) Navigator.of(context).pop();
+          _showError('Erreur de validation (400)');
         }
-        _showError('Erreur de validation');
       } else {
-        _showError('Erreur de serveur');
+        if (mounted) Navigator.of(context).pop();
+        _showError('Erreur de serveur (500).');
       }
     } catch (e) {
       _showError('Erreur de connexion');
@@ -259,20 +258,44 @@ class _EditGroupFormState extends State<EditGroupForm> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHeader(),
-              const Divider(height: 10, thickness: 1),
-              _buildFormContent(),
-              const SizedBox(height: 16),
-              _buildFooter(),
-            ],
+    // Apply theme to make all cursors and dropdown icons use primary color
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: Theme.of(
+          context,
+        ).colorScheme.copyWith(primary: Theme.of(context).primaryColor),
+      ),
+      child: Dialog(
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 0,
+        ), // 👈 margins on left/right
+        backgroundColor: Colors.white,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.of(context).size.height *
+                0.7, // 70% of screen height
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.95,
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildHeader(),
+                    const Divider(height: 10, thickness: 1),
+                    Flexible(child: _buildFormContent()),
+                    const SizedBox(height: 16),
+                    _buildFooter(),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -329,96 +352,124 @@ class _EditGroupFormState extends State<EditGroupForm> {
   }
 
   Widget _buildFormContent() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: 10),
-        TextFormField(
-          controller: _nameController,
-          decoration: InputDecoration(
-            labelText: 'Nom du groupe',
-            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-              borderRadius: BorderRadius.circular(8.0),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 10),
+          TextFormField(
+            controller: _nameController,
+            cursorColor: Theme.of(context).primaryColor,
+            decoration: InputDecoration(
+              labelText: 'Nom du groupe',
+              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              errorText: null,
+              errorBorder: _nameError != null
+                  ? OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                      borderRadius: BorderRadius.circular(8.0),
+                    )
+                  : null,
+              focusedErrorBorder: _nameError != null
+                  ? OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                      borderRadius: BorderRadius.circular(8.0),
+                    )
+                  : null,
             ),
-            errorText: _nameError,
+            onChanged: (value) {
+              if (_nameError != null) {
+                setState(() {
+                  _nameError = null;
+                });
+              }
+            },
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Veuillez saisir un nom de groupe';
+              }
+              return null;
+            },
           ),
-          onChanged: (value) {
-            if (_nameError != null) {
-              setState(() {
-                _nameError = null;
-              });
-            }
-          },
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Veuillez saisir un nom de groupe';
-            }
-            return null;
-          },
-        ),
-        const SizedBox(height: 16),
-        DropdownButtonFormField<String>(
-          value: _selectedDayEnglish,
-          decoration: InputDecoration(
-            labelText: 'Jour de la semaine',
-            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: Theme.of(context).primaryColor),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-          ),
-          items: [
-            ..._weekDays.map(
-              (d) => DropdownMenuItem<String>(
-                value: d['value']!,
-                child: Text(d['name']!),
+          if (_nameError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _nameError!,
+                style: const TextStyle(color: Colors.red, fontSize: 15),
+                softWrap: true,
               ),
             ),
-          ],
-          onChanged: (value) {
-            setState(() {
-              _selectedDayEnglish = value;
-            });
-          },
-          validator: (value) => value == null ? 'Sélectionnez un jour' : null,
-        ),
-        const SizedBox(height: 16),
-        _buildTimeRangeSelector(),
-        if (_hasScheduleChanged()) ...[
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _scheduleChangeType,
+            value: _selectedDayEnglish,
+            dropdownColor: Colors.white,
+            iconEnabledColor: Theme.of(context).primaryColor,
             decoration: InputDecoration(
-              labelText: 'Type de changement',
+              labelText: 'Jour de la semaine',
               labelStyle: TextStyle(color: Theme.of(context).primaryColor),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Theme.of(context).primaryColor),
                 borderRadius: BorderRadius.circular(8.0),
               ),
             ),
-            items: const [
-              DropdownMenuItem(
-                value: 'temporary',
-                child: Text('Only this week'),
+            items: [
+              ...weekDays.map(
+                (d) => DropdownMenuItem<String>(
+                  value: d['value']!,
+                  child: Text(d['name']!),
+                ),
               ),
-              DropdownMenuItem(value: 'permanent', child: Text('Permanently')),
             ],
-            onChanged: (String? value) {
+            onChanged: (value) {
               setState(() {
-                _scheduleChangeType = value;
+                _selectedDayEnglish = value;
               });
             },
-            validator: (value) {
-              if (_hasScheduleChanged() && (value == null || value.isEmpty)) {
-                return 'Veuillez spécifier le type de changement';
-              }
-              return null;
-            },
+            validator: (value) => value == null ? 'Sélectionnez un jour' : null,
           ),
+          const SizedBox(height: 16),
+          _buildTimeRangeSelector(),
+          if (_hasScheduleChanged()) ...[
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _scheduleChangeType,
+              dropdownColor: Colors.white,
+              iconEnabledColor: Theme.of(context).primaryColor,
+              decoration: InputDecoration(
+                labelText: 'Type de changement d\'horaire',
+                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'temporary',
+                  child: Text('Seulement cette semaine'),
+                ),
+                DropdownMenuItem(value: 'permanent', child: Text('Permanent')),
+              ],
+              onChanged: (String? value) {
+                setState(() {
+                  _scheduleChangeType = value;
+                });
+              },
+              validator: (value) {
+                if (_hasScheduleChanged() && (value == null || value.isEmpty)) {
+                  return 'Veuillez spécifier le type de changement';
+                }
+                return null;
+              },
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -431,6 +482,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
             Expanded(
               child: TextFormField(
                 controller: _startTimeController,
+                cursorColor: Theme.of(context).primaryColor,
                 decoration: InputDecoration(
                   labelText: 'Heure de début',
                   labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -488,6 +540,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
             Expanded(
               child: TextFormField(
                 controller: _endTimeController,
+                cursorColor: Theme.of(context).primaryColor,
                 decoration: InputDecoration(
                   labelText: 'Heure de fin',
                   labelStyle: TextStyle(color: Theme.of(context).primaryColor),
@@ -562,6 +615,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
             child: Text(
               _timeError!,
               style: const TextStyle(color: Colors.red, fontSize: 15),
+              softWrap: true,
             ),
           ),
       ],

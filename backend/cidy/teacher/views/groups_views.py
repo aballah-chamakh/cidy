@@ -250,7 +250,7 @@ def edit_group(request, group_id):
     
     # Validate the data
     if not serializer.is_valid():
-        return Response({'error': serializer.errors}, status=400)
+        return Response(serializer.errors, status=400)
     
     # update the group
     group = serializer.save()
