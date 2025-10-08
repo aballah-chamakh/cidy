@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:cidy/constants.dart';
 import 'package:cidy/config.dart';
-import 'package:cidy/profiles/teacher/widgets/add_student_to_group_form.dart';
+import 'package:cidy/profiles/teacher/widgets/add_student_popup/add_student_popup.dart';
+import 'package:cidy/profiles/teacher/widgets/delete_group_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/edit_group_form.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_layout.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,8 @@ class TeacherGroupDetailScreen extends StatefulWidget {
       _TeacherGroupDetailScreenState();
 }
 
-class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
+class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen>
+    {
   bool _isLoading = true;
   Map<String, dynamic>? _groupDetail;
   String? _errorMessage;
@@ -153,7 +155,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       }
 
       if (response.statusCode == 200) {
-        if (mounted) {
+        if (mounted) 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Groupe supprimé avec succès.'),
@@ -610,14 +612,13 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          child: AddStudentToGroupForm(
-            groupId: widget.groupId,
-            onStudentsAdded: () {
-              Navigator.of(context).pop();
-              _fetchGroupDetails();
-            },
-          ),
+        return AddStudentPopup(
+          groupId: widget.groupId,
+          onStudentsAdded: () {
+            Navigator.of(context).pop();
+            showSuccess('Élève créé et ajouté avec succès.');
+            _fetchGroupDetails();
+          },
         );
       },
     );
@@ -627,71 +628,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Text(
-                  'Confirmer la suppression',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-
-                // Content
-                Column(
-                  children: [
-                    Icon(Icons.delete_outline, size: 60, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Êtes-vous sûr de vouloir supprimer le groupe : ${_groupDetail!['name']} ?',
-                      style: const TextStyle(fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-
-                // Footer
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text('Non'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: const Text('Oui'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
+        return DeleteGroupPopup(groupName: _groupDetail!['name']);
       },
     );
 

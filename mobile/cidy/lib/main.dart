@@ -53,7 +53,10 @@ class MyApp extends StatelessWidget {
             borderSide: BorderSide(color: primaryColor),
             borderRadius: BorderRadius.circular(8.0),
           ),
+          labelStyle: TextStyle(color: primaryColor),
+          hintStyle: TextStyle(color: primaryColor),
         ),
+        textSelectionTheme: TextSelectionThemeData(cursorColor: primaryColor),
       ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

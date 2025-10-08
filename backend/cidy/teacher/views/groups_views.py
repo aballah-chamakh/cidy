@@ -346,10 +346,10 @@ def create_group_student(request, group_id):
 
     # Validate the data
     if not serializer.is_valid():
-        return Response({'error': serializer.errors}, status=400)
+        return Response(serializer.errors, status=400)
 
     # Save the student
-    student = serializer.save(level=group.teacher_subject.level,section=group.teacher_subject.section)
+    student = serializer.save(level=group.teacher_subject.level)
 
     # Add the student to the group
     group.students.add(student)
@@ -358,7 +358,7 @@ def create_group_student(request, group_id):
     return Response({
         'success': True,
         'message': 'Student created and added to the group successfully'
-    })
+    },status=status.HTTP_201_CREATED)
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

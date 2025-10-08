@@ -47,5 +47,9 @@
 		<true/>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSCameraUsageDescription</key>
+		<string>Cette application nécessite l'accès à la caméra pour prendre des photos de profil.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>Cette application nécessite l'accès à la bibliothèque de photos pour sélectionner des images de profil.</string>
 	</dict>
 </plist>

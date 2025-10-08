@@ -247,7 +247,6 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
 
 
 class GroupCreateStudentSerializer(serializers.ModelSerializer):
-    image = serializers.CharField(source='image.url', read_only=True)
     class Meta : 
         model = Student
-        fields = ['id', 'image', 'fullname','phone_number','gender','level','section']
+        fields = ['id', 'image', 'fullname','phone_number','gender']
