@@ -150,7 +150,7 @@ def get_groups(request):
 def create_group(request):
     #Group.objects.all().delete()
     """Create a new group"""
-    
+
     # Create a serializer with the request data
     print(request.data)
     serializer = GroupCreateUpdateSerializer(data=request.data, context={'request': request})
@@ -238,6 +238,7 @@ def get_group_details(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_group(request, group_id):
+
     """Edit an existing group"""
     teacher = request.user.teacher
     try:
@@ -334,6 +335,7 @@ def get_group_students(request,group_id):
 @permission_classes([IsAuthenticated])
 def create_group_student(request, group_id):
     """Create a new student then add them to the specified group"""
+
     teacher = request.user.teacher
 
     try:

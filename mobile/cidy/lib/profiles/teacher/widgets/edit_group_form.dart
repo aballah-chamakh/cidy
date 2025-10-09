@@ -11,11 +11,13 @@ import 'package:cidy/constants.dart';
 class EditGroupForm extends StatefulWidget {
   final Map<String, dynamic> group;
   final VoidCallback onGroupUpdated;
+  final Function onServerError;
 
   const EditGroupForm({
     super.key,
     required this.group,
     required this.onGroupUpdated,
+    required this.onServerError,
   });
 
   @override
@@ -189,26 +191,15 @@ class _EditGroupFormState extends State<EditGroupForm> {
         body: json.encode(requestBody),
       );
 
-      if (response.statusCode == 401) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-        return;
-      }
+      if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Groupe modifié avec succès'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          widget.onGroupUpdated();
-        }
+      if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      } else if (response.statusCode == 200) {
+        widget.onGroupUpdated();
       } else if (response.statusCode == 400) {
         final errorData = json.decode(utf8.decode(response.bodyBytes));
         if (errorData is Map && errorData.containsKey('non_field_errors')) {
@@ -218,28 +209,22 @@ class _EditGroupFormState extends State<EditGroupForm> {
               _nameError =
                   'Un groupe avec le même nom existe déjà pour ce niveau/section/matière';
             });
-            return;
           } else if (errorType == 'SCHEDULE_CONFLICT_DETECTED') {
             setState(() {
               _timeError = 'Cet horaire entre en conflit avec un autre groupe.';
             });
-            return;
           } else {
             // For other 400 errors, show snackbar
-            if (mounted) Navigator.of(context).pop();
-            _showError('Erreur de validation (400)');
+            widget.onServerError('Erreur de validation (400)');
           }
         } else {
-          // For other 400 errors, show snackbar
-          if (mounted) Navigator.of(context).pop();
-          _showError('Erreur de validation (400)');
+          widget.onServerError('Erreur de validation (400)');
         }
       } else {
-        if (mounted) Navigator.of(context).pop();
-        _showError('Erreur de serveur (500).');
+        widget.onServerError('Erreur de serveur (500).');
       }
     } catch (e) {
-      _showError('Erreur de connexion');
+      widget.onServerError('Erreur de serveur (500).');
     } finally {
       if (mounted) {
         setState(() {

@@ -12,16 +12,19 @@ import 'package:cidy/authentication/login.dart';
 
 class TeacherGroupDetailScreen extends StatefulWidget {
   final int groupId;
-
-  const TeacherGroupDetailScreen({super.key, required this.groupId});
+  final VoidCallback refreshGroupList;
+  const TeacherGroupDetailScreen({
+    super.key,
+    required this.groupId,
+    required this.refreshGroupList,
+  });
 
   @override
   State<TeacherGroupDetailScreen> createState() =>
       _TeacherGroupDetailScreenState();
 }
 
-class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen>
-    {
+class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   bool _isLoading = true;
   Map<String, dynamic>? _groupDetail;
   String? _errorMessage;
@@ -143,37 +146,32 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen>
           'group_ids': [widget.groupId],
         }),
       );
-
-      if (response.statusCode == 401) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-        return;
-      }
-
+      if (!mounted) return;
       if (response.statusCode == 200) {
-        if (mounted) 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Groupe supprimé avec succès.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          Navigator.of(
-            context,
-          ).pop(); // Go back to the previous screen (the groups list)
-        }
-      } else {
-        final errorData = json.decode(response.body);
-        _showError(
-          errorData['error'] ?? 'Erreur lors de la suppression du groupe.',
+        // i started by pushing a success snackbar in the snackbar queue because he
+        // need a mounted context
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Groupe supprimé avec succès.'),
+            backgroundColor: Colors.green,
+          ),
         );
+        Navigator.pop(context);
+        widget.refreshGroupList();
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      } else {
+        _showError("erreur du serveur (500)");
+        Navigator.pop(context);
+        widget.refreshGroupList();
       }
     } catch (e) {
-      _showError('Une erreur est survenue: $e');
+      _showError("erreur du serveur (500)");
+      Navigator.pop(context);
+      widget.refreshGroupList();
     } finally {
       if (mounted) {
         setState(() {
@@ -184,9 +182,14 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen>
   }
 
   void _showError(String message) {
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
@@ -600,8 +603,18 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen>
         return EditGroupForm(
           group: _groupDetail!,
           onGroupUpdated: () {
-            Navigator.of(context).pop();
-            _fetchGroupDetails();
+            if (mounted) {
+              _showSuccess('Groupe modifié avec succès');
+              Navigator.of(context).pop();
+              _fetchGroupDetails();
+            }
+          },
+          onServerError: (errorMessage) {
+            if (mounted) {
+              _showError(errorMessage);
+              Navigator.of(context).pop();
+              _fetchGroupDetails();
+            }
           },
         );
       },
@@ -615,9 +628,18 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen>
         return AddStudentPopup(
           groupId: widget.groupId,
           onStudentsAdded: () {
-            Navigator.of(context).pop();
-            showSuccess('Élève créé et ajouté avec succès.');
-            _fetchGroupDetails();
+            if (mounted) {
+              _showSuccess('Élève créé et ajouté avec succès.');
+              Navigator.of(context).pop();
+              _fetchGroupDetails();
+            }
+          },
+          onServerError: () {
+            if (mounted) {
+              _showError('Erreur du serveur (500)');
+              Navigator.of(context).pop();
+              _fetchGroupDetails();
+            }
           },
         );
       },

@@ -5,11 +5,13 @@ import 'package:cidy/profiles/teacher/widgets/add_student_popup/create_new_stude
 class AddStudentPopup extends StatefulWidget {
   final int groupId;
   final VoidCallback onStudentsAdded;
+  final VoidCallback onServerError;
 
   const AddStudentPopup({
     super.key,
     required this.groupId,
     required this.onStudentsAdded,
+    required this.onServerError,
   });
 
   @override

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
@@ -11,12 +10,14 @@ import 'package:cidy/authentication/login.dart';
 class CreateNewStudentForm extends StatefulWidget {
   final int groupId;
   final VoidCallback onStudentAdded;
+  final VoidCallback onServerError;
   final VoidCallback? onBack;
 
   const CreateNewStudentForm({
     super.key,
     required this.groupId,
     required this.onStudentAdded,
+    required this.onServerError,
     this.onBack,
   });
 
@@ -25,7 +26,6 @@ class CreateNewStudentForm extends StatefulWidget {
 }
 
 class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
-  
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -58,9 +58,8 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
       }
     } catch (e, stackTrace) {
       if (mounted) {
-        print("image picking error:");
-        print(e);
-        print(stackTrace);
+        print('Error picking image: $e');
+        print('Stack trace: $stackTrace');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -168,30 +167,24 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
 
       final streamedResponse = await request.send();
       final createResponse = await http.Response.fromStream(streamedResponse);
-      if (mounted) {
-        if (createResponse.statusCode == 201) {
-            
-            widget.onStudentAdded();
-            return;
-        } else if (createResponse.statusCode == 401) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-            );
-          }
-          return;
-        }
-      }else {
-        widget.onServerError('Erreur du serveur 500');
+      if (!mounted) return;
+
+      if (createResponse.statusCode == 201) {
+        widget.onStudentAdded();
+      } else if (createResponse.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      } else {
+        widget.onServerError();
       }
     } catch (e) {
-      widget.onServerError('Erreur du serveur 500');
+      widget.onServerError();
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 

@@ -371,7 +371,10 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
             if (groupId != -1) {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => TeacherGroupDetailScreen(groupId: groupId),
+                  builder: (_) => TeacherGroupDetailScreen(
+                    groupId: groupId,
+                    refreshGroupList: _fetchGroups,
+                  ),
                 ),
               );
             }
@@ -717,8 +720,10 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  TeacherGroupDetailScreen(groupId: group['id']),
+              builder: (context) => TeacherGroupDetailScreen(
+                groupId: group['id'],
+                refreshGroupList: _fetchGroups,
+              ),
             ),
           );
         },
