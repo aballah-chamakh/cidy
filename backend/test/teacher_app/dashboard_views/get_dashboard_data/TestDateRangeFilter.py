@@ -1,6 +1,6 @@
 import datetime
 from account.models import User 
-from teacher.models import Teacher, TeacherSubject,Level, Subject,Group, GroupEnrollment, Class
+from teacher.models import Teacher,TeacherEnrollment, TeacherSubject,Level, Subject,Group, GroupEnrollment, Class
 from student.models import Student
 from teacher_app.TeacherClient import TeacherClient
 
@@ -86,6 +86,7 @@ class TestDateRangeFilter:
                         gender="M",
                         level=teacher_subject.level
                     )
+                    TeacherEnrollment.objects.create(teacher=teacher,student=student)
                     student_cnt += 1
                     students.append(student)
 

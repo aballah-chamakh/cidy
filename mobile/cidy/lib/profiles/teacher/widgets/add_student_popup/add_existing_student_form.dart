@@ -24,7 +24,8 @@ class AddExistingStudentForm extends StatefulWidget {
 
 class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   List<Map<String, dynamic>> _availableStudents = [];
-  List<Map<String, dynamic>> _filteredStudents = [];
+  int _availableStudentsCount = 0;
+  int _page = 1;
   final Set<int> _selectedStudentIds = {};
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = false;
@@ -46,7 +47,6 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   Future<void> _fetchAvailableStudents() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
@@ -63,9 +63,14 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         return;
       }
 
+      final queryParams = {
+        'fullname': _searchController.text,
+        'page': _page.toString(),
+      };
+
       final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/students/available-for-group/${widget.groupId}/',
-      );
+        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/possible_students/',
+      ).replace(queryParameters: queryParams);
 
       final response = await http.get(
         url,
@@ -73,11 +78,20 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       );
 
       if (response.statusCode == 200) {
-        final data = json.decode(utf8.decode(response.bodyBytes)) as List;
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        print("available students data:");
+        print(data);
+        print(data['total_students'].runtimeType);
+        print(data['page'].runtimeType);
         if (mounted) {
           setState(() {
-            _availableStudents = data.cast<Map<String, dynamic>>();
-            _filteredStudents = List.from(_availableStudents);
+            _availableStudentsCount = data['total_students'];
+            _page = data['page'];
+            if (_page > 1) {
+              _availableStudents.addAll(data['students']);
+            } else {
+              _availableStudents = data['students'];
+            }
           });
         }
       } else {
@@ -85,10 +99,10 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           _errorMessage = 'Erreur lors du chargement des élèves disponibles.';
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
+          _errorMessage = 'error : {$e} \n  stackTrace : {$stackTrace} ';
         });
       }
     } finally {
@@ -98,23 +112,6 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         });
       }
     }
-  }
-
-  void _filterStudents(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredStudents = List.from(_availableStudents);
-      } else {
-        _filteredStudents = _availableStudents
-            .where(
-              (student) => student['full_name']
-                  .toString()
-                  .toLowerCase()
-                  .contains(query.toLowerCase()),
-            )
-            .toList();
-      }
-    });
   }
 
   Future<void> _addStudentsToGroup() async {
@@ -267,9 +264,8 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   }
 
   Widget _buildStudentsHeader() {
-    int studentCount = _filteredStudents.length;
     return Text(
-      '$studentCount Élèves',
+      '$_availableStudentsCount Élèves',
       style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
@@ -296,7 +292,9 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           ),
         ),
       ),
-      onChanged: _filterStudents,
+      onChanged: (value) {
+        _fetchAvailableStudents();
+      },
     );
   }
 
@@ -322,7 +320,19 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       );
     }
 
-    if (_filteredStudents.isEmpty) {
+    if (_availableStudentsCount == 0) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.0),
+        child: Center(
+          child: Text(
+            'Aucun élève disponible à ajouter.',
+            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16.0),
+          ),
+        ),
+      );
+    }
+
+    if (_availableStudents.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16.0),
         child: Center(
@@ -338,9 +348,9 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       constraints: const BoxConstraints(maxHeight: 300),
       child: ListView.builder(
         shrinkWrap: true,
-        itemCount: _filteredStudents.length,
+        itemCount: _availableStudents.length,
         itemBuilder: (context, index) {
-          final student = _filteredStudents[index];
+          final student = _availableStudents[index];
           final studentId = student['id'] as int;
           final isSelected = _selectedStudentIds.contains(studentId);
 
@@ -364,12 +374,14 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: Colors.grey.shade200,
-                    backgroundImage: student['profile_image'] != null
-                        ? NetworkImage(student['profile_image'])
+                    backgroundImage: student['image'] != null
+                        ? NetworkImage(
+                            '${Config.backendUrl}${student['image']}',
+                          )
                         : null,
-                    child: student['profile_image'] == null
+                    child: student['image'] == null
                         ? Text(
-                            student['full_name'].toString()[0].toUpperCase(),
+                            student['fullname'].toString()[0].toUpperCase(),
                             style: TextStyle(
                               color: Colors.black87,
                               fontSize: 18,
@@ -382,7 +394,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                   // Full name
                   Expanded(
                     child: Text(
-                      student['full_name'].toString(),
+                      student['fullname'].toString(),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,

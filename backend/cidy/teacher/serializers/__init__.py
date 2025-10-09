@@ -5,7 +5,7 @@ from .price_serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer
                                 SubjectSerializer)
 from .group_serializers import (GroupListSerializer,GroupCreateUpdateSerializer,
                                 GroupDetailsSerializer,GroupStudentListSerializer,
-                                GroupCreateStudentSerializer,)
+                                GroupCreateStudentSerializer,GroupPossibleStudentListSerializer)
 from .student_serializers import (TeacherStudentListSerializer,
                                   TeacherStudentCreateSerializer,
                                   TeacherStudentDetailSerializer,

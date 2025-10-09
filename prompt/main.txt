@@ -661,7 +661,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                         - row 1 : 
                                                                             - text input to search by the fullname of the student 
                                                                         - row 2 :
-                                                                            -  a header for the student list with the title : "{number of student after filtering and without pagination} Students"
+                                                                            - a header for the student list with the title : "{number of student after filtering and without pagination} Students"
                                                                         - row 3 : the list of the first 30 students (either were created by the teacher or by the student) that are not part of the group and they have the same level and section as the group or only the same level if the group has no section
                                                                                 and each student must be in a card which contains  : 
                                                                             - row : 

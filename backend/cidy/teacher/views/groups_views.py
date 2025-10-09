@@ -15,7 +15,7 @@ from ..models import Group, TeacherSubject,GroupEnrollment,Class,TeacherEnrollme
 from django.http import HttpResponseServerError
 from ..serializers import (GroupCreateStudentSerializer,GroupStudentListSerializer,
                            GroupListSerializer, TeacherLevelsSectionsSubjectsHierarchySerializer,
-                           GroupCreateUpdateSerializer,GroupDetailsSerializer,)
+                           GroupCreateUpdateSerializer,GroupDetailsSerializer,GroupPossibleStudentListSerializer)
 
 
 @api_view(['GET'])
@@ -321,6 +321,7 @@ def get_group_students(request,group_id):
         paginated_students = paginator.page(page)
     except Exception:
         # If page is out of range, deliver last page
+        page = paginator.num_pages
         paginated_students = paginator.page(paginator.num_pages)
     
     serializer = GroupStudentListSerializer(paginated_students,many=True)
@@ -328,6 +329,7 @@ def get_group_students(request,group_id):
     return Response({
         'students': serializer.data,
         'total_students': paginator.count,
+        'page':page
     })
 
 
@@ -361,6 +363,48 @@ def create_group_student(request, group_id):
         'success': True,
         'message': 'Student created and added to the group successfully'
     },status=status.HTTP_201_CREATED)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_the_possible_students_for_a_group(request,group_id):
+    teacher = request.user.teacher
+    try:
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return Response({'error': 'Group not found'}, status=404)
+    
+    teacher_subject = group.teacher_subject 
+    
+    student_qs = Student.objects.filter(teacherenrollment__teacher=teacher,level=teacher_subject.level)
+
+    # Exclude students already in the group
+    #pstudent_qs = student_qs.exclude(groups=group)
+   
+    # Apply fullname filter
+    fullname = request.GET.get('fullname', '')
+    if fullname:
+        student_qs = student_qs.filter(fullname__icontains=fullname)
+
+    page = request.GET.get('page', 1)
+    page_size = request.GET.get('page_size', 30)
+    paginator = Paginator(student_qs, page_size)
+
+    try:
+        paginated_students = paginator.page(page)
+    except Exception:
+        # If page is out of range, deliver last page
+        page = 1
+        paginated_students = paginator.page(1)
+    
+    serializer = GroupPossibleStudentListSerializer(paginated_students,many=True)
+    print(serializer.data)
+    return Response({
+        'students': serializer.data,
+        'total_students': paginator.count,
+        'page': int(page)
+    })
+
+
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

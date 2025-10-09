@@ -30,6 +30,12 @@ class GroupStudentListSerializer(serializers.Serializer):
     class Meta : 
         fields = ['id','image','fullname','paid_amount','unpaid_amount']
 
+class GroupPossibleStudentListSerializer(serializers.ModelSerializer):
+    image = serializers.CharField(source='image.url',read_only=True)
+    class Meta : 
+        model = Student 
+        fields = ['id','image','fullname']
+
 class GroupDetailsSerializer(serializers.ModelSerializer):
     level = serializers.CharField(source='teacher_subject.level.name', read_only=True)
     section = serializers.CharField(source='teacher_subject.level.section', read_only=True)
