@@ -378,7 +378,7 @@ def get_the_possible_students_for_a_group(request,group_id):
     student_qs = Student.objects.filter(teacherenrollment__teacher=teacher,level=teacher_subject.level)
 
     # Exclude students already in the group
-    #pstudent_qs = student_qs.exclude(groups=group)
+    student_qs = student_qs.exclude(groups=group)
    
     # Apply fullname filter
     fullname = request.GET.get('fullname', '')
@@ -420,7 +420,7 @@ def add_students_to_group(request,group_id):
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
     # add the students to the group 
-    students_qs = group.students.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
+    students_qs = Student.objects.filter(id__in=student_ids, teacherenrollment__teacher=teacher)
     for student in students_qs :
         # enroll the student in the group 
         GroupEnrollment.objects.create(group=group, student=student)

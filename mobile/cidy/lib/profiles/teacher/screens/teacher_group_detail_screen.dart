@@ -627,18 +627,22 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       builder: (BuildContext context) {
         return AddStudentPopup(
           groupId: widget.groupId,
-          onStudentsAdded: () {
-            if (mounted) {
-              _showSuccess('Élève créé et ajouté avec succès.');
-              Navigator.of(context).pop();
-              _fetchGroupDetails();
-            }
-          },
+          onStudentsAdded:
+              ({String message = 'L’élève a été créé et ajouté avec succès.'}) {
+                if (mounted) {
+                  _showSuccess(message);
+                  Navigator.of(context).pop();
+                  _fetchGroupDetails();
+                }
+              },
           onServerError: () {
+            print("onServerError called");
             if (mounted) {
               _showError('Erreur du serveur (500)');
               Navigator.of(context).pop();
               _fetchGroupDetails();
+            } else {
+              print("onServerError Context is not mounted");
             }
           },
         );

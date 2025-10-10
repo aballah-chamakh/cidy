@@ -73,11 +73,11 @@ class TestDateRangeFilter:
             # create 6 student for each level  
             ## if they don't exit
 
-            students = Student.objects.filter(level=teacher_subject.level)
+            students = Student.objects.filter(level=teacher_subject.level)[:6]
             
             if not students.exists():
                 students = []
-                for i in range(6):
+                for i in range(12):
                     phone_number = f"000000{student_cnt}" if student_cnt >= 10 else f"0000000{student_cnt}"
                     student = Student.objects.create(
                         user=User.objects.create_user(f"student{student_cnt}@gmail.com", phone_number, "password"),
@@ -88,8 +88,11 @@ class TestDateRangeFilter:
                     )
                     TeacherEnrollment.objects.create(teacher=teacher,student=student)
                     student_cnt += 1
-                    students.append(student)
-
+                    if i < 6:  # only keep 6 students per level
+                        students.append(student)
+                print(f"Created {len(students)} students for level {teacher_subject.level}")
+            else:
+                print(f"Found existing {students.count()} students for level {teacher_subject.level}")
             # add 2 groups for each teacher subject
             for group_name in ["A", "B"]:
                 group = Group.objects.create( 

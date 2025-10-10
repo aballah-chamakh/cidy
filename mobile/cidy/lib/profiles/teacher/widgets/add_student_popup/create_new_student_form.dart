@@ -9,7 +9,7 @@ import 'package:cidy/authentication/login.dart';
 
 class CreateNewStudentForm extends StatefulWidget {
   final int groupId;
-  final VoidCallback onStudentAdded;
+  final Function onStudentAdded;
   final VoidCallback onServerError;
   final VoidCallback? onBack;
 
@@ -196,33 +196,47 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 0,
       backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(16.0),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(context),
-              const Divider(height: 16),
-              const SizedBox(height: 20),
-              _buildProfileImageSection(),
-              const SizedBox(height: 30),
-              _buildFullNameField(),
-              const SizedBox(height: 10),
-              _buildPhoneField(),
-              const SizedBox(height: 10),
-              _buildGenderSection(),
-              if (_errorMessage != null) _buildErrorMessage(),
-              const Divider(height: 30),
-              _buildActionButtons(),
-            ],
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            shape: BoxShape.rectangle,
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(context),
+                const Divider(height: 16),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildProfileImageSection(),
+                        const SizedBox(height: 30),
+                        _buildFullNameField(),
+                        const SizedBox(height: 10),
+                        _buildPhoneField(),
+                        const SizedBox(height: 10),
+                        _buildGenderSection(),
+                        if (_errorMessage != null) _buildErrorMessage(),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 30),
+                _buildActionButtons(),
+              ],
+            ),
           ),
         ),
       ),

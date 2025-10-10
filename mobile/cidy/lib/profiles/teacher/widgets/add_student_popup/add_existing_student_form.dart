@@ -8,13 +8,15 @@ import 'package:cidy/authentication/login.dart';
 
 class AddExistingStudentForm extends StatefulWidget {
   final int groupId;
-  final VoidCallback onStudentsAdded;
+  final Function onStudentsAdded;
+  final Function onServerError;
   final VoidCallback? onBack;
 
   const AddExistingStudentForm({
     super.key,
     required this.groupId,
     required this.onStudentsAdded,
+    required this.onServerError,
     this.onBack,
   });
 
@@ -23,30 +25,38 @@ class AddExistingStudentForm extends StatefulWidget {
 }
 
 class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
-  List<Map<String, dynamic>> _availableStudents = [];
+  List _availableStudents = [];
   int _availableStudentsCount = 0;
   int _page = 1;
   final Set<int> _selectedStudentIds = {};
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   bool _isLoading = false;
   bool _isSubmitting = false;
+  bool _isLoadingMore = false;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _fetchAvailableStudents();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _fetchAvailableStudents() async {
     setState(() {
-      _isLoading = true;
+      if (_page == 1) {
+        _isLoading = true;
+      } else {
+        _isLoadingMore = true;
+      }
     });
 
     try {
@@ -76,39 +86,32 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
-
+      if (!mounted) return;
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         print("available students data:");
         print(data);
         print(data['total_students'].runtimeType);
         print(data['page'].runtimeType);
-        if (mounted) {
-          setState(() {
-            _availableStudentsCount = data['total_students'];
-            _page = data['page'];
-            if (_page > 1) {
-              _availableStudents.addAll(data['students']);
-            } else {
-              _availableStudents = data['students'];
-            }
-          });
-        }
+        setState(() {
+          _availableStudentsCount = data['total_students'];
+          _page = data['page'];
+          if (_page > 1) {
+            _availableStudents.addAll(data['students']);
+          } else {
+            _availableStudents = data['students'];
+          }
+        });
       } else {
-        setState(() {
-          _errorMessage = 'Erreur lors du chargement des élèves disponibles.';
-        });
+        widget.onServerError();
       }
-    } catch (e, stackTrace) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'error : {$e} \n  stackTrace : {$stackTrace} ';
-        });
-      }
+    } catch (e) {
+      widget.onServerError();
     } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _isLoadingMore = false;
         });
       }
     }
@@ -150,7 +153,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/students/add/',
       );
 
-      final response = await http.post(
+      final response = await http.put(
         url,
         headers: {
           'Authorization': 'Bearer $token',
@@ -161,29 +164,17 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
 
       if (response.statusCode == 200) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Élèves ajoutés avec succès.',
-                style: TextStyle(fontSize: 16.0),
-              ),
-            ),
-          );
-          widget.onStudentsAdded();
+          final studentCount = _selectedStudentIds.length;
+          final message = studentCount == 1
+              ? 'L’élève a été créé et ajouté avec succès.'
+              : '$studentCount élèves ont été créés et ajoutés avec succès.';
+          widget.onStudentsAdded(message: message);
         }
       } else {
-        final errorData = json.decode(utf8.decode(response.bodyBytes));
-        setState(() {
-          _errorMessage =
-              errorData['detail'] ?? 'Erreur lors de l\'ajout des élèves.';
-        });
+        widget.onServerError();
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
-        });
-      }
+      widget.onServerError();
     } finally {
       if (mounted) {
         setState(() {
@@ -203,6 +194,40 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
     });
   }
 
+  Future<void> _loadNextPage() async {
+    // Check if there are more students to load
+    if (_availableStudents.length >= _availableStudentsCount) {
+      // Show a brief haptic feedback or visual indication that no more data
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Tous les élèves ont été chargés.',
+            style: TextStyle(fontSize: 14.0),
+          ),
+          duration: Duration(seconds: 1),
+        ),
+      );
+      return;
+    }
+
+    // Increment page and fetch next batch
+    setState(() {
+      _page++;
+    });
+    await _fetchAvailableStudents();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // User has scrolled near the bottom (200 pixels from bottom)
+      if (!_isLoadingMore &&
+          _availableStudents.length < _availableStudentsCount) {
+        _loadNextPage();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -211,27 +236,41 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 0,
       backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(16.0),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(context),
-            const Divider(height: 16),
-            _buildSearchField(),
-            const SizedBox(height: 8),
-            _buildStudentsHeader(),
-            const SizedBox(height: 8),
-            _buildStudentsList(),
-            if (_errorMessage != null) _buildErrorMessage(),
-            _buildActionButtons(),
-          ],
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            shape: BoxShape.rectangle,
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(context),
+              const Divider(height: 16),
+              _buildSearchField(),
+              const SizedBox(height: 8),
+              _buildStudentsHeader(),
+              const SizedBox(height: 8),
+              Flexible(
+                fit: FlexFit.loose,
+                child: Scrollbar(
+                  controller: _scrollController,
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    child: _buildStudentsList(),
+                  ),
+                ),
+              ),
+              if (_errorMessage != null) _buildErrorMessage(),
+              _buildActionButtons(),
+            ],
+          ),
         ),
       ),
     );
@@ -293,6 +332,9 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         ),
       ),
       onChanged: (value) {
+        setState(() {
+          _page = 1; // Reset to first page when searching
+        });
         _fetchAvailableStudents();
       },
     );
@@ -344,13 +386,9 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       );
     }
 
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 300),
-      child: ListView.builder(
-        shrinkWrap: true,
-        itemCount: _availableStudents.length,
-        itemBuilder: (context, index) {
-          final student = _availableStudents[index];
+    return Column(
+      children: [
+        ..._availableStudents.map((student) {
           final studentId = student['id'] as int;
           final isSelected = _selectedStudentIds.contains(studentId);
 
@@ -366,55 +404,65 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                 width: isSelected ? 1 : 0,
               ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  // Profile image rounded
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage: student['image'] != null
-                        ? NetworkImage(
-                            '${Config.backendUrl}${student['image']}',
-                          )
-                        : null,
-                    child: student['image'] == null
-                        ? Text(
-                            student['fullname'].toString()[0].toUpperCase(),
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 16),
-                  // Full name
-                  Expanded(
-                    child: Text(
-                      student['fullname'].toString(),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+            child: InkWell(
+              onLongPress: () => _toggleStudentSelection(studentId),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    // Profile image rounded
+                    CircleAvatar(
+                      radius: 24,
+                      backgroundColor: Colors.grey.shade200,
+                      backgroundImage: student['image'] != null
+                          ? NetworkImage(
+                              '${Config.backendUrl}${student['image']}',
+                            )
+                          : null,
+                      child: student['image'] == null
+                          ? Text(
+                              student['fullname'].toString()[0].toUpperCase(),
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    // Full name
+                    Expanded(
+                      child: Text(
+                        student['fullname'].toString(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
-                  ),
-                  // Checkbox
-                  Checkbox(
-                    value: isSelected,
-                    activeColor: Theme.of(context).primaryColor,
-                    onChanged: (bool? value) {
-                      _toggleStudentSelection(studentId);
-                    },
-                  ),
-                ],
+                    // Selection indicator
+                    if (isSelected)
+                      Icon(
+                        Icons.check_circle,
+                        color: Theme.of(context).primaryColor,
+                        size: 24,
+                      ),
+                  ],
+                ),
               ),
             ),
           );
-        },
-      ),
+        }).toList(),
+        if (_isLoadingMore)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+      ],
     );
   }
 

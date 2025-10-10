@@ -4,7 +4,7 @@ import 'package:cidy/profiles/teacher/widgets/add_student_popup/create_new_stude
 
 class AddStudentPopup extends StatefulWidget {
   final int groupId;
-  final VoidCallback onStudentsAdded;
+  final Function onStudentsAdded;
   final VoidCallback onServerError;
 
   const AddStudentPopup({
@@ -29,6 +29,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
       return AddExistingStudentForm(
         groupId: widget.groupId,
         onStudentsAdded: widget.onStudentsAdded,
+        onServerError: widget.onServerError,
         onBack: () => setState(() {
           _showNextForm = false;
           _selectedOption = null;
@@ -54,22 +55,30 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 0,
       backgroundColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(16.0),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(context),
-            const Divider(height: 16),
-            _buildContent(),
-            _buildFooter(),
-          ],
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            shape: BoxShape.rectangle,
+            borderRadius: BorderRadius.circular(16.0),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(context),
+              const Divider(height: 16),
+              Flexible(
+                fit: FlexFit.loose,
+                child: SingleChildScrollView(child: _buildContent()),
+              ),
+              _buildFooter(),
+            ],
+          ),
         ),
       ),
     );
