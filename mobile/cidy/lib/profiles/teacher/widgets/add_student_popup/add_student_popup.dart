@@ -51,7 +51,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
 
     // Show initial selection dialog
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 0,
       backgroundColor: Colors.transparent,
@@ -60,7 +60,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         child: Container(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(15.0),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             shape: BoxShape.rectangle,
@@ -91,7 +91,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
         Text(
           'Ajouter des élèves',
           style: TextStyle(
-            fontSize: 18.0,
+            fontSize: 20.0,
             fontWeight: FontWeight.bold,
             color: Theme.of(context).primaryColor,
           ),
@@ -101,6 +101,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
             Icons.close,
             weight: 2.0,
             color: Theme.of(context).primaryColor,
+            size: 30,
           ),
           onPressed: () {
             Navigator.of(context).pop();
@@ -124,8 +125,8 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
         // Label
         Text(
           'Choisissez entre ajouter des élèves existants ou créer un nouvel élève puis l\'ajouter',
-          style: TextStyle(fontSize: 16.0, color: Colors.grey[700]),
-          textAlign: TextAlign.left,
+          style: TextStyle(fontSize: 18.0, color: Colors.grey[700]),
+          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10.0),
         // Select input with options
@@ -147,21 +148,21 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
           ),
           hint: const Text(
             'Sélectionnez une option',
-            style: TextStyle(fontSize: 16.0),
+            style: TextStyle(fontSize: 18.0),
           ),
           items: const [
             DropdownMenuItem(
               value: 'existing',
               child: Text(
                 'ajouter des élèves existants',
-                style: TextStyle(fontSize: 16.0),
+                style: TextStyle(fontSize: 18.0),
               ),
             ),
             DropdownMenuItem(
               value: 'new',
               child: Text(
                 'créer un nouvel élève puis l\'ajouter',
-                style: TextStyle(fontSize: 16.0),
+                style: TextStyle(fontSize: 18.0),
               ),
             ),
           ],
@@ -197,10 +198,10 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Annuler', style: TextStyle(fontSize: 16.0)),
+              child: const Text('Annuler', style: TextStyle(fontSize: 18.0)),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 5),
           Expanded(
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -215,7 +216,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
                 ),
               ),
               onPressed: _selectedOption != null ? _handleNext : null,
-              child: const Text('Suivant', style: TextStyle(fontSize: 16.0)),
+              child: const Text('Suivant', style: TextStyle(fontSize: 18.0)),
             ),
           ),
         ],

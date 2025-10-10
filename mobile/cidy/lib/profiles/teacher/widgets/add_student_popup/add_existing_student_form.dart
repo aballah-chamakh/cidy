@@ -102,6 +102,13 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
             _availableStudents = data['students'];
           }
         });
+      } else if (response.statusCode == 401) {
+        if (mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
       } else {
         widget.onServerError();
       }
@@ -170,6 +177,11 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
               : '$studentCount élèves ont été créés et ajoutés avec succès.';
           widget.onStudentsAdded(message: message);
         }
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       } else {
         widget.onServerError();
       }
@@ -241,7 +253,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         child: Container(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(15.0),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             shape: BoxShape.rectangle,
@@ -267,7 +279,6 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                   ),
                 ),
               ),
-              if (_errorMessage != null) _buildErrorMessage(),
               _buildActionButtons(),
             ],
           ),
@@ -283,7 +294,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         Text(
           'Ajouter des élèves existants',
           style: TextStyle(
-            fontSize: 18.0,
+            fontSize: 20.0,
             fontWeight: FontWeight.bold,
             color: Theme.of(context).primaryColor,
           ),
@@ -292,6 +303,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           icon: Icon(
             Icons.close,
             weight: 2.0,
+            size: 30,
             color: Theme.of(context).primaryColor,
           ),
           onPressed: () {
@@ -316,8 +328,10 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
+      style: const TextStyle(fontSize: 16.0),
       decoration: InputDecoration(
         hintText: 'Rechercher un élève...',
+        hintStyle: const TextStyle(fontSize: 16.0),
         prefixIcon: const Icon(Icons.search),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -334,6 +348,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       onChanged: (value) {
         setState(() {
           _page = 1; // Reset to first page when searching
+          _selectedStudentIds.clear();
         });
         _fetchAvailableStudents();
       },
@@ -342,50 +357,40 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
 
   Widget _buildStudentsList() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    if (_availableStudents.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.0),
-        child: Center(
-          child: Text(
-            'Aucun élève disponible à ajouter.',
-            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16.0),
+          padding: const EdgeInsets.all(15.0),
+          child: CircularProgressIndicator(
+            color: Theme.of(context).primaryColor,
           ),
         ),
       );
     }
 
-    if (_availableStudentsCount == 0) {
+    if (_availableStudents.isEmpty && _searchController.text.isEmpty) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.0),
+        padding: EdgeInsets.all(15.0),
         child: Center(
           child: Text(
-            'Aucun élève disponible à ajouter.',
+            'Aucun élève du même niveau que le groupe n’est disponible à ajouter.',
             style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16.0),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    } else if (_availableStudents.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(15.0),
+        child: Center(
+          child: Text(
+            'Aucun élève trouvé pour votre recherche.',
+
+            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16.0),
+            textAlign: TextAlign.center,
           ),
         ),
       );
     }
-
-    if (_availableStudents.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 16.0),
-        child: Center(
-          child: Text(
-            'Aucun résultat correspondant à votre recherche.',
-            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16.0),
-          ),
-        ),
-      );
-    }
-
     return Column(
       children: [
         ..._availableStudents.map((student) {
@@ -456,24 +461,15 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           );
         }).toList(),
         if (_isLoadingMore)
-          const Center(
+          Center(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(),
+              padding: const EdgeInsets.all(15.0),
+              child: CircularProgressIndicator(
+                color: Theme.of(context).primaryColor,
+              ),
             ),
           ),
       ],
-    );
-  }
-
-  Widget _buildErrorMessage() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Text(
-        _errorMessage!,
-        style: const TextStyle(color: Colors.red),
-        textAlign: TextAlign.center,
-      ),
     );
   }
 
@@ -502,7 +498,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
               child: const Text('Retour', style: TextStyle(fontSize: 16.0)),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 5),
           Expanded(
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(

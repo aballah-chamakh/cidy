@@ -191,7 +191,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
 
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 0,
@@ -201,7 +201,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         child: Container(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(15.0),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             shape: BoxShape.rectangle,
@@ -228,12 +228,11 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
                         _buildPhoneField(),
                         const SizedBox(height: 10),
                         _buildGenderSection(),
-                        if (_errorMessage != null) _buildErrorMessage(),
                       ],
                     ),
                   ),
                 ),
-                const Divider(height: 30),
+                const Divider(height: 20),
                 _buildActionButtons(),
               ],
             ),
@@ -250,7 +249,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
         Text(
           'Créer un nouvel élève',
           style: TextStyle(
-            fontSize: 18.0,
+            fontSize: 20.0,
             fontWeight: FontWeight.bold,
             color: Theme.of(context).primaryColor,
           ),
@@ -260,6 +259,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
             Icons.close,
             weight: 2.0,
             color: Theme.of(context).primaryColor,
+            size: 30,
           ),
           onPressed: () {
             Navigator.of(context).pop();
@@ -311,12 +311,12 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
         segments: const <ButtonSegment<String>>[
           ButtonSegment<String>(
             value: 'M',
-            label: Text('Masculin', style: TextStyle(fontSize: 16.0)),
+            label: Text('Masculin', style: TextStyle(fontSize: 18.0)),
             icon: Icon(Icons.male),
           ),
           ButtonSegment<String>(
             value: 'F',
-            label: Text('Féminin', style: TextStyle(fontSize: 16.0)),
+            label: Text('Féminin', style: TextStyle(fontSize: 18.0)),
             icon: Icon(Icons.female),
           ),
         ],
@@ -340,6 +340,9 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
   Widget _buildFullNameField() {
     return TextFormField(
       controller: _fullNameController,
+      style: const TextStyle(
+        fontSize: 18, // 👈 sets the input text size
+      ),
       decoration: InputDecoration(
         labelText: 'Nom complet',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -363,6 +366,9 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
   Widget _buildPhoneField() {
     return TextFormField(
       controller: _phoneController,
+      style: const TextStyle(
+        fontSize: 18, // 👈 sets the input text size
+      ),
       decoration: InputDecoration(
         labelText: 'Numéro de téléphone',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -391,17 +397,6 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
     );
   }
 
-  Widget _buildErrorMessage() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
-      child: Text(
-        _errorMessage!,
-        style: const TextStyle(color: Colors.red, fontSize: 16.0),
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-
   Widget _buildActionButtons() {
     return Row(
       children: [
@@ -413,6 +408,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
+
             onPressed: _isLoading
                 ? null
                 : () {
@@ -422,10 +418,10 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
                       Navigator.of(context).pop();
                     }
                   },
-            child: const Text('Retour', style: TextStyle(fontSize: 16.0)),
+            child: const Text('Retour', style: TextStyle(fontSize: 18.0)),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 5),
         Expanded(
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -446,7 +442,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
                       strokeWidth: 2,
                     ),
                   )
-                : const Text('Ajouter', style: TextStyle(fontSize: 16.0)),
+                : const Text('Ajouter', style: TextStyle(fontSize: 18.0)),
           ),
         ),
       ],

@@ -367,6 +367,7 @@ def create_group_student(request, group_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_the_possible_students_for_a_group(request,group_id):
+    time.sleep(2)
     teacher = request.user.teacher
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
@@ -386,7 +387,7 @@ def get_the_possible_students_for_a_group(request,group_id):
         student_qs = student_qs.filter(fullname__icontains=fullname)
 
     page = request.GET.get('page', 1)
-    page_size = request.GET.get('page_size', 30)
+    page_size = request.GET.get('page_size', 5)
     paginator = Paginator(student_qs, page_size)
 
     try:

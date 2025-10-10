@@ -293,7 +293,7 @@ class _AddStudentToGroupFormState extends State<AddStudentToGroupForm> {
 
           // Content
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20),
+            padding: const EdgeInsets.symmetric(vertical: 15),
             child: Column(
               children: [
                 Icon(
@@ -773,7 +773,7 @@ class _AddStudentToGroupFormState extends State<AddStudentToGroupForm> {
     }
 
     return Dialog(
-      child: Padding(padding: const EdgeInsets.all(20), child: content),
+      child: Padding(padding: const EdgeInsets.all(15), child: content),
     );
   }
 }

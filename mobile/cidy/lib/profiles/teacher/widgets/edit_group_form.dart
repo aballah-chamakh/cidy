@@ -191,14 +191,9 @@ class _EditGroupFormState extends State<EditGroupForm> {
         body: json.encode(requestBody),
       );
 
-      if (!mounted) return;
-
-      if (response.statusCode == 401) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
-      } else if (response.statusCode == 200) {
+      if (!mounted)
+        return;
+      else if (response.statusCode == 200) {
         widget.onGroupUpdated();
       } else if (response.statusCode == 400) {
         final errorData = json.decode(utf8.decode(response.bodyBytes));
@@ -232,13 +227,6 @@ class _EditGroupFormState extends State<EditGroupForm> {
         });
       }
     }
-  }
-
-  void _showError(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
   }
 
   @override

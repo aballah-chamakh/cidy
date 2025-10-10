@@ -8,11 +8,12 @@ class DeleteGroupPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 0,
       backgroundColor: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(15.0),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           shape: BoxShape.rectangle,
@@ -20,6 +21,7 @@ class DeleteGroupPopup extends StatelessWidget {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -27,7 +29,7 @@ class DeleteGroupPopup extends StatelessWidget {
                 Text(
                   'Confirmer la suppression',
                   style: TextStyle(
-                    fontSize: 18.0,
+                    fontSize: 20.0,
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).primaryColor,
                   ),
@@ -35,7 +37,7 @@ class DeleteGroupPopup extends StatelessWidget {
                 IconButton(
                   icon: Icon(
                     Icons.close,
-                    weight: 2.0,
+                    size: 30.0,
                     color: Theme.of(context).primaryColor,
                   ),
                   onPressed: () {
@@ -55,14 +57,10 @@ class DeleteGroupPopup extends StatelessWidget {
             Text(
               'Êtes-vous sûr de vouloir supprimer le groupe : $groupName ?',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Theme.of(context).textTheme.bodySmall?.color,
-              ),
+              style: const TextStyle(fontSize: 16.0),
             ),
-            const SizedBox(height: 10.0),
+            const SizedBox(height: 20.0),
             Column(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
                 SizedBox(
                   width: double.infinity,
@@ -74,7 +72,7 @@ class DeleteGroupPopup extends StatelessWidget {
                       backgroundColor: Theme.of(context).primaryColor,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
+                        borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
                     child: const Text(
@@ -93,7 +91,7 @@ class DeleteGroupPopup extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
+                        borderRadius: BorderRadius.circular(8.0),
                       ),
                       side: BorderSide(color: Theme.of(context).primaryColor),
                     ),

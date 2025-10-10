@@ -9,6 +9,7 @@ class DeleteMultipleGroupsPopup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
       elevation: 0,
       backgroundColor: Colors.transparent,
       child: Container(
@@ -60,7 +61,7 @@ class DeleteMultipleGroupsPopup extends StatelessWidget {
                 color: Theme.of(context).textTheme.bodySmall?.color,
               ),
             ),
-            const SizedBox(height: 10.0),
+            const SizedBox(height: 20.0),
             Column(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[

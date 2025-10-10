@@ -206,7 +206,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
         child: SizedBox(
           width: double.infinity,
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(15.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -269,7 +269,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
               )
             : const Text(
                 'Ajouter',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
       ),
     );
@@ -629,7 +629,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
             padding: const EdgeInsets.only(top: 8.0),
             child: Text(
               _timeError!,
-              style: const TextStyle(color: Colors.red, fontSize: 15),
+              style: const TextStyle(color: Colors.red, fontSize: 16),
             ),
           ),
       ],
