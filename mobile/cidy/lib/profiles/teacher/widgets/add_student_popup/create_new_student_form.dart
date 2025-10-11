@@ -50,6 +50,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
         maxHeight: 800,
         imageQuality: 85,
       );
+      if (!mounted) return;
 
       if (image != null) {
         setState(() {
@@ -136,14 +137,13 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
 
       if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
@@ -182,9 +182,11 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
     } catch (e) {
       widget.onServerError();
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

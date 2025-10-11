@@ -63,13 +63,12 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
       if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
@@ -86,26 +85,26 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
-        if (mounted) {
-          setState(() {
-            _groupDetail = json.decode(utf8.decode(response.bodyBytes));
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _errorMessage = 'Failed to load group details.';
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
         setState(() {
-          _errorMessage = 'An error occurred: $e';
+          _groupDetail = json.decode(utf8.decode(response.bodyBytes));
+        });
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      } else {
+        setState(() {
+          _errorMessage = 'Failed to load group details.';
         });
       }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An error occurred: $e';
+      });
     } finally {
       if (mounted && showLoading) {
         setState(() {
@@ -125,13 +124,13 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
+
       if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
@@ -147,6 +146,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         }),
       );
       if (!mounted) return;
+
       if (response.statusCode == 200) {
         // i started by pushing a success snackbar in the snackbar queue because he
         // need a mounted context
@@ -657,6 +657,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         return DeleteGroupPopup(groupName: _groupDetail!['name']);
       },
     );
+    if (!mounted) return;
 
     if (confirmed == true) {
       await _deleteGroup();
@@ -868,6 +869,8 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                           firstDate: DateTime(2020),
                           lastDate: DateTime.now(),
                         );
+                        if (!mounted) return;
+
                         if (picked != null) {
                           setState(() {
                             selectedDate = picked;
@@ -890,6 +893,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                           context: context,
                           initialTime: selectedStartTime ?? TimeOfDay.now(),
                         );
+                        if (!mounted) return;
                         if (picked != null) {
                           setState(() {
                             selectedStartTime = picked;
@@ -912,6 +916,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                           context: context,
                           initialTime: selectedEndTime ?? TimeOfDay.now(),
                         );
+                        if (!mounted) return;
                         if (picked != null) {
                           setState(() {
                             selectedEndTime = picked;
@@ -1096,6 +1101,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                           firstDate: DateTime(2020),
                           lastDate: DateTime.now(),
                         );
+                        if (!mounted) return;
                         if (pickedDate != null) {
                           final TimeOfDay? pickedTime = await showTimePicker(
                             context: context,
@@ -1103,6 +1109,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                               selectedDateTime,
                             ),
                           );
+                          if (!mounted) return;
                           if (pickedTime != null) {
                             setState(() {
                               selectedDateTime = DateTime(

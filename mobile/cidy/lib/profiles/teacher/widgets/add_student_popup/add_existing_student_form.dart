@@ -34,7 +34,6 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   bool _isLoading = false;
   bool _isSubmitting = false;
   bool _isLoadingMore = false;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -62,14 +61,13 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
 
       if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
@@ -103,12 +101,10 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           }
         });
       } else if (response.statusCode == 401) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       } else {
         widget.onServerError();
       }
@@ -139,20 +135,18 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
 
     setState(() {
       _isSubmitting = true;
-      _errorMessage = null;
     });
 
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
 
       if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
@@ -168,15 +162,14 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         },
         body: json.encode({'student_ids': _selectedStudentIds.toList()}),
       );
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
-        if (mounted) {
-          final studentCount = _selectedStudentIds.length;
-          final message = studentCount == 1
-              ? 'L’élève a été créé et ajouté avec succès.'
-              : '$studentCount élèves ont été créés et ajoutés avec succès.';
-          widget.onStudentsAdded(message: message);
-        }
+        final studentCount = _selectedStudentIds.length;
+        final message = studentCount == 1
+            ? 'L’élève a été créé et ajouté avec succès.'
+            : '$studentCount élèves ont été créés et ajoutés avec succès.';
+        widget.onStudentsAdded(message: message);
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -243,7 +236,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
 
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 0,

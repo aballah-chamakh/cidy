@@ -56,6 +56,7 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
     final teacherfullName = await storage.read(key: 'fullname');
     final teacherImageUrl = await storage.read(key: 'image_url');
     final teacherEmail = await storage.read(key: 'email');
+    if (!mounted) return;
 
     setState(() {
       _teacherFullName = teacherfullName!;
@@ -72,6 +73,7 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
       Uri.parse('${Config.backendUrl}/api/teacher/notifications/unread_count/'),
       headers: {'Authorization': 'Bearer $token'},
     );
+    if (!mounted) return;
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -80,6 +82,11 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
         _notificationCount = data['unread_count'];
         AppState.notificationCount = _notificationCount;
       });
+    } else if (response.statusCode == 401) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
     }
   }
 
@@ -237,12 +244,11 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
           // Handle logout
           const storage = FlutterSecureStorage();
           await storage.deleteAll();
-          if (context.mounted) {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false,
-            );
-          }
+          if (!context.mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
         },
         onClose: () {
           Navigator.of(context).pop();

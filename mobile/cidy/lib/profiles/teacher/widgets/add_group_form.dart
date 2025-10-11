@@ -81,13 +81,13 @@ class _AddGroupFormState extends State<AddGroupForm> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
+
       if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
@@ -109,31 +109,25 @@ class _AddGroupFormState extends State<AddGroupForm> {
           'end_time': _formatTime(_endTime!),
         }),
       );
-
-      if (response.statusCode == 401) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-        return;
-      }
+      if (!mounted) return;
 
       if (response.statusCode == 201) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         final int? groupId = (data is Map && data['group_id'] is int)
             ? data['group_id'] as int
             : null;
-        if (mounted) {
-          Navigator.of(context).pop();
-          if (groupId != null) {
-            widget.onGroupCreated(groupId);
-          } else {
-            // Fallback: refresh only
-            widget.onGroupCreated(-1);
-          }
+        Navigator.of(context).pop();
+        if (groupId != null) {
+          widget.onGroupCreated(groupId);
+        } else {
+          // Fallback: refresh only
+          widget.onGroupCreated(-1);
         }
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       } else if (response.statusCode == 400) {
         final errorData = json.decode(utf8.decode(response.bodyBytes));
         if (errorData is Map && errorData.containsKey('non_field_errors')) {
@@ -152,15 +146,15 @@ class _AddGroupFormState extends State<AddGroupForm> {
           }
         }
         // For other 400 errors, show snackbar
-        if (mounted) Navigator.of(context).pop();
-        _showError('Erreur de validation (400)');
+        Navigator.of(context).pop();
+        _showError('Erreur du serveur (500)');
       } else {
-        if (mounted) Navigator.of(context).pop();
-        _showError('Erreur de serveur (500).');
+        Navigator.of(context).pop();
+        _showError('Erreur du serveur (500).');
       }
     } catch (e) {
-      if (mounted) Navigator.of(context).pop();
-      _showError('Erreur de serveur (500).');
+      Navigator.of(context).pop();
+      _showError('Erreur du serveur (500).');
     } finally {
       if (mounted) {
         setState(() {

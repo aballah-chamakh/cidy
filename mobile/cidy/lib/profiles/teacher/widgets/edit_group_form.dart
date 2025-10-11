@@ -155,13 +155,13 @@ class _EditGroupFormState extends State<EditGroupForm> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
+
       if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
@@ -191,10 +191,15 @@ class _EditGroupFormState extends State<EditGroupForm> {
         body: json.encode(requestBody),
       );
 
-      if (!mounted)
-        return;
-      else if (response.statusCode == 200) {
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
         widget.onGroupUpdated();
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       } else if (response.statusCode == 400) {
         final errorData = json.decode(utf8.decode(response.bodyBytes));
         if (errorData is Map && errorData.containsKey('non_field_errors')) {

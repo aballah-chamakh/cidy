@@ -52,23 +52,22 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
   }
 
   Future<void> _fetchDashboardData({bool showLoadingOverlay = false}) async {
-    if (mounted) {
-      setState(() {
-        if (showLoadingOverlay) {
-          _isLoading = true;
-        }
-        _isFetchingData = true;
-      });
-    }
+    setState(() {
+      if (showLoadingOverlay) {
+        _isLoading = true;
+      }
+      _isFetchingData = true;
+    });
+
     const storage = FlutterSecureStorage();
     final token = await storage.read(key: 'access_token');
+    if (!mounted) return;
+
     if (token == null) {
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
-      }
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
       return;
     }
 
@@ -88,33 +87,36 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         Uri.parse(url),
         headers: {'Authorization': 'Bearer $token'},
       );
-      if (mounted) {
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          setState(() {
-            _hasLevels = data['has_levels'];
-            if (_hasLevels) {
-              _dashboardData = data['dashboard'];
-            }
-          });
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erreur: ${response.reasonPhrase}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _hasLevels = data['has_levels'];
+          if (_hasLevels) {
+            _dashboardData = data['dashboard'];
+          }
+        });
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Une erreur est survenue: $e'),
+            content: Text('Erreur: ${response.reasonPhrase}'),
             backgroundColor: Colors.red,
           ),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Une erreur est survenue: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -165,6 +167,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
         );
       },
     );
+    if (!mounted) return;
 
     if (picked != null) {
       setState(() {
