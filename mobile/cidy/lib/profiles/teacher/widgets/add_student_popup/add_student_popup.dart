@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/profiles/teacher/widgets/add_student_popup/add_existing_student_form.dart';
 import 'package:cidy/profiles/teacher/widgets/add_student_popup/create_new_student_form.dart';
 
@@ -51,8 +52,13 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
 
     // Show initial selection dialog
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: popupHorizontalMargin,
+        vertical: 0,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(popupBorderRadius),
+      ),
       elevation: 0,
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
@@ -60,7 +66,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         child: Container(
-          padding: const EdgeInsets.all(15.0),
+          padding: const EdgeInsets.all(popupPadding),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             shape: BoxShape.rectangle,
@@ -91,17 +97,17 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
         Text(
           'Ajouter des élèves',
           style: TextStyle(
-            fontSize: 20.0,
+            fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+            color: primaryColor,
           ),
         ),
         IconButton(
           icon: Icon(
             Icons.close,
             weight: 2.0,
-            color: Theme.of(context).primaryColor,
-            size: 30,
+            color: primaryColor,
+            size: headerIconSize,
           ),
           onPressed: () {
             Navigator.of(context).pop();
@@ -116,16 +122,12 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
       children: [
         const SizedBox(height: 16.0),
         // Add student icon
-        Icon(
-          Icons.person_add,
-          size: 100.0,
-          color: Theme.of(context).primaryColor,
-        ),
+        Icon(Icons.person_add, size: 100.0, color: primaryColor),
         const SizedBox(height: 16.0),
         // Label
         Text(
           'Choisissez entre ajouter des élèves existants ou créer un nouvel élève puis l\'ajouter',
-          style: TextStyle(fontSize: 18.0, color: Colors.grey[700]),
+          style: TextStyle(fontSize: mediumFontSize, color: Colors.grey[700]),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10.0),
@@ -133,36 +135,32 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
         DropdownButtonFormField<String>(
           value: _selectedOption,
           decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(inputBorderRadius),
+            ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(
-                color: Theme.of(context).primaryColor,
-                width: 2,
-              ),
+              borderRadius: BorderRadius.circular(inputBorderRadius),
+              borderSide: BorderSide(color: primaryColor, width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 16,
-            ),
+            contentPadding: inputContentPadding,
           ),
           hint: const Text(
             'Sélectionnez une option',
-            style: TextStyle(fontSize: 18.0),
+            style: TextStyle(fontSize: mediumFontSize),
           ),
           items: const [
             DropdownMenuItem(
               value: 'existing',
               child: Text(
                 'ajouter des élèves existants',
-                style: TextStyle(fontSize: 18.0),
+                style: TextStyle(fontSize: mediumFontSize),
               ),
             ),
             DropdownMenuItem(
               value: 'new',
               child: Text(
                 'créer un nouvel élève puis l\'ajouter',
-                style: TextStyle(fontSize: 18.0),
+                style: TextStyle(fontSize: mediumFontSize),
               ),
             ),
           ],
@@ -189,34 +187,25 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
         children: [
           Expanded(
             child: TextButton(
-              style: TextButton.styleFrom(
-                side: BorderSide(color: Theme.of(context).primaryColor),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+              style: secondaryButtonStyle,
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Annuler', style: TextStyle(fontSize: 18.0)),
+              child: const Text(
+                'Annuler',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
             ),
           ),
           const SizedBox(width: 5),
           Expanded(
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
+              style: primaryButtonStyle,
               onPressed: _selectedOption != null ? _handleNext : null,
-              child: const Text('Suivant', style: TextStyle(fontSize: 18.0)),
+              child: const Text(
+                'Suivant',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
             ),
           ),
         ],

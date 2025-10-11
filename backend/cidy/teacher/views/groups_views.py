@@ -337,7 +337,6 @@ def get_group_students(request,group_id):
 @permission_classes([IsAuthenticated])
 def create_group_student(request, group_id):
     """Create a new student then add them to the specified group"""
-
     teacher = request.user.teacher
 
     try:
@@ -350,6 +349,7 @@ def create_group_student(request, group_id):
 
     # Validate the data
     if not serializer.is_valid():
+        print(serializer.errors)
         return Response(serializer.errors, status=400)
 
     # Save the student

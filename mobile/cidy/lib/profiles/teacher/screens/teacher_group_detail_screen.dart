@@ -30,9 +30,10 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   String? _errorMessage;
   final Set<int> _selectedStudentIds = {};
   final TextEditingController _searchController = TextEditingController();
-  String? _sortBy;
+  String? _sortBy = '';
 
   final Map<String, String> _sortOptions = {
+    '': 'Par défaut',
     'paid_amount_desc': 'Payé (décroissant)',
     'paid_amount_asc': 'Payé (croissant)',
     'unpaid_amount_desc': 'Impayé (décroissant)',
@@ -191,6 +192,14 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
+  }
+
+  void clearFiltersAndSelectedStudents() {
+    setState(() {
+      _searchController.text = '';
+      _sortBy = '';
+      _selectedStudentIds.clear();
+    });
   }
 
   @override
@@ -613,6 +622,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             if (mounted) {
               _showError(errorMessage);
               Navigator.of(context).pop();
+              clearFiltersAndSelectedStudents();
               _fetchGroupDetails();
             }
           },
@@ -632,6 +642,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                 if (mounted) {
                   _showSuccess(message);
                   Navigator.of(context).pop();
+                  clearFiltersAndSelectedStudents();
                   _fetchGroupDetails();
                 }
               },
@@ -640,6 +651,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             if (mounted) {
               _showError('Erreur du serveur (500)');
               Navigator.of(context).pop();
+              clearFiltersAndSelectedStudents();
               _fetchGroupDetails();
             } else {
               print("onServerError Context is not mounted");

@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -109,6 +109,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         widget.onServerError();
       }
     } catch (e) {
+      if (!mounted) return;
       widget.onServerError();
     } finally {
       if (mounted) {
@@ -126,7 +127,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         const SnackBar(
           content: Text(
             'Veuillez sélectionner au moins un élève.',
-            style: TextStyle(fontSize: 16.0),
+            style: TextStyle(fontSize: mediumFontSize),
           ),
         ),
       );
@@ -179,6 +180,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         widget.onServerError();
       }
     } catch (e) {
+      if (!mounted) return;
       widget.onServerError();
     } finally {
       if (mounted) {
@@ -207,7 +209,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         const SnackBar(
           content: Text(
             'Tous les élèves ont été chargés.',
-            style: TextStyle(fontSize: 14.0),
+            style: TextStyle(fontSize: mediumFontSize),
           ),
           duration: Duration(seconds: 1),
         ),
@@ -236,7 +238,10 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: popupHorizontalMargin,
+        vertical: 0,
+      ),
 
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
       elevation: 0,
@@ -246,11 +251,11 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         child: Container(
-          padding: const EdgeInsets.all(15.0),
+          padding: const EdgeInsets.all(popupPadding),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             shape: BoxShape.rectangle,
-            borderRadius: BorderRadius.circular(16.0),
+            borderRadius: BorderRadius.circular(popupBorderRadius),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -260,7 +265,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
               const Divider(height: 16),
               _buildSearchField(),
               const SizedBox(height: 8),
-              _buildStudentsHeader(),
+              if (_availableStudentsCount > 0) _buildStudentsHeader(),
               const SizedBox(height: 8),
               Flexible(
                 fit: FlexFit.loose,
@@ -287,17 +292,17 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         Text(
           'Ajouter des élèves existants',
           style: TextStyle(
-            fontSize: 20.0,
+            fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+            color: primaryColor,
           ),
         ),
         IconButton(
           icon: Icon(
             Icons.close,
             weight: 2.0,
-            size: 30,
-            color: Theme.of(context).primaryColor,
+            size: headerIconSize,
+            color: primaryColor,
           ),
           onPressed: () {
             Navigator.of(context).pop();
@@ -311,9 +316,9 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
     return Text(
       '$_availableStudentsCount Élèves',
       style: TextStyle(
-        fontSize: 16,
+        fontSize: mediumFontSize,
         fontWeight: FontWeight.w600,
-        color: Theme.of(context).primaryColor,
+        color: primaryColor,
       ),
     );
   }
@@ -321,21 +326,20 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
-      style: const TextStyle(fontSize: 16.0),
+      cursorColor: primaryColor,
+      style: const TextStyle(fontSize: mediumFontSize),
       decoration: InputDecoration(
         hintText: 'Rechercher un élève...',
-        hintStyle: const TextStyle(fontSize: 16.0),
+        hintStyle: const TextStyle(fontSize: mediumFontSize),
         prefixIcon: const Icon(Icons.search),
+        contentPadding: inputContentPadding,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 2,
-          ),
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
         ),
       ),
       onChanged: (value) {
@@ -366,7 +370,10 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         child: Center(
           child: Text(
             'Aucun élève du même niveau que le groupe n’est disponible à ajouter.',
-            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16.0),
+            style: TextStyle(
+              fontStyle: FontStyle.italic,
+              fontSize: mediumFontSize,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -378,7 +385,10 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           child: Text(
             'Aucun élève trouvé pour votre recherche.',
 
-            style: TextStyle(fontStyle: FontStyle.italic, fontSize: 16.0),
+            style: TextStyle(
+              fontStyle: FontStyle.italic,
+              fontSize: mediumFontSize,
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -423,7 +433,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                               student['fullname'].toString()[0].toUpperCase(),
                               style: TextStyle(
                                 color: Colors.black87,
-                                fontSize: 18,
+                                fontSize: mediumFontSize,
                                 fontWeight: FontWeight.bold,
                               ),
                             )
@@ -435,7 +445,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                       child: Text(
                         student['fullname'].toString(),
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: mediumFontSize,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -473,12 +483,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         children: [
           Expanded(
             child: TextButton(
-              style: TextButton.styleFrom(
-                side: BorderSide(color: Theme.of(context).primaryColor),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
+              style: secondaryButtonStyle,
               onPressed: _isSubmitting
                   ? null
                   : () {
@@ -488,25 +493,16 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                         Navigator.of(context).pop();
                       }
                     },
-              child: const Text('Retour', style: TextStyle(fontSize: 16.0)),
+              child: const Text(
+                'Retour',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
             ),
           ),
           const SizedBox(width: 5),
           Expanded(
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _selectedStudentIds.isEmpty
-                    ? Colors.grey
-                    : Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
+              style: primaryButtonStyle,
               onPressed: (_isSubmitting || _selectedStudentIds.isEmpty)
                   ? null
                   : _addStudentsToGroup,
@@ -519,7 +515,10 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Text('Ajouter', style: TextStyle(fontSize: 16.0)),
+                  : const Text(
+                      'Ajouter',
+                      style: TextStyle(fontSize: mediumFontSize),
+                    ),
             ),
           ),
         ],

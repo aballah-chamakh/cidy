@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:cidy/config.dart';
+import 'package:cidy/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -30,12 +32,28 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   String? _selectedGender;
-  bool _isLoading = false;
   String? _errorMessage;
+  String? _phoneErrorMessage;
+  bool _isLoading = false;
   File? _selectedImage;
 
   @override
+  void initState() {
+    super.initState();
+    _phoneController.addListener(_clearPhoneError);
+  }
+
+  void _clearPhoneError() {
+    if (_phoneErrorMessage != null) {
+      setState(() {
+        _phoneErrorMessage = null;
+      });
+    }
+  }
+
+  @override
   void dispose() {
+    _phoneController.removeListener(_clearPhoneError);
     _fullNameController.dispose();
     _phoneController.dispose();
     super.dispose();
@@ -57,19 +75,16 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
           _selectedImage = File(image.path);
         });
       }
-    } catch (e, stackTrace) {
-      if (mounted) {
-        print('Error picking image: $e');
-        print('Stack trace: $stackTrace');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Erreur lors de la sélection de l\'image',
-              style: TextStyle(fontSize: 16.0),
-            ),
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Erreur lors de la sélection de l\'image',
+            style: TextStyle(fontSize: mediumFontSize),
           ),
-        );
-      }
+        ),
+      );
     }
   }
 
@@ -119,6 +134,11 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
 
   Future<void> _createAndAddStudent() async {
     if (!_formKey.currentState!.validate()) {
+      if (_selectedGender == null) {
+        setState(() {
+          _errorMessage = 'Veuillez sélectionner le genre de l\'élève.';
+        });
+      }
       return;
     }
 
@@ -132,6 +152,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _phoneErrorMessage = null;
     });
 
     try {
@@ -176,10 +197,31 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
           MaterialPageRoute(builder: (context) => const LoginScreen()),
           (route) => false,
         );
+      } else if (createResponse.statusCode == 400) {
+        try {
+          final Map<String, dynamic> responseData = jsonDecode(
+            createResponse.body,
+          );
+          print("phone number validation");
+          print(responseData);
+          if (responseData.containsKey('phone_number') &&
+              responseData['phone_number'][0] ==
+                  'student with this phone number already exists.') {
+            setState(() {
+              _phoneErrorMessage =
+                  'Un élève avec ce numéro de téléphone existe déjà.';
+            });
+          } else {
+            widget.onServerError();
+          }
+        } catch (e) {
+          widget.onServerError();
+        }
       } else {
         widget.onServerError();
       }
     } catch (e) {
+      if (!mounted) return;
       widget.onServerError();
     } finally {
       if (mounted) {
@@ -193,9 +235,14 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: popupHorizontalMargin,
+        vertical: 0,
+      ),
 
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(popupBorderRadius),
+      ),
       elevation: 0,
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
@@ -203,11 +250,11 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         child: Container(
-          padding: const EdgeInsets.all(15.0),
+          padding: const EdgeInsets.all(popupPadding),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             shape: BoxShape.rectangle,
-            borderRadius: BorderRadius.circular(16.0),
+            borderRadius: BorderRadius.circular(popupBorderRadius),
           ),
           child: Form(
             key: _formKey,
@@ -228,8 +275,32 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
                         _buildFullNameField(),
                         const SizedBox(height: 10),
                         _buildPhoneField(),
-                        const SizedBox(height: 10),
+                        if (_phoneErrorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5.0),
+                            child: Text(
+                              _phoneErrorMessage!,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 15.0,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 8),
                         _buildGenderSection(),
+                        if (_errorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5.0),
+                            child: Text(
+                              _errorMessage!,
+                              textAlign: TextAlign.left,
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontSize: 15.0,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -251,17 +322,17 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
         Text(
           'Créer un nouvel élève',
           style: TextStyle(
-            fontSize: 20.0,
+            fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+            color: primaryColor,
           ),
         ),
         IconButton(
           icon: Icon(
             Icons.close,
             weight: 2.0,
-            color: Theme.of(context).primaryColor,
-            size: 30,
+            color: primaryColor,
+            size: headerIconSize,
           ),
           onPressed: () {
             Navigator.of(context).pop();
@@ -275,15 +346,18 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
     return Center(
       child: Stack(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.grey.shade200,
-            backgroundImage: _selectedImage != null
-                ? FileImage(_selectedImage!)
-                : null,
-            child: _selectedImage == null
-                ? Icon(Icons.person, size: 50, color: Colors.grey.shade600)
-                : null,
+          SizedBox(
+            width: 130,
+            height: 130,
+            child: CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: _selectedImage != null
+                  ? FileImage(_selectedImage!)
+                  : NetworkImage(
+                      "${Config.backendUrl}/media/defaults/student.png",
+                    ),
+            ),
           ),
           Positioned(
             bottom: 0,
@@ -292,7 +366,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
+                color: primaryColor,
                 shape: BoxShape.circle,
               ),
               child: IconButton(
@@ -309,16 +383,29 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
   Widget _buildGenderSection() {
     return SizedBox(
       width: double.infinity,
+
       child: SegmentedButton<String>(
-        segments: const <ButtonSegment<String>>[
+        segments: <ButtonSegment<String>>[
           ButtonSegment<String>(
             value: 'M',
-            label: Text('Masculin', style: TextStyle(fontSize: 18.0)),
+            label: Padding(
+              padding: buttonSegmentPadding, // vertical padding
+              child: Text(
+                'Masculin',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
+            ),
             icon: Icon(Icons.male),
           ),
           ButtonSegment<String>(
             value: 'F',
-            label: Text('Féminin', style: TextStyle(fontSize: 18.0)),
+            label: Padding(
+              padding: buttonSegmentPadding, // vertical padding
+              child: Text(
+                'Féminin',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
+            ),
             icon: Icon(Icons.female),
           ),
         ],
@@ -331,9 +418,14 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
         emptySelectionAllowed: true,
         style: SegmentedButton.styleFrom(
           backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-          foregroundColor: Theme.of(context).primaryColor,
+          foregroundColor: primaryColor,
           selectedForegroundColor: Colors.white,
-          selectedBackgroundColor: Theme.of(context).primaryColor,
+          selectedBackgroundColor: primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+              buttonSegmentBorderRadius,
+            ), // <-- borderRadius here
+          ),
         ),
       ),
     );
@@ -342,19 +434,20 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
   Widget _buildFullNameField() {
     return TextFormField(
       controller: _fullNameController,
-      style: const TextStyle(
-        fontSize: 18, // 👈 sets the input text size
+      style: TextStyle(
+        fontSize: mediumFontSize, // 👈 sets the input text size
       ),
+      cursorColor: primaryColor,
       decoration: InputDecoration(
         labelText: 'Nom complet',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 2,
-          ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        contentPadding: inputContentPadding,
       ),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
@@ -368,19 +461,20 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
   Widget _buildPhoneField() {
     return TextFormField(
       controller: _phoneController,
+      cursorColor: primaryColor,
       style: const TextStyle(
-        fontSize: 18, // 👈 sets the input text size
+        fontSize: mediumFontSize, // 👈 sets the input text size
       ),
       decoration: InputDecoration(
         labelText: 'Numéro de téléphone',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(
-            color: Theme.of(context).primaryColor,
-            width: 2,
-          ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        contentPadding: inputContentPadding,
       ),
       keyboardType: TextInputType.phone,
       inputFormatters: [
@@ -404,12 +498,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
       children: [
         Expanded(
           child: TextButton(
-            style: TextButton.styleFrom(
-              side: BorderSide(color: Theme.of(context).primaryColor),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+            style: secondaryButtonStyle,
 
             onPressed: _isLoading
                 ? null
@@ -420,20 +509,16 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
                       Navigator.of(context).pop();
                     }
                   },
-            child: const Text('Retour', style: TextStyle(fontSize: 18.0)),
+            child: const Text(
+              'Retour',
+              style: TextStyle(fontSize: mediumFontSize),
+            ),
           ),
         ),
         const SizedBox(width: 5),
         Expanded(
           child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
+            style: primaryButtonStyle,
             onPressed: _isLoading ? null : _createAndAddStudent,
             child: _isLoading
                 ? const SizedBox(
@@ -444,7 +529,10 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
                       strokeWidth: 2,
                     ),
                   )
-                : const Text('Ajouter', style: TextStyle(fontSize: 18.0)),
+                : const Text(
+                    'Ajouter',
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
           ),
         ),
       ],
