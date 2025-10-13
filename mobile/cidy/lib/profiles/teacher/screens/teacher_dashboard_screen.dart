@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cidy/app_styles.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -195,11 +196,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       body: Container(
         color: scaffoldBackgroundColor,
         child: _isLoading
-            ? Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
-                ),
-              )
+            ? Center(child: CircularProgressIndicator(color: primaryColor))
             : _hasLevels
             ? _buildDashboard()
             : _buildNoLevelsWidget(),

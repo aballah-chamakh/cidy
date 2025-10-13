@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/constants.dart';
 import 'package:cidy/config.dart';
 import 'package:cidy/profiles/teacher/widgets/add_student_popup/add_student_popup.dart';
@@ -214,7 +215,9 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: primaryColor),
+      );
     }
 
     if (_errorMessage != null) {

@@ -23,6 +23,7 @@ class TestDateRangeFilter:
     THIS_YEAR_DATES = [datetime.datetime(2025, 8, 10), datetime.datetime(2025, 8, 14)]
 
     def set_up(self):
+        Student.objects.all().delete()
         User.objects.all().delete()
         User.objects.create_superuser("chamakhabdallah8@gmail.com","58671414", "cidy1234")
 

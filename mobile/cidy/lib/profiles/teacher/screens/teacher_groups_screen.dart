@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:cidy/config.dart';
-
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_group_detail_screen.dart';
 import 'package:cidy/profiles/teacher/widgets/add_group_form.dart';
 import 'package:cidy/profiles/teacher/widgets/delete_multiple_groups_popup.dart';
@@ -373,7 +373,14 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 MaterialPageRoute(
                   builder: (_) => TeacherGroupDetailScreen(
                     groupId: groupId,
-                    refreshGroupList: _fetchGroups,
+                    refreshGroupList: () {
+                      setState(() {
+                        _searchController.text = '';
+                        _currentFilters = {};
+                        _selectedGroupIds.clear();
+                      });
+                      _fetchGroups();
+                    },
                   ),
                 ),
               );
@@ -453,9 +460,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 child: SizedBox(
                   height: MediaQuery.of(context).size.height * 0.7,
                   child: Center(
-                    child: CircularProgressIndicator(
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    child: CircularProgressIndicator(color: primaryColor),
                   ),
                 ),
               ),
@@ -722,7 +727,14 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
             MaterialPageRoute(
               builder: (context) => TeacherGroupDetailScreen(
                 groupId: group['id'],
-                refreshGroupList: _fetchGroups,
+                refreshGroupList: () {
+                  setState(() {
+                    _searchController.text = '';
+                    _currentFilters = {};
+                    _selectedGroupIds.clear();
+                  });
+                  _fetchGroups();
+                },
               ),
             ),
           );

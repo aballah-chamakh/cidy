@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -370,7 +370,9 @@ class _AddStudentToGroupFormState extends State<AddStudentToGroupForm> {
 
   Widget _buildExistingStudentsScreen() {
     if (_isLoadingStudents) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(color: primaryColor),
+      );
     }
 
     if (_availableStudents.isEmpty) {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cidy/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -166,7 +167,7 @@ class _TeacherWeekScheduleScreenState extends State<TeacherWeekScheduleScreen> {
     return TeacherLayout(
       title: 'Planning de la semaine',
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
           : PageView.builder(
               controller: _pageController,
               scrollDirection: Axis.horizontal,

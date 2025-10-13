@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,9 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   bool _isSubmitting = false;
   bool _isLoadingMore = false;
 
+  // Debounce for the search field to avoid spamming the API
+  Timer? _searchDebounce;
+
   @override
   void initState() {
     super.initState();
@@ -45,7 +49,9 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -87,10 +93,6 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       if (!mounted) return;
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
-        print("available students data:");
-        print(data);
-        print(data['total_students'].runtimeType);
-        print(data['page'].runtimeType);
         setState(() {
           _availableStudentsCount = data['total_students'];
           _page = data['page'];
@@ -123,6 +125,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
 
   Future<void> _addStudentsToGroup() async {
     if (_selectedStudentIds.isEmpty) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -134,6 +137,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       return;
     }
 
+    if (!mounted) return;
     setState(() {
       _isSubmitting = true;
     });
@@ -168,8 +172,8 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       if (response.statusCode == 200) {
         final studentCount = _selectedStudentIds.length;
         final message = studentCount == 1
-            ? 'L’élève a été créé et ajouté avec succès.'
-            : '$studentCount élèves ont été créés et ajoutés avec succès.';
+            ? 'L’élève a été ajouté avec succès.'
+            : '$studentCount élèves ont été ajoutés avec succès.';
         widget.onStudentsAdded(message: message);
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -192,6 +196,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   }
 
   void _toggleStudentSelection(int studentId) {
+    if (!mounted) return;
     setState(() {
       if (_selectedStudentIds.contains(studentId)) {
         _selectedStudentIds.remove(studentId);
@@ -202,9 +207,11 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   }
 
   Future<void> _loadNextPage() async {
+    if (_isLoading || _isLoadingMore) return;
+
     // Check if there are more students to load
     if (_availableStudents.length >= _availableStudentsCount) {
-      // Show a brief haptic feedback or visual indication that no more data
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -217,7 +224,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       return;
     }
 
-    // Increment page and fetch next batch
+    if (!mounted) return;
     setState(() {
       _page++;
     });
@@ -225,11 +232,12 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   }
 
   void _onScroll() {
+    // Prevent starting pagination while an initial or ongoing load is in progress
+    if (_isLoading || _isLoadingMore) return;
+
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      // User has scrolled near the bottom (200 pixels from bottom)
-      if (!_isLoadingMore &&
-          _availableStudents.length < _availableStudentsCount) {
+      if (_availableStudents.length < _availableStudentsCount) {
         _loadNextPage();
       }
     }
@@ -343,11 +351,16 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         ),
       ),
       onChanged: (value) {
-        setState(() {
-          _page = 1; // Reset to first page when searching
-          _selectedStudentIds.clear();
+        // Debounce the search to avoid firing too many requests
+        _searchDebounce?.cancel();
+        _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+          if (!mounted) return;
+          setState(() {
+            _page = 1; // Reset to first page when searching
+            _selectedStudentIds.clear();
+          });
+          _fetchAvailableStudents();
         });
-        _fetchAvailableStudents();
       },
     );
   }
@@ -357,9 +370,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(15.0),
-          child: CircularProgressIndicator(
-            color: Theme.of(context).primaryColor,
-          ),
+          child: CircularProgressIndicator(color: primaryColor),
         ),
       );
     }
@@ -370,10 +381,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
         child: Center(
           child: Text(
             'Aucun élève du même niveau que le groupe n’est disponible à ajouter.',
-            style: TextStyle(
-              fontStyle: FontStyle.italic,
-              fontSize: mediumFontSize,
-            ),
+            style: TextStyle(fontSize: mediumFontSize),
             textAlign: TextAlign.center,
           ),
         ),
@@ -385,10 +393,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           child: Text(
             'Aucun élève trouvé pour votre recherche.',
 
-            style: TextStyle(
-              fontStyle: FontStyle.italic,
-              fontSize: mediumFontSize,
-            ),
+            style: TextStyle(fontSize: mediumFontSize),
             textAlign: TextAlign.center,
           ),
         ),
@@ -467,9 +472,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
           Center(
             child: Padding(
               padding: const EdgeInsets.all(15.0),
-              child: CircularProgressIndicator(
-                color: Theme.of(context).primaryColor,
-              ),
+              child: CircularProgressIndicator(color: primaryColor),
             ),
           ),
       ],
