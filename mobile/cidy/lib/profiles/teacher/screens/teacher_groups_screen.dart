@@ -88,6 +88,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
       if (token == null) {
         if (mounted) {
           Navigator.of(context).pushAndRemoveUntil(
@@ -131,39 +132,32 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         url,
         headers: {'Authorization': 'Bearer $token'},
       );
-
-      if (response.statusCode == 401) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-        return;
-      }
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         //print("group id type : ${data['groups'][0]['id'].runtimeType}");
-        if (mounted) {
-          setState(() {
-            _groups = data['groups'] as List<dynamic>;
-            //print("group id type after : ${_groups[0]['id'].runtimeType}");
+        setState(() {
+          _groups = data['groups'] as List<dynamic>;
+          //print("group id type after : ${_groups[0]['id'].runtimeType}");
 
-            _filterOptions =
-                data['teacher_levels_sections_subjects_hierarchy']
-                    as Map<String, dynamic>;
-          });
-        }
+          _filterOptions =
+              data['teacher_levels_sections_subjects_hierarchy']
+                  as Map<String, dynamic>;
+        });
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       } else {
         _showError("Erreur du serveur (500)");
       }
     } catch (e, stacktrace) {
-      if (mounted) {
-        print("Error: $e");
-        print("StackTrace: $stacktrace");
-        _showError("Erreur du serveur (500)");
-      }
+      if (!mounted) return;
+      print("Error: $e");
+      print("StackTrace: $stacktrace");
+      _showError("Erreur du serveur (500)");
     } finally {
       if (mounted) {
         setState(() {
@@ -374,6 +368,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                   builder: (_) => TeacherGroupDetailScreen(
                     groupId: groupId,
                     refreshGroupList: () {
+                      if (!mounted) return;
                       setState(() {
                         _searchController.text = '';
                         _currentFilters = {};

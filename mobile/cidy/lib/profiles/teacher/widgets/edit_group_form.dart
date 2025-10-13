@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -106,6 +106,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
   }
 
   Future<void> _editGroup() async {
+    if (!mounted) return;
     // Clear previous errors
     setState(() {
       _nameError = null;
@@ -224,6 +225,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
         widget.onServerError('Erreur de serveur (500).');
       }
     } catch (e) {
+      if (!mounted) return;
       widget.onServerError('Erreur de serveur (500).');
     } finally {
       if (mounted) {
@@ -237,42 +239,39 @@ class _EditGroupFormState extends State<EditGroupForm> {
   @override
   Widget build(BuildContext context) {
     // Apply theme to make all cursors and dropdown icons use primary color
-    return Theme(
-      data: Theme.of(context).copyWith(
-        colorScheme: Theme.of(
-          context,
-        ).colorScheme.copyWith(primary: Theme.of(context).primaryColor),
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: popupHorizontalMargin,
+        vertical: 0,
       ),
-      child: Dialog(
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 0,
-        ), // 👈 margins on left/right
-        backgroundColor: Colors.white,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight:
-                MediaQuery.of(context).size.height *
-                0.7, // 70% of screen height
+
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(popupBorderRadius),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(popupPadding),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            shape: BoxShape.rectangle,
+            borderRadius: BorderRadius.circular(popupBorderRadius),
           ),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.95,
-            constraints: const BoxConstraints(maxWidth: 600),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildHeader(),
-                    const Divider(height: 10, thickness: 1),
-                    Flexible(child: _buildFormContent()),
-                    const SizedBox(height: 16),
-                    _buildFooter(),
-                  ],
-                ),
-              ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildHeader(),
+                const Divider(height: 10, thickness: 1),
+                Flexible(child: _buildFormContent()),
+                const SizedBox(height: 16),
+                _buildFooter(),
+              ],
             ),
           ),
         ),
@@ -287,21 +286,20 @@ class _EditGroupFormState extends State<EditGroupForm> {
         Text(
           'Modifier le groupe',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+            color: primaryColor,
           ),
           textAlign: TextAlign.left,
         ),
         IconButton(
-          icon: Icon(
-            Icons.close,
-            size: 30,
-            color: Theme.of(context).primaryColor,
-          ),
+          icon: Icon(Icons.close, size: headerIconSize, color: primaryColor),
           padding: EdgeInsets.zero, // 👈 removes default padding
           constraints: BoxConstraints(), // 👈 removes default constraints
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+          },
         ),
       ],
     );
@@ -312,9 +310,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
       width: double.infinity,
       child: ElevatedButton(
         onPressed: _isLoading ? null : _editGroup,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-        ),
+        style: primaryButtonStyle,
         child: _isLoading
             ? const SizedBox(
                 height: 20,
@@ -326,7 +322,10 @@ class _EditGroupFormState extends State<EditGroupForm> {
               )
             : const Text(
                 'Modifier',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: mediumFontSize,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
       ),
     );
@@ -340,25 +339,29 @@ class _EditGroupFormState extends State<EditGroupForm> {
           const SizedBox(height: 10),
           TextFormField(
             controller: _nameController,
-            cursorColor: Theme.of(context).primaryColor,
+            cursorColor: primaryColor,
+            style: TextStyle(
+              fontSize: mediumFontSize, // 👈 sets the input text size
+            ),
             decoration: InputDecoration(
               labelText: 'Nom du groupe',
-              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+              labelStyle: TextStyle(color: primaryColor),
+              contentPadding: inputContentPadding,
               focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide(color: primaryColor),
+                borderRadius: BorderRadius.circular(inputBorderRadius),
               ),
               errorText: null,
               errorBorder: _nameError != null
                   ? OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.red),
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(inputBorderRadius),
                     )
                   : null,
               focusedErrorBorder: _nameError != null
                   ? OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.red),
-                      borderRadius: BorderRadius.circular(8.0),
+                      borderRadius: BorderRadius.circular(inputBorderRadius),
                     )
                   : null,
             ),
@@ -389,24 +392,30 @@ class _EditGroupFormState extends State<EditGroupForm> {
           DropdownButtonFormField<String>(
             value: _selectedDayEnglish,
             dropdownColor: Colors.white,
-            iconEnabledColor: Theme.of(context).primaryColor,
+            iconEnabledColor: primaryColor,
+
             decoration: InputDecoration(
               labelText: 'Jour de la semaine',
-              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+              labelStyle: TextStyle(color: primaryColor),
+              contentPadding: inputContentPadding,
               focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                borderRadius: BorderRadius.circular(8.0),
+                borderSide: BorderSide(color: primaryColor),
+                borderRadius: BorderRadius.circular(inputBorderRadius),
               ),
             ),
             items: [
               ...weekDays.map(
                 (d) => DropdownMenuItem<String>(
                   value: d['value']!,
-                  child: Text(d['name']!),
+                  child: Text(
+                    d['name']!,
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
                 ),
               ),
             ],
             onChanged: (value) {
+              if (!mounted) return;
               setState(() {
                 _selectedDayEnglish = value;
               });
@@ -420,23 +429,38 @@ class _EditGroupFormState extends State<EditGroupForm> {
             DropdownButtonFormField<String>(
               value: _scheduleChangeType,
               dropdownColor: Colors.white,
-              iconEnabledColor: Theme.of(context).primaryColor,
+              iconEnabledColor: primaryColor,
               decoration: InputDecoration(
                 labelText: 'Type de changement d\'horaire',
-                labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                contentPadding: inputContentPadding,
+                labelStyle: TextStyle(color: primaryColor),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderSide: BorderSide(color: primaryColor),
+                  borderRadius: BorderRadius.circular(inputBorderRadius),
                 ),
               ),
               items: const [
                 DropdownMenuItem(
                   value: 'temporary',
-                  child: Text('Seulement cette semaine'),
+                  child: Text(
+                    'Seulement cette semaine',
+                    style: TextStyle(
+                      fontSize: mediumFontSize, // 👈 sets the input text size
+                    ),
+                  ),
                 ),
-                DropdownMenuItem(value: 'permanent', child: Text('Permanent')),
+                DropdownMenuItem(
+                  value: 'permanent',
+                  child: Text(
+                    'Permanent',
+                    style: TextStyle(
+                      fontSize: mediumFontSize, // 👈 sets the input text size
+                    ),
+                  ),
+                ),
               ],
               onChanged: (String? value) {
+                if (!mounted) return;
                 setState(() {
                   _scheduleChangeType = value;
                 });
@@ -463,18 +487,23 @@ class _EditGroupFormState extends State<EditGroupForm> {
             Expanded(
               child: TextFormField(
                 controller: _startTimeController,
-                cursorColor: Theme.of(context).primaryColor,
+                cursorColor: primaryColor,
+                style: TextStyle(
+                  fontSize: mediumFontSize, // 👈 sets the input text size
+                ),
                 decoration: InputDecoration(
+                  contentPadding: inputContentPadding,
                   labelText: 'Heure de début',
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  labelStyle: TextStyle(color: primaryColor),
                   border: const OutlineInputBorder(),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(color: primaryColor),
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
                   ),
                   hintText: 'HH:MM',
+                  hintStyle: TextStyle(
+                    fontSize: mediumFontSize, // 👈 sets the input text size
+                  ),
                 ),
                 keyboardType: TextInputType.datetime,
                 inputFormatters: [
@@ -497,6 +526,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
                   return null;
                 },
                 onChanged: (value) {
+                  if (!mounted) return;
                   if (_timeError != null) {
                     setState(() {
                       _timeError = null;
@@ -521,18 +551,20 @@ class _EditGroupFormState extends State<EditGroupForm> {
             Expanded(
               child: TextFormField(
                 controller: _endTimeController,
-                cursorColor: Theme.of(context).primaryColor,
+                cursorColor: primaryColor,
                 decoration: InputDecoration(
+                  contentPadding: inputContentPadding,
                   labelText: 'Heure de fin',
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
+                  labelStyle: TextStyle(color: primaryColor),
                   border: const OutlineInputBorder(),
                   focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                    ),
+                    borderSide: BorderSide(color: primaryColor),
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                   hintText: 'HH:MM',
+                  hintStyle: TextStyle(
+                    fontSize: mediumFontSize, // 👈 sets the input text size
+                  ),
                 ),
                 keyboardType: TextInputType.datetime,
                 inputFormatters: [
@@ -555,6 +587,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
                   return null;
                 },
                 onChanged: (value) {
+                  if (!mounted) return;
                   if (_timeError != null) {
                     setState(() {
                       _timeError = null;
@@ -580,6 +613,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
               IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
+                  if (!mounted) return;
                   setState(() {
                     _startTime = null;
                     _endTime = null;

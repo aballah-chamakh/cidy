@@ -55,6 +55,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
 
   Future<void> _fetchGroupDetails({bool showLoading = true}) async {
     if (!mounted) return;
+
     if (showLoading) {
       setState(() {
         _isLoading = true;
@@ -104,6 +105,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'An error occurred: $e';
       });
@@ -117,8 +119,6 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   }
 
   Future<void> _deleteGroup() async {
-    if (!mounted) return;
-
     setState(() {
       _isLoading = true;
     });
@@ -171,6 +171,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         widget.refreshGroupList();
       }
     } catch (e) {
+      if (!mounted) return;
       _showError("erreur du serveur (500)");
       Navigator.pop(context);
       widget.refreshGroupList();
@@ -231,7 +232,11 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     return Stack(
       children: [
         RefreshIndicator(
-          onRefresh: () => _fetchGroupDetails(showLoading: false),
+          onRefresh: () async {
+            if (!mounted) return;
+            await _fetchGroupDetails(showLoading: false);
+            if (!mounted) return;
+          },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.fromLTRB(
@@ -618,6 +623,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             if (mounted) {
               _showSuccess('Groupe modifié avec succès');
               Navigator.of(context).pop();
+              clearFiltersAndSelectedStudents();
               _fetchGroupDetails();
             }
           },
@@ -666,6 +672,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   }
 
   Future<void> _showDeleteGroupConfirmationDialog() async {
+    if (!mounted) return;
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -675,7 +682,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     if (!mounted) return;
 
     if (confirmed == true) {
-      await _deleteGroup();
+      _deleteGroup();
     }
   }
 
@@ -732,7 +739,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                   ),
                 ],
                 onChanged: (value) {
-                  if (value != null) {
+                  if (mounted && value != null) {
                     _handleGroupAction(value);
                   }
                 },
@@ -741,6 +748,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             const SizedBox(width: 12),
             ElevatedButton(
               onPressed: () {
+                if (!mounted) return;
                 setState(() {
                   _selectedStudentIds.clear();
                 });
@@ -946,7 +954,10 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                       children: [
                         Expanded(
                           child: TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
+                            onPressed: () {
+                              if (!mounted) return;
+                              Navigator.of(context).pop();
+                            },
                             child: const Text('Annuler'),
                           ),
                         ),
@@ -957,6 +968,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                                 selectedStartTime != null &&
                                     selectedEndTime != null
                                 ? () {
+                                    if (!mounted) return;
                                     Navigator.of(context).pop();
                                     _markAttendance(
                                       selectedDate,
@@ -1030,7 +1042,10 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                       children: [
                         Expanded(
                           child: TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
+                            onPressed: () {
+                              if (!mounted) return;
+                              Navigator.of(context).pop();
+                            },
                             child: const Text('Annuler'),
                           ),
                         ),
@@ -1038,6 +1053,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                         Expanded(
                           child: ElevatedButton(
                             onPressed: () {
+                              if (!mounted) return;
                               Navigator.of(context).pop();
                               _unmarkAttendance(numberOfClasses);
                             },
