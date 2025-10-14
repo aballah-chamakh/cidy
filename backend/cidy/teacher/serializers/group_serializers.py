@@ -44,7 +44,6 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
     start_time = serializers.SerializerMethodField()
     end_time = serializers.SerializerMethodField()
     is_temporary_schedule = serializers.SerializerMethodField()
-    
     students = serializers.SerializerMethodField()
     
 
@@ -107,7 +106,7 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
                 output_field=DecimalField()
             ),
             unpaid_amount=Coalesce(
-                Sum('teacherenrollment__paid_amount', filter=Q(teacherenrollment__teacher=teacher)),
+                Sum('teacherenrollment__unpaid_amount', filter=Q(teacherenrollment__teacher=teacher)),
                 Value(0),
                 output_field=DecimalField()
             )
@@ -125,6 +124,7 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
                 students = students.order_by('unpaid_amount')
         else : 
             students = students.order_by('-id')  # Default sorting by newest
+        
         page = request.GET.get('page', 1)
         page_size = request.GET.get('page_size', 30)
         paginator = Paginator(students, page_size)
@@ -132,13 +132,15 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
             paginated_students = paginator.page(page)
         except Exception:
             # If page is out of range, deliver last page
-            paginated_students = paginator.page(paginator.num_pages)
+            paginated_students = paginator.page(1)
+            page = 1 
         total_students = paginator.count
         serializer = GroupStudentListSerializer(paginated_students, many=True)
 
         return {
             'students': serializer.data,
             'total_students': total_students,
+            'page': page,
         }
     
 class GroupCreateUpdateSerializer(serializers.ModelSerializer):
@@ -211,9 +213,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
             teacher=teacher,
             week_day=week_day
         ).filter(
-            (Q(start_time__lt=start_time) & Q(end_time__gt=start_time)) |
-            (Q(start_time__lt=end_time) & Q(end_time__gt=end_time)) |
-            (Q(start_time__gt=start_time) & Q(end_time__lt=end_time))
+           Q(start_time__lt=end_time) & Q(end_time__gt=start_time)
         )
         # in the case of the edit, exclude the group 
         if self.instance : 

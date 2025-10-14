@@ -240,7 +240,6 @@ def get_group_details(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_group(request, group_id):
-
     """Edit an existing group"""
     teacher = request.user.teacher
     try:
@@ -389,7 +388,7 @@ def get_the_possible_students_for_a_group(request,group_id):
         student_qs = student_qs.filter(fullname__icontains=fullname)
 
     page = request.GET.get('page', 1)
-    page_size = request.GET.get('page_size', 5)
+    page_size = request.GET.get('page_size', 30)
     paginator = Paginator(student_qs, page_size)
 
     try:

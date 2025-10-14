@@ -55,7 +55,10 @@ class MyApp extends StatelessWidget {
           labelStyle: TextStyle(color: primaryColor),
           hintStyle: TextStyle(color: primaryColor),
         ),
-        textSelectionTheme: TextSelectionThemeData(cursorColor: primaryColor),
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: primaryColor,
+          selectionHandleColor: primaryColor,
+        ),
       ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

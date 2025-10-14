@@ -74,7 +74,7 @@ class TestDateRangeFilter:
             # create 6 student for each level  
             ## if they don't exit
 
-            students = Student.objects.filter(level=teacher_subject.level)[:6]
+            students = Student.objects.filter(level=teacher_subject.level)#[:6]
             
             if not students.exists():
                 students = []
@@ -89,8 +89,8 @@ class TestDateRangeFilter:
                     )
                     TeacherEnrollment.objects.create(teacher=teacher,student=student)
                     student_cnt += 1
-                    if i < 6:  # only keep 6 students per level
-                        students.append(student)
+                    #if i < 6:  # only keep 6 students per level
+                    students.append(student)
                 print(f"Created {len(students)} students for level {teacher_subject.level}")
             else:
                 print(f"Found existing {students.count()} students for level {teacher_subject.level}")

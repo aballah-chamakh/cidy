@@ -249,9 +249,9 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildGroupDetailsCard(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 _buildKpiCards(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 _buildStudentListCard(),
               ],
             ),
@@ -271,7 +271,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -419,7 +419,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -429,7 +429,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                 Text(
                   '${students.length} Élève(s)',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: mediumFontSize,
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).primaryColor,
                   ),
@@ -445,14 +445,14 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                       horizontal: 16,
                       vertical: 8,
                     ),
-                    textStyle: const TextStyle(fontSize: 14),
+                    textStyle: const TextStyle(fontSize: 16),
                   ),
                 ),
               ],
             ),
             const Divider(height: 20),
             _buildStudentFilters(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             if (students.isEmpty)
               _buildNoStudentsUI()
             else
@@ -545,29 +545,26 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: isSelected
-            ? BorderSide(color: Theme.of(context).primaryColor, width: 1.5)
+            ? const BorderSide(color: primaryColor, width: 1.5)
             : BorderSide(color: Colors.grey.shade300),
       ),
       child: InkWell(
         onTap: () {
           // TODO: Navigate to student detail screen
         },
+        onLongPress: () {
+          setState(() {
+            if (isSelected) {
+              _selectedStudentIds.remove(student['id']);
+            } else {
+              _selectedStudentIds.add(student['id'] as int);
+            }
+          });
+        },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: Row(
             children: [
-              Checkbox(
-                value: isSelected,
-                onChanged: (bool? value) {
-                  setState(() {
-                    if (value == true) {
-                      _selectedStudentIds.add(student['id'] as int);
-                    } else {
-                      _selectedStudentIds.remove(student['id']);
-                    }
-                  });
-                },
-              ),
               CircleAvatar(
                 radius: 25,
                 backgroundImage: NetworkImage(imageUrl),
@@ -578,29 +575,26 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               Expanded(
                 child: Text(
                   student['fullname'],
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                  style: const TextStyle(fontSize: mediumFontSize),
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${student['paid_amount']} Payé',
+                    '${student['paid_amount']} DT',
                     style: const TextStyle(
                       color: Colors.green,
-                      fontSize: 13,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${student['unpaid_amount']} Non payé',
+                    '${student['unpaid_amount']} DT',
                     style: const TextStyle(
                       color: Colors.red,
-                      fontSize: 13,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -692,9 +686,13 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       left: 0,
       right: 0,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
         decoration: BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(10),
+            topRight: Radius.circular(10),
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -703,57 +701,74 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              flex: 3,
-              child: DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Action groupée',
-                  border: OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: 'Action groupée',
+                border: OutlineInputBorder(),
+                contentPadding: inputContentPadding,
+              ),
+              items: const [
+                DropdownMenuItem(
+                  value: 'remove',
+                  child: Text(
+                    'Retirer du groupe',
+                    style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'remove',
-                    child: Text('Retirer du groupe'),
+                DropdownMenuItem(
+                  value: 'mark_attendance',
+                  child: Text(
+                    'Marquer présence',
+                    style: TextStyle(fontSize: mediumFontSize),
                   ),
-                  DropdownMenuItem(
-                    value: 'mark_attendance',
-                    child: Text('Marquer présence'),
+                ),
+                DropdownMenuItem(
+                  value: 'unmark_attendance',
+                  child: Text(
+                    'Annuler présence',
+                    style: TextStyle(fontSize: mediumFontSize),
                   ),
-                  DropdownMenuItem(
-                    value: 'unmark_attendance',
-                    child: Text('Annuler présence'),
+                ),
+                DropdownMenuItem(
+                  value: 'mark_payment',
+                  child: Text(
+                    'Marquer paiement',
+                    style: TextStyle(fontSize: mediumFontSize),
                   ),
-                  DropdownMenuItem(
-                    value: 'mark_payment',
-                    child: Text('Marquer paiement'),
+                ),
+                DropdownMenuItem(
+                  value: 'unmark_payment',
+                  child: Text(
+                    'Annuler paiement',
+                    style: TextStyle(fontSize: mediumFontSize),
                   ),
-                  DropdownMenuItem(
-                    value: 'unmark_payment',
-                    child: Text('Annuler paiement'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (mounted && value != null) {
-                    _handleGroupAction(value);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: () {
-                if (!mounted) return;
-                setState(() {
-                  _selectedStudentIds.clear();
-                });
+                ),
+              ],
+              onChanged: (value) {
+                if (mounted && value != null) {
+                  _handleGroupAction(value);
+                }
               },
-              child: const Text('Annuler'),
+            ),
+
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: primaryButtonStyle,
+                onPressed: () {
+                  if (!mounted) return;
+                  setState(() {
+                    _selectedStudentIds.clear();
+                  });
+                },
+                child: const Text(
+                  'Annuler',
+                  style: TextStyle(fontSize: mediumFontSize),
+                ),
+              ),
             ),
           ],
         ),

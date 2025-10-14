@@ -894,8 +894,8 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(15.0),
-          topRight: Radius.circular(15.0),
+          topLeft: Radius.circular(10),
+          topRight: Radius.circular(10),
         ),
         boxShadow: const [BoxShadow(color: Colors.black, blurRadius: 1.0)],
       ),
