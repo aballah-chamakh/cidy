@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cidy/app_styles.dart';
-import 'package:cidy/profiles/teacher/widgets/add_student_popup/add_existing_student_form.dart';
-import 'package:cidy/profiles/teacher/widgets/add_student_popup/create_new_student_form.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/add_existing_student_form.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/create_new_student_form.dart';
 
 class AddStudentPopup extends StatefulWidget {
   final int groupId;
@@ -82,6 +82,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
                 fit: FlexFit.loose,
                 child: SingleChildScrollView(child: _buildContent()),
               ),
+              const Divider(height: 30),
               _buildFooter(),
             ],
           ),
@@ -181,35 +182,32 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
   }
 
   Widget _buildFooter() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 10.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextButton(
-              style: secondaryButtonStyle,
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text(
-                'Annuler',
-                style: TextStyle(fontSize: mediumFontSize),
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: TextButton(
+            style: secondaryButtonStyle,
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text(
+              'Annuler',
+              style: TextStyle(fontSize: mediumFontSize),
             ),
           ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: ElevatedButton(
-              style: primaryButtonStyle,
-              onPressed: _selectedOption != null ? _handleNext : null,
-              child: const Text(
-                'Suivant',
-                style: TextStyle(fontSize: mediumFontSize),
-              ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: ElevatedButton(
+            style: primaryButtonStyle,
+            onPressed: _selectedOption != null ? _handleNext : null,
+            child: const Text(
+              'Suivant',
+              style: TextStyle(fontSize: mediumFontSize),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

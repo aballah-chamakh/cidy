@@ -305,7 +305,7 @@ class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
                     ),
                   ),
                 ),
-                const Divider(height: 20),
+                const Divider(height: 30),
                 _buildActionButtons(),
               ],
             ),

@@ -13,13 +13,13 @@ ButtonStyle primaryButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: primaryColor,
   foregroundColor: Colors.white,
   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-  padding: const EdgeInsets.symmetric(vertical: 10),
+  padding: const EdgeInsets.symmetric(vertical: 15),
 );
 
 ButtonStyle secondaryButtonStyle = TextButton.styleFrom(
   side: BorderSide(color: primaryColor),
   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-  padding: const EdgeInsets.symmetric(vertical: 10),
+  padding: const EdgeInsets.symmetric(vertical: 15),
 );
 
 EdgeInsets inputContentPadding = EdgeInsets.symmetric(

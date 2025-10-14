@@ -1,15 +1,22 @@
 import 'dart:convert';
 import 'package:cidy/app_styles.dart';
+import 'package:cidy/app_tools.dart';
 import 'package:cidy/constants.dart';
 import 'package:cidy/config.dart';
-import 'package:cidy/profiles/teacher/widgets/add_student_popup/add_student_popup.dart';
-import 'package:cidy/profiles/teacher/widgets/delete_group_popup.dart';
-import 'package:cidy/profiles/teacher/widgets/edit_group_form.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/add_student_popup.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/delete_group_popup.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/edit_group_form.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/unmark_payment_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
+
+import '../widgets/teacher_group_detail_screen/mark_attendance_popup.dart';
+import '../widgets/teacher_group_detail_screen/mark_payment_popup.dart';
+import '../widgets/teacher_group_detail_screen/remove_students_popup.dart';
+import '../widgets/teacher_group_detail_screen/unmark_attendance_popup.dart';
 
 class TeacherGroupDetailScreen extends StatefulWidget {
   final int groupId;
@@ -356,12 +363,15 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
 
   Widget _buildKpiCards() {
     final group = _groupDetail!;
+    print("group['total_paid'] : ${group['total_paid'].runtimeType}");
+    print("group['total_unpaid'] : ${group['total_unpaid'].runtimeType}");
+
     final students = group['students']['students'] as List;
     return Row(
       children: [
         Expanded(
           child: _buildKpiCard(
-            group['total_paid'].toString(),
+            formatToK(group['total_paid']),
             'Payé',
             Colors.green,
           ),
@@ -369,7 +379,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         const SizedBox(width: 8),
         Expanded(
           child: _buildKpiCard(
-            group['total_unpaid'].toString(),
+            formatToK(group['total_unpaid']),
             'Non payé',
             Colors.red,
           ),
@@ -419,7 +429,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -518,20 +528,32 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       padding: const EdgeInsets.symmetric(vertical: 40),
       alignment: Alignment.center,
       child: Text(
-        'Aucun élève dans ce groupe.',
-        style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+        _searchController.text.isNotEmpty
+            ? "Aucun élève ne correspond à votre recherche."
+            : 'Aucun élève dans ce groupe.',
+        style: TextStyle(fontSize: mediumFontSize),
+        textAlign: TextAlign.center,
       ),
     );
   }
 
   Widget _buildStudentListView(List students) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: students.length,
-      itemBuilder: (context, index) {
-        return _buildStudentCard(students[index]);
-      },
+    final screenHeight = MediaQuery.of(context).size.height;
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: 0.7 * screenHeight, // 👈 50% of the screen height
+      ),
+      child: Scrollbar(
+        thumbVisibility: true,
+        child: ListView.builder(
+          shrinkWrap: true,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: students.length,
+          itemBuilder: (context, index) {
+            return _buildStudentCard(students[index]);
+          },
+        ),
+      ),
     );
   }
 
@@ -540,7 +562,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     final imageUrl = '${Config.backendUrl}${student['image']}';
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
+      margin: EdgeInsets.symmetric(vertical: 6),
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
@@ -582,7 +604,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${student['paid_amount']} DT',
+                    '${formatToK(student['paid_amount'])} DT',
                     style: const TextStyle(
                       color: Colors.green,
                       fontSize: 16,
@@ -591,7 +613,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${student['unpaid_amount']} DT',
+                    '${formatToK(student['unpaid_amount'])} DT',
                     style: const TextStyle(
                       color: Colors.red,
                       fontSize: 16,
@@ -704,8 +726,13 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         child: Column(
           children: [
             DropdownButtonFormField<String>(
+              hint: const Text(
+                'Action groupée',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
               decoration: InputDecoration(
                 labelText: 'Action groupée',
+                labelStyle: const TextStyle(color: primaryColor),
                 border: OutlineInputBorder(),
                 contentPadding: inputContentPadding,
               ),
@@ -764,9 +791,9 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                     _selectedStudentIds.clear();
                   });
                 },
-                child: const Text(
-                  'Annuler',
-                  style: TextStyle(fontSize: mediumFontSize),
+                child: Text(
+                  'Annuler (${_selectedStudentIds.length})',
+                  style: const TextStyle(fontSize: mediumFontSize),
                 ),
               ),
             ),
@@ -800,207 +827,40 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.9,
-            constraints: const BoxConstraints(maxWidth: 400),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Confirmer la suppression (${_selectedStudentIds.length})',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                Icon(Icons.person_remove, size: 60, color: Colors.orange),
-                const SizedBox(height: 16),
-                Text(
-                  'Êtes-vous sûr de vouloir retirer les ${_selectedStudentIds.length} élève(s) sélectionné(s) du groupe ?',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Non'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          _removeStudentsFromGroup();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Oui'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+        return RemoveStudentsPopup(
+          studentCount: _selectedStudentIds.length,
+          studentIds: _selectedStudentIds,
+          groupId: widget.groupId,
+          onSuccess: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showSuccess('Élèves retirés avec succès');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: false);
+          },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: false);
+          },
         );
       },
     );
   }
 
   void _showMarkAttendanceDialog() {
-    DateTime selectedDate = DateTime.now();
-    TimeOfDay? selectedStartTime;
-    TimeOfDay? selectedEndTime;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Marquer présence (${_selectedStudentIds.length})',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    Icon(
-                      Icons.check_circle_outline,
-                      size: 60,
-                      color: Colors.green,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Date picker
-                    ListTile(
-                      title: const Text('Date'),
-                      subtitle: Text(
-                        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                      ),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime.now(),
-                        );
-                        if (!mounted) return;
-
-                        if (picked != null) {
-                          setState(() {
-                            selectedDate = picked;
-                          });
-                        }
-                      },
-                    ),
-
-                    // Start time picker
-                    ListTile(
-                      title: const Text('Heure de début'),
-                      subtitle: Text(
-                        selectedStartTime != null
-                            ? selectedStartTime!.format(context)
-                            : 'Sélectionner l\'heure',
-                      ),
-                      trailing: const Icon(Icons.access_time),
-                      onTap: () async {
-                        final TimeOfDay? picked = await showTimePicker(
-                          context: context,
-                          initialTime: selectedStartTime ?? TimeOfDay.now(),
-                        );
-                        if (!mounted) return;
-                        if (picked != null) {
-                          setState(() {
-                            selectedStartTime = picked;
-                          });
-                        }
-                      },
-                    ),
-
-                    // End time picker
-                    ListTile(
-                      title: const Text('Heure de fin'),
-                      subtitle: Text(
-                        selectedEndTime != null
-                            ? selectedEndTime!.format(context)
-                            : 'Sélectionner l\'heure',
-                      ),
-                      trailing: const Icon(Icons.access_time),
-                      onTap: () async {
-                        final TimeOfDay? picked = await showTimePicker(
-                          context: context,
-                          initialTime: selectedEndTime ?? TimeOfDay.now(),
-                        );
-                        if (!mounted) return;
-                        if (picked != null) {
-                          setState(() {
-                            selectedEndTime = picked;
-                          });
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () {
-                              if (!mounted) return;
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Annuler'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed:
-                                selectedStartTime != null &&
-                                    selectedEndTime != null
-                                ? () {
-                                    if (!mounted) return;
-                                    Navigator.of(context).pop();
-                                    _markAttendance(
-                                      selectedDate,
-                                      selectedStartTime!,
-                                      selectedEndTime!,
-                                    );
-                                  }
-                                : null,
-                            child: const Text('Marquer'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
+        return MarkAttendancePopup(
+          studentCount: _selectedStudentIds.length,
+          studentIds: _selectedStudentIds,
+          onSuccess: () {
+            _showSuccess('Présence marquée avec succès');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: false);
           },
         );
       },
@@ -1008,79 +868,16 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   }
 
   void _showUnmarkAttendanceDialog() {
-    int numberOfClasses = 1;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Annuler présence (${_selectedStudentIds.length})',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    Icon(Icons.cancel_outlined, size: 60, color: Colors.orange),
-                    const SizedBox(height: 20),
-
-                    TextFormField(
-                      initialValue: numberOfClasses.toString(),
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de cours à annuler',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        final parsed = int.tryParse(value);
-                        if (parsed != null && parsed > 0) {
-                          numberOfClasses = parsed;
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () {
-                              if (!mounted) return;
-                              Navigator.of(context).pop();
-                            },
-                            child: const Text('Annuler'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (!mounted) return;
-                              Navigator.of(context).pop();
-                              _unmarkAttendance(numberOfClasses);
-                            },
-                            child: const Text('Annuler'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
+        return UnmarkAttendancePopup(
+          studentCount: _selectedStudentIds.length,
+          studentIds: _selectedStudentIds,
+          onSuccess: () {
+            _showSuccess('Présence annulée avec succès');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: false);
           },
         );
       },
@@ -1088,115 +885,16 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   }
 
   void _showMarkPaymentDialog() {
-    int numberOfClasses = 1;
-    DateTime selectedDateTime = DateTime.now();
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Marquer paiement (${_selectedStudentIds.length})',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    Icon(Icons.payment, size: 60, color: Colors.green),
-                    const SizedBox(height: 20),
-
-                    TextFormField(
-                      initialValue: numberOfClasses.toString(),
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de cours à marquer comme payés',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        final parsed = int.tryParse(value);
-                        if (parsed != null && parsed > 0) {
-                          numberOfClasses = parsed;
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    ListTile(
-                      title: const Text('Date et heure'),
-                      subtitle: Text(
-                        '${selectedDateTime.day}/${selectedDateTime.month}/${selectedDateTime.year} ${selectedDateTime.hour}:${selectedDateTime.minute.toString().padLeft(2, '0')}',
-                      ),
-                      trailing: const Icon(Icons.date_range),
-                      onTap: () async {
-                        final DateTime? pickedDate = await showDatePicker(
-                          context: context,
-                          initialDate: selectedDateTime,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime.now(),
-                        );
-                        if (!mounted) return;
-                        if (pickedDate != null) {
-                          final TimeOfDay? pickedTime = await showTimePicker(
-                            context: context,
-                            initialTime: TimeOfDay.fromDateTime(
-                              selectedDateTime,
-                            ),
-                          );
-                          if (!mounted) return;
-                          if (pickedTime != null) {
-                            setState(() {
-                              selectedDateTime = DateTime(
-                                pickedDate.year,
-                                pickedDate.month,
-                                pickedDate.day,
-                                pickedTime.hour,
-                                pickedTime.minute,
-                              );
-                            });
-                          }
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Annuler'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              _markPayment(numberOfClasses, selectedDateTime);
-                            },
-                            child: const Text('Marquer'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
+        return MarkPaymentPopup(
+          studentCount: _selectedStudentIds.length,
+          studentIds: _selectedStudentIds,
+          onSuccess: () {
+            _showSuccess('Paiement marqué avec succès');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: false);
           },
         );
       },
@@ -1204,335 +902,19 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   }
 
   void _showUnmarkPaymentDialog() {
-    int numberOfClasses = 1;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.9,
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Annuler paiement (${_selectedStudentIds.length})',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    Icon(Icons.money_off, size: 60, color: Colors.red),
-                    const SizedBox(height: 20),
-
-                    TextFormField(
-                      initialValue: numberOfClasses.toString(),
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de cours à annuler le paiement',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (value) {
-                        final parsed = int.tryParse(value);
-                        if (parsed != null && parsed > 0) {
-                          numberOfClasses = parsed;
-                        }
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: const Text('Annuler'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              _unmarkPayment(numberOfClasses);
-                            },
-                            child: const Text('Annuler'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
+        return UnmarkPaymentPopup(
+          studentCount: _selectedStudentIds.length,
+          studentIds: _selectedStudentIds,
+          onSuccess: () {
+            _showSuccess('Paiement annulé avec succès');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: false);
           },
         );
       },
     );
-  }
-
-  Future<void> _removeStudentsFromGroup() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) return;
-
-      // Using the delete students endpoint with group context
-      final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/students/delete/',
-      );
-
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'student_ids': _selectedStudentIds.toList(),
-          'group_id':
-              widget.groupId, // Context for removing from specific group
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _selectedStudentIds.clear();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Élèves retirés avec succès'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _fetchGroupDetails(showLoading: false);
-      } else {
-        _showError('Erreur lors de la suppression des élèves');
-      }
-    } catch (e) {
-      _showError('Erreur de connexion');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _markAttendance(
-    DateTime date,
-    TimeOfDay startTime,
-    TimeOfDay endTime,
-  ) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) return;
-
-      final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/students/mark_attendance/',
-      );
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'student_ids': _selectedStudentIds.toList(),
-          'date':
-              '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}',
-          'start_time':
-              '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}',
-          'end_time':
-              '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}',
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _selectedStudentIds.clear();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Présence marquée avec succès'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _fetchGroupDetails(showLoading: false);
-      } else {
-        _showError('Erreur lors du marquage de présence');
-      }
-    } catch (e) {
-      _showError('Erreur de connexion');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _unmarkAttendance(int numberOfClasses) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) return;
-
-      final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/students/unmark_attendance/',
-      );
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'student_ids': _selectedStudentIds.toList(),
-          'number_of_classes': numberOfClasses,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _selectedStudentIds.clear();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Présence annulée avec succès'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _fetchGroupDetails(showLoading: false);
-      } else {
-        _showError('Erreur lors de l\'annulation de présence');
-      }
-    } catch (e) {
-      _showError('Erreur de connexion');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _markPayment(int numberOfClasses, DateTime dateTime) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) return;
-
-      final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/students/mark_payment/',
-      );
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'student_ids': _selectedStudentIds.toList(),
-          'number_of_classes': numberOfClasses,
-          'datetime': dateTime.toIso8601String(),
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _selectedStudentIds.clear();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Paiement marqué avec succès'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _fetchGroupDetails(showLoading: false);
-      } else {
-        _showError('Erreur lors du marquage de paiement');
-      }
-    } catch (e) {
-      _showError('Erreur de connexion');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _unmarkPayment(int numberOfClasses) async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) return;
-
-      final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/students/unmark_payment/',
-      );
-
-      final response = await http.post(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'student_ids': _selectedStudentIds.toList(),
-          'number_of_classes': numberOfClasses,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          _selectedStudentIds.clear();
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Paiement annulé avec succès'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        _fetchGroupDetails(showLoading: false);
-      } else {
-        _showError('Erreur lors de l\'annulation de paiement');
-      }
-    } catch (e) {
-      _showError('Erreur de connexion');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 }

@@ -285,6 +285,7 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
                   ),
                 ),
               ),
+              const Divider(height: 30),
               _buildActionButtons(),
             ],
           ),
@@ -480,52 +481,49 @@ class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
   }
 
   Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextButton(
-              style: secondaryButtonStyle,
-              onPressed: _isSubmitting
-                  ? null
-                  : () {
-                      if (widget.onBack != null) {
-                        widget.onBack!();
-                      } else {
-                        Navigator.of(context).pop();
-                      }
-                    },
-              child: const Text(
-                'Retour',
-                style: TextStyle(fontSize: mediumFontSize),
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: TextButton(
+            style: secondaryButtonStyle,
+            onPressed: _isSubmitting
+                ? null
+                : () {
+                    if (widget.onBack != null) {
+                      widget.onBack!();
+                    } else {
+                      Navigator.of(context).pop();
+                    }
+                  },
+            child: const Text(
+              'Retour',
+              style: TextStyle(fontSize: mediumFontSize),
             ),
           ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: ElevatedButton(
-              style: primaryButtonStyle,
-              onPressed: (_isSubmitting || _selectedStudentIds.isEmpty)
-                  ? null
-                  : _addStudentsToGroup,
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'Ajouter',
-                      style: TextStyle(fontSize: mediumFontSize),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: ElevatedButton(
+            style: primaryButtonStyle,
+            onPressed: (_isSubmitting || _selectedStudentIds.isEmpty)
+                ? null
+                : _addStudentsToGroup,
+            child: _isSubmitting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
                     ),
-            ),
+                  )
+                : const Text(
+                    'Ajouter',
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

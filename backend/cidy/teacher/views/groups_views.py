@@ -173,8 +173,7 @@ def create_group(request):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_groups(request):
-    time.sleep(2)
-    return HttpResponseServerError('500 server error')
+
     """Delete selected groups"""
     teacher = request.user.teacher
     group_ids = request.data.get('group_ids', [])
