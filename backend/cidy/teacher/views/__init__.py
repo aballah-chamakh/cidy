@@ -18,7 +18,7 @@ from .groups_views import (
     can_create_group, get_groups, 
     create_group, delete_groups, 
     get_group_details, edit_group, get_group_students,
-    create_group_student,get_the_possible_students_for_a_group,add_students_to_group,
+    create_group_student,get_the_possible_students_for_a_group,add_students_to_group,remove_students_from_group,
     mark_attendance, unmark_attendance,
     mark_absence, unmark_absence,
     mark_payment, unmark_payment

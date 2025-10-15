@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +38,8 @@ class _RemoveStudentsPopupState extends State<RemoveStudentsPopup> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
+
       if (token == null) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -48,7 +49,7 @@ class _RemoveStudentsPopupState extends State<RemoveStudentsPopup> {
       }
 
       final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/remove-students/',
+        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/students/remove/',
       );
       final response = await http.put(
         url,
@@ -131,7 +132,12 @@ class _RemoveStudentsPopupState extends State<RemoveStudentsPopup> {
             const Divider(height: 5),
             const SizedBox(height: 15.0),
             if (_isLoading)
-              const Center(child: CircularProgressIndicator())
+              Padding(
+                padding: EdgeInsetsGeometry.all(40),
+                child: const Center(
+                  child: CircularProgressIndicator(color: primaryColor),
+                ),
+              )
             else ...[
               const Icon(Icons.person_remove, size: 100, color: primaryColor),
               const SizedBox(height: 15.0),

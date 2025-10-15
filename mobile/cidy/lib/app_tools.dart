@@ -6,7 +6,7 @@ String formatToK(String value) {
     String formatted = (number / 1000).toStringAsFixed(4); // 1 decimal place
     formatted = formatted.replaceFirst(RegExp(r'\.?0+$'), '');
 
-    return '${formatted} K';
+    return '$formatted K';
   }
 
   return number.toString();

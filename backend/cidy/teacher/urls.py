@@ -31,9 +31,11 @@ urlpatterns = [
     path('groups/<int:group_id>/', views.get_group_details, name='get_group_details'),
     path('groups/<int:group_id>/edit/', views.edit_group, name='edit_group'),
     path('groups/<int:group_id>/students/', views.get_group_students, name='group_students'),
+    
     path('groups/<int:group_id>/students/create/', views.create_group_student, name='create_group_student'),
     path('groups/<int:group_id>/possible_students/', views.get_the_possible_students_for_a_group, name='get_the_possible_students_for_a_group'),
     path('groups/<int:group_id>/students/add/', views.add_students_to_group, name='add_students_to_group'),
+    path('groups/<int:group_id>/students/remove/', views.remove_students_from_group, name='remove_students_from_group'),
     path('groups/<int:group_id>/students/mark_attendance/', views.mark_attendance, name='mark_attendance'),
     path('groups/<int:group_id>/students/unmark_attendance/', views.unmark_attendance, name='unmark_attendance'),
     path('groups/<int:group_id>/students/mark_absence/', views.mark_absence, name='mark_absence'),

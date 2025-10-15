@@ -87,128 +87,154 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: popupHorizontalMargin,
+        vertical: 0,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(popupBorderRadius),
+      ),
       elevation: 0,
       backgroundColor: Colors.transparent,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        constraints: const BoxConstraints(maxWidth: 400),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(popupPadding),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(popupBorderRadius),
         ),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Column(
-                mainAxisSize: MainAxisSize.min,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Confirmer le retrait',
+                  style: TextStyle(
+                    fontSize: headerFontSize,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.close,
+                    size: headerIconSize,
+                    color: primaryColor,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                ),
+              ],
+            ),
+            const Divider(height: 5),
+            const SizedBox(height: 15.0),
+            if (_isLoading)
+              Padding(
+                padding: EdgeInsetsGeometry.all(40),
+                child: const Center(
+                  child: CircularProgressIndicator(color: primaryColor),
+                ),
+              )
+            else ...[
+              const Icon(
+                Icons.check_circle_outline,
+                size: 60,
+                color: Colors.green,
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                title: const Text('Date'),
+                subtitle: Text(
+                  '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () async {
+                  final DateTime? picked = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      selectedDate = picked;
+                    });
+                  }
+                },
+              ),
+              ListTile(
+                title: const Text('Heure de début'),
+                subtitle: Text(
+                  selectedStartTime != null
+                      ? selectedStartTime!.format(context)
+                      : 'Sélectionner l\'heure',
+                ),
+                trailing: const Icon(Icons.access_time),
+                onTap: () async {
+                  final TimeOfDay? picked = await showTimePicker(
+                    context: context,
+                    initialTime: selectedStartTime ?? TimeOfDay.now(),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      selectedStartTime = picked;
+                    });
+                  }
+                },
+              ),
+              ListTile(
+                title: const Text('Heure de fin'),
+                subtitle: Text(
+                  selectedEndTime != null
+                      ? selectedEndTime!.format(context)
+                      : 'Sélectionner l\'heure',
+                ),
+                trailing: const Icon(Icons.access_time),
+                onTap: () async {
+                  final TimeOfDay? picked = await showTimePicker(
+                    context: context,
+                    initialTime: selectedEndTime ?? TimeOfDay.now(),
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      selectedEndTime = picked;
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text(
-                    'Marquer présence (${widget.studentCount})',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
+                  Expanded(
+                    child: TextButton(
+                      style: secondaryButtonStyle,
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Annuler'),
                     ),
-                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 20),
-                  const Icon(
-                    Icons.check_circle_outline,
-                    size: 60,
-                    color: Colors.green,
-                  ),
-                  const SizedBox(height: 20),
-                  ListTile(
-                    title: const Text('Date'),
-                    subtitle: Text(
-                      '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: primaryButtonStyle,
+                      onPressed:
+                          selectedStartTime != null && selectedEndTime != null
+                          ? _markAttendance
+                          : null,
+                      child: const Text('Marquer'),
                     ),
-                    trailing: const Icon(Icons.calendar_today),
-                    onTap: () async {
-                      final DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          selectedDate = picked;
-                        });
-                      }
-                    },
-                  ),
-                  ListTile(
-                    title: const Text('Heure de début'),
-                    subtitle: Text(
-                      selectedStartTime != null
-                          ? selectedStartTime!.format(context)
-                          : 'Sélectionner l\'heure',
-                    ),
-                    trailing: const Icon(Icons.access_time),
-                    onTap: () async {
-                      final TimeOfDay? picked = await showTimePicker(
-                        context: context,
-                        initialTime: selectedStartTime ?? TimeOfDay.now(),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          selectedStartTime = picked;
-                        });
-                      }
-                    },
-                  ),
-                  ListTile(
-                    title: const Text('Heure de fin'),
-                    subtitle: Text(
-                      selectedEndTime != null
-                          ? selectedEndTime!.format(context)
-                          : 'Sélectionner l\'heure',
-                    ),
-                    trailing: const Icon(Icons.access_time),
-                    onTap: () async {
-                      final TimeOfDay? picked = await showTimePicker(
-                        context: context,
-                        initialTime: selectedEndTime ?? TimeOfDay.now(),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          selectedEndTime = picked;
-                        });
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      Expanded(
-                        child: TextButton(
-                          style: secondaryButtonStyle,
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          child: const Text('Annuler'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: primaryButtonStyle,
-                          onPressed:
-                              selectedStartTime != null &&
-                                  selectedEndTime != null
-                              ? _markAttendance
-                              : null,
-                          child: const Text('Marquer'),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
+            ],
+          ],
+        ),
       ),
     );
   }

@@ -122,6 +122,7 @@ def get_groups(request):
     
 
     # Pagination
+    """
     page = request.GET.get('page', 1)
     page_size = request.GET.get('page_size', 30)
     paginator = Paginator(groups, page_size)
@@ -131,13 +132,13 @@ def get_groups(request):
         # If page is out of range, deliver last page
         paginated_groups = paginator.page(paginator.num_pages)
         page = paginator.num_pages
-    serializer = GroupListSerializer(paginated_groups, many=True)
+    """
+    serializer = GroupListSerializer(groups, many=True)
 
     
     response = {
         'has_groups': True,
-        'groups_total_count': paginator.count,
-        'current_page': page,
+        'groups_total_count': groups.count(),
         'groups': serializer.data,
         'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy.data
     }
@@ -457,6 +458,7 @@ def add_students_to_group(request,group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def remove_students_from_group(request, group_id):
+
     """Remove students from a specific group"""
     teacher = request.user.teacher
 
@@ -479,7 +481,7 @@ def remove_students_from_group(request, group_id):
     for student in students_to_remove:
         # Notify the student if they have an independent account
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a retiré du groupe de {group.subject.name}."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a retiré du groupe de {group.teacher_subject.subject.name}."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -490,7 +492,7 @@ def remove_students_from_group(request, group_id):
         # Notify the parents of the student
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a retiré {child_pronoun} {son.fullname} du groupe de {group.subject.name}."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a retiré {child_pronoun} {son.fullname} du groupe de {group.teacher_subject.subject.name}."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -541,7 +543,7 @@ def mark_attendance(request, group_id):
     if not students.exists():
         return Response({'error': 'No students found in the group'}, status=404)
 
-    teacher_subject = TeacherSubject.objects.filter(teacher=teacher, level=group.level, section=group.section, subject=group.subject).first()
+    teacher_subject = TeacherSubject.objects.filter(teacher=teacher, level=group.teacher_subject.level, section=group.section, subject=group.teacher_subject.subject.name).first()
 
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
@@ -573,7 +575,7 @@ def mark_attendance(request, group_id):
         student_group_enrollment.save()
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans le cours de {group.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans le cours de {group.teacher_subject.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -585,7 +587,7 @@ def mark_attendance(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {child_pronoun} {son.fullname} comme présent(e) dans le cours de {group.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {child_pronoun} {son.fullname} comme présent(e) dans le cours de {group.teacher_subject.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -610,7 +612,7 @@ def unmark_attendance(request, group_id):
     except Group.DoesNotExist:
         return Response({'error': 'Group not found'}, status=404)
 
-    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.teacher_subject.level,section=group.section,subject=group.teacher_subject.subject.name).first()
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
@@ -653,7 +655,7 @@ def unmark_attendance(request, group_id):
 
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé votre présence pour {attended_classes_to_delete_count} séances de {group.subject.name}."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé votre présence pour {attended_classes_to_delete_count} séances de {group.teacher_subject.subject.name}."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -665,7 +667,7 @@ def unmark_attendance(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé la présence de {child_pronoun} {son.fullname} pour {attended_classes_to_delete_count} séances de {group.subject.name}."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé la présence de {child_pronoun} {son.fullname} pour {attended_classes_to_delete_count} séances de {group.teacher_subject.subject.name}."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -750,7 +752,7 @@ def mark_absence(request,group_id):
 
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué votre absence dans la séance de {group.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué votre absence dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -762,7 +764,7 @@ def mark_absence(request,group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué l'absence de {child_pronoun} {son.fullname} dans la séance de {group.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué l'absence de {child_pronoun} {son.fullname} dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -817,7 +819,7 @@ def unmark_absence(request,group_id):
 
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé pour vous l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.subject.name}."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé pour vous l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.teacher_subject.subject.name}."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -829,7 +831,7 @@ def unmark_absence(request,group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé pour {child_pronoun} {son.fullname} l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.subject.name}."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé pour {child_pronoun} {son.fullname} l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.teacher_subject.subject.name}."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -854,7 +856,7 @@ def mark_payment(request, group_id):
     except Group.DoesNotExist:
         return Response({'error': 'Group not found'}, status=404)
 
-    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.teacher_subject.level,section=group.section,subject=group.teacher_subject.subject.name).first()
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
@@ -905,7 +907,7 @@ def mark_payment(request, group_id):
         student_group_enrollment.attended_non_paid_classes -= classes_to_mark_as_paid_count
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.subject.name} comme payée(s)."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.teacher_subject.subject.name} comme payée(s)."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -917,7 +919,7 @@ def mark_payment(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -943,7 +945,7 @@ def unmark_payment(request, group_id):
     except Group.DoesNotExist:
         return Response({'error': 'Group not found'}, status=404)
 
-    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.level,section=group.section,subject=group.subject).first()
+    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.teacher_subject.level,section=group.section,subject=group.teacher_subject.subject.name).first()
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
@@ -990,7 +992,7 @@ def unmark_payment(request, group_id):
         unpaid_classes_count = paid_classes.count()
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.subject.name} comme payée(s)."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.teacher_subject.subject.name} comme payée(s)."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -1002,7 +1004,7 @@ def unmark_payment(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {unpaid_classes_count} séance(s) de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
