@@ -812,28 +812,28 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                 DropdownMenuItem(
                   value: 'mark_attendance',
                   child: Text(
-                    'Marquer présence',
+                    'Marquer la présence',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
                 DropdownMenuItem(
                   value: 'unmark_attendance',
                   child: Text(
-                    'Annuler présence',
+                    'Annuler la présence',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
                 DropdownMenuItem(
                   value: 'mark_payment',
                   child: Text(
-                    'Marquer paiement',
+                    'Marquer la paiement',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
                 DropdownMenuItem(
                   value: 'unmark_payment',
                   child: Text(
-                    'Annuler paiement',
+                    'Annuler la paiement',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
@@ -929,7 +929,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           onSuccess: () {
             if (!mounted) return;
             Navigator.of(context).pop();
-            _showSuccess('Présence marquée avec succès');
+            _showSuccess('Présence(s) marquée(s) avec succès');
             clearFiltersAndSelectedStudents();
             _fetchGroupDetails(showLoading: true);
           },
@@ -950,12 +950,22 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       context: context,
       builder: (BuildContext context) {
         return UnmarkAttendancePopup(
+          groupId: _groupDetail!['id'],
           studentCount: _selectedStudentIds.length,
           studentIds: _selectedStudentIds,
           onSuccess: () {
-            _showSuccess('Présence annulée avec succès');
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showSuccess('Présence(s) annulée(s) avec succès');
             clearFiltersAndSelectedStudents();
-            _fetchGroupDetails(showLoading: false);
+            _fetchGroupDetails(showLoading: true);
+          },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
           },
         );
       },

@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.utils import timezone
 import time 
 from django.core.paginator import Paginator
 from django.db.models import Q
@@ -41,7 +42,7 @@ def can_create_group(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_groups(request):
-    time.sleep(2)
+    time.sleep(1)
     #return HttpResponseServerError("An unexpected error occurred.")
     """Get a filtered list of groups for the teacher"""
     teacher = request.user.teacher
@@ -222,6 +223,7 @@ def delete_groups(request):
 @permission_classes([IsAuthenticated])
 def get_group_details(request, group_id):
     """Get detailed information about a specific group"""
+    time.sleep(1)
     teacher = request.user.teacher
 
     try:
@@ -231,8 +233,6 @@ def get_group_details(request, group_id):
     
     
     serializer = GroupDetailsSerializer(group,context={'request':request})
-    print("group details : ")
-    print(serializer.data)
     
     return Response(serializer.data)
 
@@ -514,6 +514,8 @@ def mark_attendance(request, group_id):
     """Mark attendance for selected students in a group"""
     # validate the request data
     student_ids = request.data.get('student_ids', [])
+    print(f"student_ids : {student_ids}")
+    print(f"group id  : {group_id}")
     if not student_ids:
         print("No student IDs provided")
         return Response({'error': 'No student IDs provided'}, status=400)
@@ -548,7 +550,7 @@ def mark_attendance(request, group_id):
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
-    current_datetime = datetime.now()
+    current_datetime = timezone.now()
     print("starting to mark attendance for students...")
     for student in students:
         student_teacher_enrollment = TeacherEnrollment.objects.get(student=student, teacher=teacher)
@@ -575,8 +577,13 @@ def mark_attendance(request, group_id):
                                 attendance_end_time=attendance_end_time,
                                 status = 'attended_and_the_payment_not_due',
                                 last_status_datetime = current_datetime)
+                            
         student_group_enrollment.attended_non_paid_classes += 1
         student_group_enrollment.save()
+        student_teacher_enrollment.save()
+        print(f"group_enrollment.attended_non_paid_classes : {student_group_enrollment.attended_non_paid_classes}")
+        print(f"group_enrollment.unpaid_amount : {student_group_enrollment.unpaid_amount}")
+        print(f"teacher_enrollment.unpaid_amount : {student_teacher_enrollment.unpaid_amount}")
         # Notify the student
         if student.user:
             student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans le cours de {group.teacher_subject.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
@@ -608,6 +615,7 @@ def mark_attendance(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def unmark_attendance(request, group_id):
+
     """Unmark attendance for selected students in a group"""
     teacher = request.user.teacher
 
@@ -621,7 +629,7 @@ def unmark_attendance(request, group_id):
     if not student_ids:
         return Response({'error': 'No student IDs provided'}, status=400)
 
-    num_classes_to_unmark = request.data.get('num_classes_to_unmark')
+    num_classes_to_unmark = request.data.get('number_of_classes')
     if not num_classes_to_unmark or not isinstance(num_classes_to_unmark, int) or num_classes_to_unmark < 1:
         return Response({'error': 'Invalid number of classes to unmark'}, status=400)
 
@@ -637,6 +645,7 @@ def unmark_attendance(request, group_id):
             status__in=['attended_and_the_payment_not_due', 'attended_and_the_payment_due']
         ).order_by('-id')[:num_classes_to_unmark]
         attended_classes_to_delete_count = attended_classes_to_delete.count()
+        print(f"attended_classes_to_delete_count : {attended_classes_to_delete_count}")
 
         for attended_class in attended_classes_to_delete :
             attended_class.delete()
@@ -648,13 +657,20 @@ def unmark_attendance(request, group_id):
             student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_classes_to_delete_count
             student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_classes_to_delete_count
             # if we still have less than 4 classes attended and their payment are due after deleting the classes
-            # convert their status to attended and their payment not due 
+            # convert their status to attended and their payment not due and subtract their due unpaid amount from the unpaid amount of the student
             classes_to_not_delete_count = student_group_enrollment.attended_non_paid_classes - attended_classes_to_delete_count 
             if classes_to_not_delete_count > 0 and classes_to_not_delete_count < 4 : 
                 Class.objects.filter(group_enrollment=student_group_enrollment, status='attended_and_the_payment_due').update(status='attended_and_the_payment_not_due')
+                student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * classes_to_not_delete_count
+                student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class * classes_to_not_delete_count
+                
         # remove the number of deleted classes from the attended non paid classes ones 
         student_group_enrollment.attended_non_paid_classes -= attended_classes_to_delete_count 
         student_group_enrollment.save()
+        student_teacher_enrollment.save()
+        print(f"group_enrollment.attended_non_paid_classes : {student_group_enrollment.attended_non_paid_classes}")
+        print(f"group_enrollment.unpaid_amount : {student_group_enrollment.unpaid_amount}")
+        print(f"teacher_enrollment.unpaid_amount : {student_teacher_enrollment.unpaid_amount}")
 
         # Notify the student
         if student.user:

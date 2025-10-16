@@ -402,7 +402,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 5),
                         Expanded(
                           child: ElevatedButton(
                             style: primaryButtonStyle,

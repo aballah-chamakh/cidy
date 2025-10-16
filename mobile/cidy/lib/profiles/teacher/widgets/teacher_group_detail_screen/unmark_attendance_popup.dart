@@ -1,20 +1,26 @@
 import 'dart:convert';
 
 import 'package:cidy/app_styles.dart';
+import 'package:cidy/authentication/login.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class UnmarkAttendancePopup extends StatefulWidget {
   final int studentCount;
+  final int groupId;
   final VoidCallback onSuccess;
+  final VoidCallback onError;
   final Set<int> studentIds;
 
   const UnmarkAttendancePopup({
     super.key,
+    required this.groupId,
     required this.studentCount,
     required this.onSuccess,
+    required this.onError,
     required this.studentIds,
   });
 
@@ -26,12 +32,29 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
   int numberOfClasses = 1;
   bool _isLoading = false;
   final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _numberOfClassesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _numberOfClassesController = TextEditingController(
+      text: numberOfClasses.toString(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _numberOfClassesController.dispose();
+    super.dispose();
+  }
 
   Future<void> _unmarkAttendance() async {
+    if (!mounted) return;
+
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    _formKey.currentState!.save();
+    numberOfClasses = int.parse(_numberOfClassesController.text);
 
     setState(() {
       _isLoading = true;
@@ -40,15 +63,20 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
     try {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
+
       if (token == null) {
-        // Handle token absence
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
       final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/unmark-attendance/',
+        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/students/unmark_attendance/',
       );
-      final response = await http.post(
+      final response = await http.put(
         url,
         headers: {
           'Content-Type': 'application/json',
@@ -60,20 +88,21 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
         }),
       );
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
         widget.onSuccess();
-        Navigator.of(context).pop();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Échec de l\'annulation de la présence'),
-          ),
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
         );
+      } else {
+        widget.onError();
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Erreur de connexion')));
+      if (!mounted) return;
+      widget.onError();
     } finally {
       if (mounted) {
         setState(() {
@@ -86,48 +115,99 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: popupHorizontalMargin,
+        vertical: 0,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(popupBorderRadius),
+      ),
       elevation: 0,
       backgroundColor: Colors.transparent,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        constraints: const BoxConstraints(maxWidth: 400),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(popupPadding),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
           shape: BoxShape.rectangle,
-          borderRadius: BorderRadius.circular(16.0),
+          borderRadius: BorderRadius.circular(popupBorderRadius),
         ),
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : Form(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Annuler la présence',
+                  style: TextStyle(
+                    fontSize: headerFontSize,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.close,
+                    size: headerIconSize,
+                    color: primaryColor,
+                  ),
+                  onPressed: () {
+                    if (!mounted) return;
+                    Navigator.of(context).pop(false);
+                  },
+                ),
+              ],
+            ),
+            const Divider(height: 5),
+            const SizedBox(height: 20.0),
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(
+                  child: CircularProgressIndicator(color: primaryColor),
+                ),
+              )
+            else
+              Form(
                 key: _formKey,
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'Annuler présence (${widget.studentCount})',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      textAlign: TextAlign.center,
+                    const Icon(
+                      Icons.cancel_schedule_send_outlined,
+                      size: 100,
+                      color: primaryColor,
                     ),
                     const SizedBox(height: 20),
-                    const Icon(
-                      Icons.cancel_outlined,
-                      size: 60,
-                      color: Colors.orange,
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: mediumFontSize,
+                          color: Colors.black,
+                        ),
+                        children: <TextSpan>[
+                          const TextSpan(text: 'Annuler la présence de '),
+                          TextSpan(
+                            text: '${widget.studentCount}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(
+                            text:
+                                ' ${widget.studentCount > 1 ? 'étudiants' : 'étudiant'} pour le nombre de séances indiqué.',
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 20),
                     TextFormField(
-                      initialValue: numberOfClasses.toString(),
+                      controller: _numberOfClassesController,
                       decoration: const InputDecoration(
-                        labelText: 'Nombre de cours à annuler',
+                        labelText: 'Nombre de seances à annuler',
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Veuillez entrer un nombre';
@@ -141,11 +221,8 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
                         }
                         return null;
                       },
-                      onSaved: (value) {
-                        numberOfClasses = int.parse(value!);
-                      },
                     ),
-                    const SizedBox(height: 20),
+                    const Divider(height: 30),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -153,17 +230,24 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
                           child: TextButton(
                             style: secondaryButtonStyle,
                             onPressed: () {
-                              Navigator.of(context).pop();
+                              if (!mounted) return;
+                              Navigator.of(context).pop(false);
                             },
-                            child: const Text('Annuler'),
+                            child: const Text(
+                              'Annuler',
+                              style: TextStyle(fontSize: mediumFontSize),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 5),
                         Expanded(
                           child: ElevatedButton(
                             style: primaryButtonStyle,
                             onPressed: _unmarkAttendance,
-                            child: const Text('Confirmer'),
+                            child: const Text(
+                              'Confirmer',
+                              style: TextStyle(fontSize: mediumFontSize),
+                            ),
                           ),
                         ),
                       ],
@@ -171,6 +255,8 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
                   ],
                 ),
               ),
+          ],
+        ),
       ),
     );
   }

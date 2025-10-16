@@ -101,12 +101,12 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
         
         students = students.annotate(
             paid_amount=Coalesce(
-                Sum('teacherenrollment__paid_amount', filter=Q(teacherenrollment__teacher=teacher)),
+                Sum('groupenrollment__paid_amount', filter=Q(groupenrollment__group=group_obj)),
                 Value(0),
                 output_field=DecimalField()
             ),
             unpaid_amount=Coalesce(
-                Sum('teacherenrollment__unpaid_amount', filter=Q(teacherenrollment__teacher=teacher)),
+                Sum('groupenrollment__unpaid_amount', filter=Q(groupenrollment__group=group_obj)),
                 Value(0),
                 output_field=DecimalField()
             )
