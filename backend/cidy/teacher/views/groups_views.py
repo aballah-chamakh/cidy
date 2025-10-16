@@ -368,7 +368,6 @@ def create_group_student(request, group_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_the_possible_students_for_a_group(request,group_id):
-    time.sleep(2)
     teacher = request.user.teacher
     try:
         group = Group.objects.get(id=group_id, teacher=teacher)
@@ -513,18 +512,19 @@ def remove_students_from_group(request, group_id):
 @permission_classes([IsAuthenticated])
 def mark_attendance(request, group_id):
     """Mark attendance for selected students in a group"""
-
     # validate the request data
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
+        print("No student IDs provided")
         return Response({'error': 'No student IDs provided'}, status=400)
 
-    attendance_date = request.data.get('attendance_date')
-    attendance_start_time = request.data.get('attendance_start_time')
-    attendance_end_time = request.data.get('attendance_end_time')
+    attendance_date = request.data.get('date')
+    attendance_start_time = request.data.get('start_time')
+    attendance_end_time = request.data.get('end_time')
     
     if not attendance_date or not attendance_start_time or not attendance_end_time:
-        return Response({'error': 'Date and time range are required for the "specify" option'}, status=400)
+        print("The date, start time and end time are required")
+        return Response({'error': 'The date, start time and end time are required'}, status=400)
 
     attendance_date = datetime.strptime(attendance_date, "%d/%m/%Y").date()
     attendance_start_time = datetime.strptime(attendance_start_time, "%H:%M").time()
@@ -539,15 +539,17 @@ def mark_attendance(request, group_id):
         return Response({'error': 'Group not found'}, status=404)
 
     # check if these students are enrolled in the group of the teacher
-    students = group.students.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
+    students = group.students.filter(id__in=student_ids, teacherenrollment__teacher=teacher)
     if not students.exists():
         return Response({'error': 'No students found in the group'}, status=404)
 
-    teacher_subject = TeacherSubject.objects.filter(teacher=teacher, level=group.teacher_subject.level, section=group.section, subject=group.teacher_subject.subject.name).first()
+    teacher_subject = group.teacher_subject
 
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
+    current_datetime = datetime.now()
+    print("starting to mark attendance for students...")
     for student in students:
         student_teacher_enrollment = TeacherEnrollment.objects.get(student=student, teacher=teacher)
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
@@ -558,19 +560,21 @@ def mark_attendance(request, group_id):
                 student_group_enrollment.unpaid_amount += teacher_subject.price_per_class * 3
                 student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class * 3
             # create the next class as attended_and_the_payment_due
-            Class.objects.create(enrollement=student_group_enrollment,
+            Class.objects.create(group_enrollment=student_group_enrollment,
                                 attendance_date=attendance_date,
                                 attendance_start_time=attendance_start_time,
                                 attendance_end_time=attendance_end_time,
-                                status = 'attended_and_the_payment_due')
+                                status = 'attended_and_the_payment_due',
+                                last_status_datetime = current_datetime)
             student_group_enrollment.unpaid_amount += teacher_subject.price_per_class
             student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class
         else : 
-            Class.objects.create(enrollement=student_group_enrollment,
+            Class.objects.create(group_enrollment=student_group_enrollment,
                                 attendance_date=attendance_date,
                                 attendance_start_time=attendance_start_time,
                                 attendance_end_time=attendance_end_time,
-                                status = 'attended_and_the_payment_not_due')
+                                status = 'attended_and_the_payment_not_due',
+                                last_status_datetime = current_datetime)
         student_group_enrollment.attended_non_paid_classes += 1
         student_group_enrollment.save()
         # Notify the student
@@ -612,8 +616,7 @@ def unmark_attendance(request, group_id):
     except Group.DoesNotExist:
         return Response({'error': 'Group not found'}, status=404)
 
-    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.teacher_subject.level,section=group.section,subject=group.teacher_subject.subject.name).first()
-
+    teacher_subject = group.teacher_subject
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
         return Response({'error': 'No student IDs provided'}, status=400)
@@ -856,7 +859,7 @@ def mark_payment(request, group_id):
     except Group.DoesNotExist:
         return Response({'error': 'Group not found'}, status=404)
 
-    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.teacher_subject.level,section=group.section,subject=group.teacher_subject.subject.name).first()
+    teacher_subject = group.teacher_subject
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:
@@ -945,7 +948,7 @@ def unmark_payment(request, group_id):
     except Group.DoesNotExist:
         return Response({'error': 'Group not found'}, status=404)
 
-    teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level=group.teacher_subject.level,section=group.section,subject=group.teacher_subject.subject.name).first()
+    teacher_subject = group.teacher_subject
 
     student_ids = request.data.get('student_ids', [])
     if not student_ids:

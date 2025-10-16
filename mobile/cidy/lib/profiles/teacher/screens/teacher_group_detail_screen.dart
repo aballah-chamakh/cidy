@@ -39,25 +39,73 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   final Set<int> _selectedStudentIds = {};
   final TextEditingController _searchController = TextEditingController();
   String? _sortBy = '';
+  final ScrollController _studentListScrollController = ScrollController();
+  final ScrollController _pageScrollController = ScrollController();
+  bool _isStudentListAtEdge = true;
+  final GlobalKey _stickyActionBarKey = GlobalKey();
+  double _stickyActionBarHeight = 0;
 
   final Map<String, String> _sortOptions = {
     '': 'Par défaut',
     'paid_amount_desc': 'Payé (décroissant)',
     'paid_amount_asc': 'Payé (croissant)',
-    'unpaid_amount_desc': 'Impayé (décroissant)',
-    'unpaid_amount_asc': 'Impayé (croissant)',
+    'unpaid_amount_desc': 'Non payé (décroissant)',
+    'unpaid_amount_asc': 'Non payé (croissant)',
+    'name_asc': 'Nom (A à Z)',
+    'name_desc': 'Nom (Z à A)',
   };
 
   @override
   void initState() {
     super.initState();
     _fetchGroupDetails();
+    _studentListScrollController.addListener(_onStudentListScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _studentListScrollController.removeListener(_onStudentListScroll);
+    _studentListScrollController.dispose();
+    _pageScrollController.dispose();
     super.dispose();
+  }
+
+  void _onStudentListScroll() {
+    if (!_studentListScrollController.hasClients) return;
+    final atEdge = _studentListScrollController.position.atEdge;
+    if (atEdge != _isStudentListAtEdge) {
+      setState(() {
+        _isStudentListAtEdge = atEdge;
+      });
+    }
+  }
+
+  void _propagateStudentListScroll(double delta) {
+    if (!_pageScrollController.hasClients || delta.abs() < 0.01) return;
+    final position = _pageScrollController.position;
+    final double target = (position.pixels + delta)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+
+    if (target != position.pixels) {
+      position.jumpTo(target);
+    }
+  }
+
+  void _updateStickyActionBarHeight() {
+    if (!mounted) return;
+    final context = _stickyActionBarKey.currentContext;
+    if (context == null) return;
+    final renderBox = context.findRenderObject();
+    if (renderBox is! RenderBox) return;
+    final newHeight = renderBox.size.height;
+    if (newHeight <= 0) return;
+    if ((newHeight - _stickyActionBarHeight).abs() > 0.5) {
+      setState(() {
+        _stickyActionBarHeight = newHeight;
+      });
+    }
   }
 
   Future<void> _fetchGroupDetails({bool showLoading = true}) async {
@@ -242,16 +290,11 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           onRefresh: () async {
             if (!mounted) return;
             await _fetchGroupDetails(showLoading: false);
-            if (!mounted) return;
           },
           child: SingleChildScrollView(
+            controller: _pageScrollController,
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              8.0,
-              8.0,
-              8.0,
-              _selectedStudentIds.isNotEmpty ? 80.0 : 8.0,
-            ),
+            padding: const EdgeInsets.all(8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -260,6 +303,12 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                 _buildKpiCards(),
                 const SizedBox(height: 10),
                 _buildStudentListCard(),
+                if (_selectedStudentIds.isNotEmpty)
+                  SizedBox(
+                    height: _stickyActionBarHeight > 0
+                        ? _stickyActionBarHeight
+                        : 160,
+                  ), // Spacer for sticky bar
               ],
             ),
           ),
@@ -363,15 +412,12 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
 
   Widget _buildKpiCards() {
     final group = _groupDetail!;
-    print("group['total_paid'] : ${group['total_paid'].runtimeType}");
-    print("group['total_unpaid'] : ${group['total_unpaid'].runtimeType}");
-
     final students = group['students']['students'] as List;
     return Row(
       children: [
         Expanded(
           child: _buildKpiCard(
-            formatToK(group['total_paid']),
+            formatToK((group['total_paid'] ?? 0).toString()),
             'Payé',
             Colors.green,
           ),
@@ -379,7 +425,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         const SizedBox(width: 8),
         Expanded(
           child: _buildKpiCard(
-            formatToK(group['total_unpaid']),
+            formatToK((group['total_unpaid'] ?? 0).toString()),
             'Non payé',
             Colors.red,
           ),
@@ -543,15 +589,31 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       constraints: BoxConstraints(
         maxHeight: 0.7 * screenHeight, // 👈 50% of the screen height
       ),
-      child: Scrollbar(
-        thumbVisibility: true,
-        child: ListView.builder(
-          shrinkWrap: true,
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: students.length,
-          itemBuilder: (context, index) {
-            return _buildStudentCard(students[index]);
-          },
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification.metrics.axis != Axis.vertical) return false;
+
+          if (notification is OverscrollNotification) {
+            _propagateStudentListScroll(notification.overscroll);
+          } else if (notification is ScrollUpdateNotification &&
+              notification.metrics.atEdge &&
+              (notification.scrollDelta ?? 0.0) != 0.0) {
+            _propagateStudentListScroll(notification.scrollDelta!);
+          }
+          return false;
+        },
+        child: Scrollbar(
+          controller: _studentListScrollController,
+          thumbVisibility: true,
+          child: ListView.builder(
+            controller: _studentListScrollController,
+            shrinkWrap: true,
+            physics: const ClampingScrollPhysics(),
+            itemCount: students.length,
+            itemBuilder: (context, index) {
+              return _buildStudentCard(students[index]);
+            },
+          ),
         ),
       ),
     );
@@ -672,7 +734,6 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                 }
               },
           onServerError: () {
-            print("onServerError called");
             if (mounted) {
               _showError('Erreur du serveur (500)');
               Navigator.of(context).pop();
@@ -703,11 +764,15 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   }
 
   Widget _buildStickyActionBar() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateStickyActionBarHeight();
+    });
     return Positioned(
       bottom: 0,
       left: 0,
       right: 0,
       child: Container(
+        key: _stickyActionBarKey,
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 10),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -856,11 +921,24 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       builder: (BuildContext context) {
         return MarkAttendancePopup(
           studentCount: _selectedStudentIds.length,
+          groupId: _groupDetail!['id'],
           studentIds: _selectedStudentIds,
+          groupStartTime: _groupDetail!['start_time'],
+          groupEndTime: _groupDetail!['end_time'],
+          weekDay: _groupDetail!['week_day'],
           onSuccess: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
             _showSuccess('Présence marquée avec succès');
             clearFiltersAndSelectedStudents();
-            _fetchGroupDetails(showLoading: false);
+            _fetchGroupDetails(showLoading: true);
+          },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
           },
         );
       },

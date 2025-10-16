@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:cidy/authentication/login.dart';
 import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
@@ -9,14 +9,24 @@ import 'package:http/http.dart' as http;
 
 class MarkAttendancePopup extends StatefulWidget {
   final int studentCount;
-  final VoidCallback onSuccess;
+  final int groupId;
   final Set<int> studentIds;
+  final String groupStartTime;
+  final String groupEndTime;
+  final String weekDay;
+  final VoidCallback onSuccess;
+  final VoidCallback onError;
 
   const MarkAttendancePopup({
     super.key,
     required this.studentCount,
-    required this.onSuccess,
+    required this.groupId,
     required this.studentIds,
+    required this.groupStartTime,
+    required this.groupEndTime,
+    required this.weekDay,
+    required this.onSuccess,
+    required this.onError,
   });
 
   @override
@@ -24,6 +34,7 @@ class MarkAttendancePopup extends StatefulWidget {
 }
 
 class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
+  final _formKey = GlobalKey<FormState>();
   DateTime selectedDate = DateTime.now();
   TimeOfDay? selectedStartTime;
   TimeOfDay? selectedEndTime;
@@ -33,19 +44,41 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
   late final TextEditingController _startTimeController;
   late final TextEditingController _endTimeController;
 
-  String? _dateError;
-  String? _startTimeError;
-  String? _endTimeError;
-
   @override
   void initState() {
     super.initState();
+    selectedDate = _getDateForWeekday(widget.weekDay);
     _dateController = TextEditingController(
       text:
           '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}',
     );
-    _startTimeController = TextEditingController();
-    _endTimeController = TextEditingController();
+    _startTimeController = TextEditingController(text: widget.groupStartTime);
+    _endTimeController = TextEditingController(text: widget.groupEndTime);
+  }
+
+  DateTime _getDateForWeekday(String weekday) {
+    final now = DateTime.now();
+    final englishWeekdays = {
+      'Monday': DateTime.monday,
+      'Tuesday': DateTime.tuesday,
+      'Wednesday': DateTime.wednesday,
+      'Thursday': DateTime.thursday,
+      'Friday': DateTime.friday,
+      'Saturday': DateTime.saturday,
+      'Sunday': DateTime.sunday,
+    };
+
+    final targetWeekday = englishWeekdays[weekday];
+    if (targetWeekday == null) {
+      return now; // fallback to today
+    }
+
+    // Go back to the beginning of the week (Monday)
+    var resultDate = now.subtract(Duration(days: now.weekday - 1));
+    // Go forward to the target weekday
+    resultDate = resultDate.add(Duration(days: targetWeekday - 1));
+
+    return resultDate;
   }
 
   @override
@@ -57,79 +90,8 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
   }
 
   Future<void> _markAttendance() async {
-    // Validate all fields and collect errors
-    String? dateError;
-    String? startTimeError;
-    String? endTimeError;
-
-    // Validate date
-    if (_dateController.text.isEmpty) {
-      dateError = 'Veuillez saisir une date';
-    } else {
-      try {
-        final parts = _dateController.text.split('/');
-        if (parts.length != 3 ||
-            parts[0].length != 2 ||
-            parts[1].length != 2 ||
-            parts[2].length != 4) throw FormatException();
-        int day = int.parse(parts[0]);
-        int month = int.parse(parts[1]);
-        int year = int.parse(parts[2]);
-        if (day < 1 || day > 31 || month < 1 || month > 12 || year < 2024) {
-          dateError = 'Date invalide';
-        }
-      } catch (e) {
-        dateError = 'Format invalide';
-      }
-    }
-
-    // Validate start time
-    if (_startTimeController.text.isEmpty) {
-      startTimeError = 'Veuillez saisir l\'heure de début';
-    } else {
-      try {
-        final parts = _startTimeController.text.split(':');
-        if (parts.length != 2 || parts[0].length != 2 || parts[1].length != 2) {
-          throw FormatException();
-        }
-        int hour = int.parse(parts[0]);
-        int minute = int.parse(parts[1]);
-        if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-          startTimeError = 'Heure invalide';
-        }
-      } catch (e) {
-        startTimeError = 'Format invalide';
-      }
-    }
-
-    // Validate end time
-    if (_endTimeController.text.isEmpty) {
-      endTimeError = 'Veuillez saisir l\'heure de fin';
-    } else {
-      try {
-        final parts = _endTimeController.text.split(':');
-        if (parts.length != 2 || parts[0].length != 2 || parts[1].length != 2) {
-          throw FormatException();
-        }
-        int hour = int.parse(parts[0]);
-        int minute = int.parse(parts[1]);
-        if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-          endTimeError = 'Heure invalide';
-        }
-      } catch (e) {
-        endTimeError = 'Format invalide';
-      }
-    }
-
-    // Update the UI with all errors at once
-    setState(() {
-      _dateError = dateError;
-      _startTimeError = startTimeError;
-      _endTimeError = endTimeError;
-    });
-
-    // If there are any errors, stop processing
-    if (dateError != null || startTimeError != null || endTimeError != null) {
+    if (!mounted) return;
+    if (!_formKey.currentState!.validate()) {
       return;
     }
 
@@ -160,21 +122,21 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
 
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
+
       if (token == null) {
         // Handle token absence
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erreur d\'authentification')),
-          );
-          setState(() => _isLoading = false);
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
         return;
       }
 
       final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/groups/mark-attendance/',
+        '${Config.backendUrl}/api/teacher/groups/${widget.groupId}/students/mark_attendance/',
       );
-      final response = await http.post(
+      final response = await http.put(
         url,
         headers: {
           'Content-Type': 'application/json',
@@ -183,30 +145,28 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
         body: jsonEncode({
           'student_ids': widget.studentIds.toList(),
           'date':
-              "${parsedDate.year}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}",
+              "${parsedDate.day.toString().padLeft(2, '0')}/${parsedDate.month.toString().padLeft(2, '0')}/${parsedDate.year}",
           'start_time':
               '${parsedStartTime.hour.toString().padLeft(2, '0')}:${parsedStartTime.minute.toString().padLeft(2, '0')}',
           'end_time':
               '${parsedEndTime.hour.toString().padLeft(2, '0')}:${parsedEndTime.minute.toString().padLeft(2, '0')}',
         }),
       );
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         widget.onSuccess();
-        if (mounted) Navigator.of(context).pop();
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Échec du marquage de la présence')),
-          );
-        }
+        widget.onError();
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Format de date/heure invalide')),
-        );
-      }
+      if (!mounted) return;
+      widget.onError();
     } finally {
       if (mounted) {
         setState(() {
@@ -243,7 +203,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Confirmer le retrait',
+                  'Marquer la présence',
                   style: TextStyle(
                     fontSize: headerFontSize,
                     fontWeight: FontWeight.bold,
@@ -257,6 +217,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                     color: primaryColor,
                   ),
                   onPressed: () {
+                    if (!mounted) return;
                     Navigator.of(context).pop(false);
                   },
                 ),
@@ -265,138 +226,199 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
             const Divider(height: 5),
             const SizedBox(height: 20.0),
             if (_isLoading)
-              Padding(
-                padding: EdgeInsetsGeometry.all(40),
-                child: const Center(
+              const Padding(
+                padding: EdgeInsets.all(40),
+                child: Center(
                   child: CircularProgressIndicator(color: primaryColor),
                 ),
               )
-            else ...[
-              const Icon(Icons.event_available, size: 100, color: primaryColor),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _dateController,
-                decoration: InputDecoration(
-                  labelText: 'Date (jj/mm/aaaa) *',
-                  border: const OutlineInputBorder(),
-                  errorText: _dateError,
-                  errorBorder: _dateError != null
-                      ? OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4.0),
-                        )
-                      : null,
-                  focusedErrorBorder: _dateError != null
-                      ? OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4.0),
-                        )
-                      : null,
-                ),
-                keyboardType: TextInputType.datetime,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
-                  _DateTextInputFormatter(),
-                ],
-                onChanged: (value) {
-                  if (_dateError != null) {
-                    setState(() {
-                      _dateError = null;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _startTimeController,
-                decoration: InputDecoration(
-                  labelText: 'Heure de début (HH:mm) *',
-                  border: const OutlineInputBorder(),
-                  errorText: _startTimeError,
-                  errorBorder: _startTimeError != null
-                      ? OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4.0),
-                        )
-                      : null,
-                  focusedErrorBorder: _startTimeError != null
-                      ? OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4.0),
-                        )
-                      : null,
-                ),
-                keyboardType: TextInputType.datetime,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
-                  _TimeTextInputFormatter(),
-                ],
-                onChanged: (value) {
-                  if (_startTimeError != null) {
-                    setState(() {
-                      _startTimeError = null;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _endTimeController,
-                decoration: InputDecoration(
-                  labelText: 'Heure de fin (HH:mm) *',
-                  border: const OutlineInputBorder(),
-                  errorText: _endTimeError,
-                  errorBorder: _endTimeError != null
-                      ? OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4.0),
-                        )
-                      : null,
-                  focusedErrorBorder: _endTimeError != null
-                      ? OutlineInputBorder(
-                          borderSide: const BorderSide(color: Colors.red),
-                          borderRadius: BorderRadius.circular(4.0),
-                        )
-                      : null,
-                ),
-                keyboardType: TextInputType.datetime,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
-                  _TimeTextInputFormatter(),
-                ],
-                onChanged: (value) {
-                  if (_endTimeError != null) {
-                    setState(() {
-                      _endTimeError = null;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      style: secondaryButtonStyle,
-                      onPressed: () {
-                        Navigator.of(context).pop();
+            else
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    const Icon(
+                      Icons.event_available,
+                      size: 100,
+                      color: primaryColor,
+                    ),
+                    const SizedBox(height: 20),
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: TextStyle(
+                          fontSize: mediumFontSize,
+                          color: Colors.black,
+                        ),
+                        children: <TextSpan>[
+                          const TextSpan(text: 'Marquer la présence de '),
+                          TextSpan(
+                            text: '${widget.studentCount}',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(
+                            text:
+                                ' ${widget.studentCount > 1 ? 'étudiants' : 'étudiant'} '
+                                'pour la date et la plage horaire spécifiées.',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _dateController,
+                      decoration: const InputDecoration(
+                        labelText: 'Date (jj/mm/aaaa) *',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.datetime,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
+                        _DateTextInputFormatter(),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Veuillez saisir une date';
+                        }
+                        try {
+                          final parts = value.split('/');
+                          if (parts.length != 3) throw FormatException();
+                          int day = int.parse(parts[0]);
+                          int month = int.parse(parts[1]);
+                          int year = int.parse(parts[2]);
+                          if (day < 1 ||
+                              day > 31 ||
+                              month < 1 ||
+                              month > 12 ||
+                              year < 2025) {
+                            return 'Date invalide';
+                          }
+                        } catch (e) {
+                          return 'Format invalide';
+                        }
+                        return null;
                       },
-                      child: const Text('Annuler'),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: primaryButtonStyle,
-                      onPressed: _markAttendance,
-                      child: const Text('Marquer'),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _startTimeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Heure de début (HH:mm) *',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.datetime,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                        _TimeTextInputFormatter(),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Veuillez saisir l\'heure de début';
+                        }
+                        try {
+                          final parts = value.split(':');
+                          if (parts.length != 2) throw FormatException();
+                          int hour = int.parse(parts[0]);
+                          int minute = int.parse(parts[1]);
+                          if (hour < 0 ||
+                              hour > 23 ||
+                              minute < 0 ||
+                              minute > 59) {
+                            return 'Heure invalide';
+                          }
+                          if (hour < 8) {
+                            return 'L\'heure doit être entre 8:00 et 00:00';
+                          }
+                        } catch (e) {
+                          return 'Format invalide';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _endTimeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Heure de fin (HH:mm) *',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.datetime,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                        _TimeTextInputFormatter(),
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Veuillez saisir l\'heure de fin';
+                        }
+                        try {
+                          final parts = value.split(':');
+                          if (parts.length != 2) throw FormatException();
+                          int hour = int.parse(parts[0]);
+                          int minute = int.parse(parts[1]);
+                          if (hour < 0 ||
+                              hour > 23 ||
+                              minute < 0 ||
+                              minute > 59) {
+                            return 'Heure invalide';
+                          }
+                          if (hour < 8 && hour != 0) {
+                            return 'L\'heure doit être entre 8:00 et 00:00';
+                          }
+
+                          if (_startTimeController.text.isNotEmpty) {
+                            final startParts = _startTimeController.text.split(
+                              ':',
+                            );
+                            if (startParts.length == 2) {
+                              int startHour = int.parse(startParts[0]);
+                              int startMinute = int.parse(startParts[1]);
+                              if (hour < startHour ||
+                                  (hour == startHour && minute < startMinute)) {
+                                return 'L\'heure de fin doit être après l\'heure de début';
+                              }
+                            }
+                          }
+                        } catch (e) {
+                          return 'Format invalide';
+                        }
+                        return null;
+                      },
+                    ),
+                    const Divider(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            style: secondaryButtonStyle,
+                            onPressed: () {
+                              if (!mounted) return;
+                              Navigator.of(context).pop();
+                            },
+                            child: const Text(
+                              'Annuler',
+                              style: TextStyle(fontSize: mediumFontSize),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: primaryButtonStyle,
+                            onPressed: _markAttendance,
+                            child: const Text(
+                              'Marquer',
+                              style: TextStyle(fontSize: mediumFontSize),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
