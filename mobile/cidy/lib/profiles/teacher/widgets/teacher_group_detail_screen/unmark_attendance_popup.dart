@@ -174,7 +174,7 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
                 child: Column(
                   children: [
                     const Icon(
-                      Icons.cancel_schedule_send_outlined,
+                      Icons.event_busy,
                       size: 100,
                       color: primaryColor,
                     ),

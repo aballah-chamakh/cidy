@@ -979,10 +979,20 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         return MarkPaymentPopup(
           studentCount: _selectedStudentIds.length,
           studentIds: _selectedStudentIds,
+          groupId: widget.groupId,
           onSuccess: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
             _showSuccess('Paiement marqué avec succès');
             clearFiltersAndSelectedStudents();
-            _fetchGroupDetails(showLoading: false);
+            _fetchGroupDetails(showLoading: true);
+          },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
           },
         );
       },

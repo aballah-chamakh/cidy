@@ -881,7 +881,7 @@ def mark_payment(request, group_id):
     if not student_ids:
         return Response({'error': 'No student IDs provided'}, status=400)
 
-    num_classes_to_mark = request.data.get('num_classes_to_mark')
+    num_classes_to_mark = request.data.get('number_of_classes')
     payment_datetime = request.data.get('payment_datetime')
 
     if not num_classes_to_mark or not isinstance(num_classes_to_mark, int) or num_classes_to_mark < 1:
@@ -899,34 +899,60 @@ def mark_payment(request, group_id):
     for student in students:
         student_teacher_enrollment = TeacherEnrollment.objects.get(student=student, teacher=teacher)
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
-        classes_to_mark_as_paid = Class.objects.filter(
+        # get the attended classes that are not marked as paid yet
+        attended_classes = Class.objects.filter(
             group_enrollment=student_group_enrollment,
             status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due']
-        )[:num_classes_to_mark]
-        classes_to_mark_as_paid_count = classes_to_mark_as_paid.count()
-
-        # Mark the payment for the class to mark as paid 
-        for unpaid_class in classes_to_mark_as_paid:
+        ).order_by('id')
+        
+        # Mark the payment for the classes that are already attended but not marked as paid
+        for unpaid_class in attended_classes[:num_classes_to_mark]:
             unpaid_class.status = 'attended_and_paid'
             unpaid_class.paid_at = payment_datetime
             unpaid_class.save()
-
+        
+        ## if we don't have enough attended non paid classes to mark as paid, we need to create new classes and mark them as paid
+        # get the number of classes to create and mark as paid if needed
+        attended_classes_count = attended_classes.count()
+        number_of_classes_to_create_and_mark_as_paid = 0
+        if attended_classes_count < num_classes_to_mark :
+            number_of_classes_to_create_and_mark_as_paid = num_classes_to_mark - attended_classes_count
+        
+        # create and mark them as paid 
+        for _ in range(number_of_classes_to_create_and_mark_as_paid):
+            Class.objects.create(
+                group_enrollment=student_group_enrollment,
+                attendance_date=None,
+                attendance_start_time=None,
+                attendance_end_time=None,
+                status='attended_and_paid',
+                paid_at=payment_datetime
+            )
+        
+        attended_classes_marked_as_paid_count = attended_classes[:num_classes_to_mark].count()
+        total_number_of_classes_marked_as_paid = attended_classes_marked_as_paid_count + number_of_classes_to_create_and_mark_as_paid
         ## handle the finances 
         # if we have only attended and due payment classes 
         if student_group_enrollment.attended_non_paid_classes >= 4 : 
+            
             # remove the unpaid amount of theses classes 
-            student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * classes_to_mark_as_paid_count
-            student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class * classes_to_mark_as_paid_count
-            # if we still have due payment classes after marking the payment, convert them to not due payment classes
-            attended_class_non_marked_as_paid_cnt = student_group_enrollment.attended_non_paid_classes - classes_to_mark_as_paid_count
+            student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_classes_marked_as_paid_count
+            student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_classes_marked_as_paid_count
+            # if number of due payment classes left after marking the payment is below 4 and higher than 0, convert them to not due payment classes
+            attended_class_non_marked_as_paid_cnt = student_group_enrollment.attended_non_paid_classes - attended_classes_marked_as_paid_count
             if attended_class_non_marked_as_paid_cnt> 0 and attended_class_non_marked_as_paid_cnt < 4 : 
                 Class.objects.filter(group_enrollment=student_group_enrollment, status='attended_and_the_payment_due').update(status='attended_and_the_payment_not_due')
+                student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_class_non_marked_as_paid_cnt
+                student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_class_non_marked_as_paid_cnt
 
-        student_group_enrollment.paid_amount += classes_to_mark_as_paid_count * teacher_subject.price_per_class
-        student_group_enrollment.attended_non_paid_classes -= classes_to_mark_as_paid_count
+        student_group_enrollment.paid_amount += total_number_of_classes_marked_as_paid * teacher_subject.price_per_class
+        student_group_enrollment.attended_non_paid_classes -= attended_classes_marked_as_paid_count
+        student_group_enrollment.save()
+        student_teacher_enrollment.save()
+        
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.teacher_subject.subject.name} comme payée(s)."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {total_number_of_classes_marked_as_paid} séance(s) de {group.teacher_subject.subject.name} comme payée(s)."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -938,7 +964,7 @@ def mark_payment(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {classes_to_mark_as_paid_count} séance(s) de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {total_number_of_classes_marked_as_paid} séance(s) de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -1008,6 +1034,8 @@ def unmark_payment(request, group_id):
             unpaid_class.paid_at = None
             unpaid_class.save()
 
+        student_group_enrollment.save()
+        student_teacher_enrollment.save()
         unpaid_classes_count = paid_classes.count()
         # Notify the student
         if student.user:
