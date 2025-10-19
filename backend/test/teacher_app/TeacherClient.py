@@ -5,7 +5,6 @@ class TeacherClient:
     
     def __init__(self, email, password):
         self.authenticate(email, password)
-        self.access_token = None
 
     def authenticate(self, email, password):
         """Authenticate the teacher and retrieve the access token."""

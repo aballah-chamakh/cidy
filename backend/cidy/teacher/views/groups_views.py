@@ -914,7 +914,7 @@ def mark_payment(request, group_id):
         attended_classes = Class.objects.filter(
             group_enrollment=student_group_enrollment,
             status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due']
-        ).order_by('id')
+        ).order_by('attendance_date','attendance_start_time','id')
         
         # Mark the payment for the classes that are already attended but not marked as paid
         for idx,unpaid_class in enumerate(attended_classes,start=1):
@@ -941,7 +941,7 @@ def mark_payment(request, group_id):
                 attendance_date=None,
                 attendance_start_time=None,
                 attendance_end_time=None,
-                status='attended_and_paid',
+                status='paid',
                 last_status_datetime=payment_datetime
             )
         print(f"number_of_classes_to_create_and_mark_as_paid : {number_of_classes_to_create_and_mark_as_paid}")
@@ -963,6 +963,7 @@ def mark_payment(request, group_id):
                 student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_class_non_marked_as_paid_cnt
                 student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class * attended_class_non_marked_as_paid_cnt
                 group.total_unpaid -= teacher_subject.price_per_class * attended_class_non_marked_as_paid_cnt
+        
         student_group_enrollment.paid_amount += total_number_of_classes_marked_as_paid * teacher_subject.price_per_class
         student_teacher_enrollment.paid_amount += total_number_of_classes_marked_as_paid * teacher_subject.price_per_class
         group.total_paid += total_number_of_classes_marked_as_paid * teacher_subject.price_per_class
