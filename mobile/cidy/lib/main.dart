@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'route_observer.dart';
+import 'dart:io';
 
 void main() {
+  HttpOverrides.global = MyHttpOverrides();
+
   initializeDateFormatting('fr_FR', null).then((_) {
     runApp(const MyApp());
   });
@@ -70,5 +73,14 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       navigatorObservers: [routeObserver],
     );
+  }
+}
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
   }
 }

@@ -108,6 +108,7 @@ class Class(models.Model):
     status = models.CharField(
         max_length=50,
         choices=(
+            ('paid', 'Paid'),
             ('attended_and_paid', 'Attended & paid'),     
             ('attended_and_the_payment_not_due', 'Attended & the payment not due'), 
             ('attended_and_the_payment_due', 'Attended & the payment due'),

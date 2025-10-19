@@ -1,18 +1,18 @@
 import requests
 
 class TeacherClient:
-    TeacherClient = "http://127.0.0.1:8000"  # Change this to your server's base URL
+    BACKEND_BASE_URL = "http://127.0.0.1:8000"  # Change this to your server's base URL
+    
     def __init__(self, email, password):
-        self.email = email
-        self.password = password
+        self.authenticate(email, password)
         self.access_token = None
 
-    def authenticate(self):
+    def authenticate(self, email, password):
         """Authenticate the teacher and retrieve the access token."""
-        url = f"{TeacherClient.TeacherClient}/api/auth/token/"
+        url = f"{TeacherClient.BACKEND_BASE_URL}/api/auth/token/"
         data = {
-            "email": self.email,
-            "password": self.password
+            "email": email,
+            "password": password
         }
         response = requests.post(url, data=data)
         if response.status_code == 200:
@@ -27,7 +27,7 @@ class TeacherClient:
             print("You must authenticate first.")
             return
 
-        url = f"{TeacherClient.TeacherClient}/api/teacher/get_dashboard_data/"
+        url = f"{TeacherClient.BACKEND_BASE_URL}/api/teacher/get_dashboard_data/"
         headers = {
             "Authorization": f"Bearer {self.access_token}"
         }

@@ -1,5 +1,6 @@
 class Config {
-  static const String backendUrl = 'http://10.0.2.2:8000';
+  static const String backendUrl =
+      'http://172.16.0.62:8000'; //'http://10.0.2.2:8000';
   static const levelsSectionsSubjects = {
     "Première année primaire": {
       "subjects": [

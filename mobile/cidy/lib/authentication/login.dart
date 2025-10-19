@@ -89,10 +89,12 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } else {
       if (!mounted) return;
-      final error = jsonDecode(response.body);
+      //final error = jsonDecode(response.body);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Erreur : ${error['detail'] ?? 'Erreur de connexion'}'),
+          content: Text(
+            'Erreur de connexion. Veuillez vérifier vos identifiants.',
+          ),
         ),
       );
     }
