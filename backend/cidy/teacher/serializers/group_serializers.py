@@ -20,6 +20,12 @@ class GroupListSerializer(serializers.ModelSerializer):
             'subject','week_day', 'start_time', 'end_time','total_paid', 'total_unpaid'
         ]
 
+class StudentsWithOverlappingClasses(serializers.ModelSerializer):
+    image = serializers.CharField(source='image.url')
+    class Meta : 
+        model = Student 
+        fields = ['id','image','fullname']
+
 class GroupStudentListSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     image = serializers.CharField(source='image.url')
