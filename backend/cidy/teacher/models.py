@@ -108,7 +108,6 @@ class Class(models.Model):
     status = models.CharField(
         max_length=50,
         choices=(
-            ('paid', 'Paid'),
             ('attended_and_paid', 'Attended & paid'),     
             ('attended_and_the_payment_not_due', 'Attended & the payment not due'), 
             ('attended_and_the_payment_due', 'Attended & the payment due'),
@@ -118,11 +117,10 @@ class Class(models.Model):
     attendance_date = models.DateField(null=True, blank=True)
     attendance_start_time = models.TimeField(null=True, blank=True)
     attendance_end_time = models.TimeField(null=True, blank=True)
-    #absence_date = models.DateField(null=True, blank=True)
+    absence_date = models.DateField(null=True, blank=True)
     absence_start_time = models.TimeField(null=True, blank=True)
     absence_end_time = models.TimeField(null=True, blank=True)
-    #paid_at = models.DateTimeField(null=True, blank=True)
-    last_status_datetime = models.DateTimeField(default=timezone.now)
+    paid_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Class for {self.group_enrollment.group.name} - {self.status} - {self.last_status_datetime}"
