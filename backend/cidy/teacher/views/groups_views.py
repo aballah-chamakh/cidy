@@ -1,4 +1,5 @@
 from datetime import datetime
+from tokenize import group
 from django.utils import timezone
 import time 
 from django.core.paginator import Paginator
@@ -570,7 +571,8 @@ def mark_attendance(request, group_id):
         if overlapping_classes.exists() : 
             students_with_overlapping_classes.append(student)
             continue
-
+        
+        unpaid_amount_did_increase = False 
         # check if the class of this attendance completes the next batch of 4 classes
         if (student_group_enrollment.attended_non_paid_classes + 1) % 4 == 0 : 
             # mark the non due payment classes of this group enrollment as due 
@@ -589,6 +591,7 @@ def mark_attendance(request, group_id):
             group.total_unpaid += teacher_subject.price_per_class * 4
             student_group_enrollment.save()
             student_teacher_enrollment.save()
+            unpaid_amount_did_increase = True
         else : 
             # create the class of this attendance as not due
             Class.objects.create(group_enrollment=student_group_enrollment,
@@ -606,7 +609,19 @@ def mark_attendance(request, group_id):
         print(f"teacher_enrollment.unpaid_amount : {student_teacher_enrollment.unpaid_amount}")
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} vous a marqué comme présent(e) dans le cours de {group.teacher_subject.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+            student_message = (
+                f"{student_teacher_pronoun} {teacher.fullname} a marqué votre présence "
+                f"dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le "
+                f"{attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} "
+                f"à {attendance_end_time.strftime('%H:%M')}"
+            )
+            if unpaid_amount_did_increase:
+                student_message += (
+                    f", et le montant impayé pour cette matière est désormais de "
+                    f"{student_group_enrollment.unpaid_amount} DT."
+                )
+            else:
+                student_message += "."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -618,7 +633,21 @@ def mark_attendance(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {child_pronoun} {son.fullname} comme présent(e) dans le cours de {group.teacher_subject.subject.name} le {attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+            parent_message = (
+                f"{parent_teacher_pronoun} {teacher.fullname} a marqué la présence de "
+                f"{child_pronoun} {son.fullname} dans la séance de "
+                f"{group.teacher_subject.subject.name} qui a eu lieu le "
+                f"{attendance_date.strftime('%d/%m/%Y')} de {attendance_start_time.strftime('%H:%M')} "
+                f"à {attendance_end_time.strftime('%H:%M')}"
+            )
+            if unpaid_amount_did_increase:
+                parent_message += (
+                    f", et le montant impayé pour cette matière est désormais de "
+                    f"{student_group_enrollment.unpaid_amount} DT."
+                )
+            else:
+                parent_message += "."
+
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -735,7 +764,11 @@ def unmark_attendance(request, group_id):
 
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé votre présence pour {attended_classes_to_delete_count} séances de {group.teacher_subject.subject.name}."
+            student_message = (
+                f"{student_teacher_pronoun} {teacher.fullname} a annulé votre présence "
+                f"pour {attended_classes_to_delete_count} séance(s) de "
+                f"{group.teacher_subject.subject.name}."
+            )            
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -747,7 +780,11 @@ def unmark_attendance(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé la présence de {child_pronoun} {son.fullname} pour {attended_classes_to_delete_count} séances de {group.teacher_subject.subject.name}."
+            parent_message = (
+                    f"{parent_teacher_pronoun} {teacher.fullname} a annulé la présence de "
+                    f"{child_pronoun} {son.fullname} pour {attended_classes_to_delete_count} "
+                    f"séance(s) de {group.teacher_subject.subject.name}."
+            )
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -832,7 +869,11 @@ def mark_absence(request,group_id):
         
             # Notify the student
             if student.user:
-                student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué votre absence dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
+                student_message = (
+                    f"{student_teacher_pronoun} {teacher.fullname} a marqué votre absence "
+                    f"dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le "
+                    f"{absence_date} de {absence_start_time} à {absence_end_time}."
+                )
                 StudentNotification.objects.create(
                     student=student,
                     image=teacher.image,
@@ -844,7 +885,12 @@ def mark_absence(request,group_id):
             # Notify the parents
             child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
             for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-                parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué l'absence de {child_pronoun} {son.fullname} dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
+                parent_message = (
+                        f"{parent_teacher_pronoun} {teacher.fullname} a marqué l’absence de "
+                        f"{child_pronoun} {son.fullname} dans la séance de "
+                        f"{group.teacher_subject.subject.name} qui a eu lieu le "
+                        f"{absence_date} de {absence_start_time} à {absence_end_time}."
+                )               
                 ParentNotification.objects.create(
                     parent=son.parent,
                     image=son.image,
@@ -915,7 +961,11 @@ def unmark_absence(request,group_id):
 
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé pour vous l'absence de {absent_classes_to_delete_count} séance(s) de {group.teacher_subject.subject.name}."
+            student_message = (
+                f"{student_teacher_pronoun} {teacher.fullname} a annulé votre absence "
+                f"pour {absent_classes_to_delete_count} séance(s) de "
+                f"{group.teacher_subject.subject.name}."
+            )            
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -927,7 +977,11 @@ def unmark_absence(request,group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé pour {child_pronoun} {son.fullname} l'absence de {absent_classes_to_delete_count} séance(s) de {group.teacher_subject.subject.name}."
+            parent_message = (
+                f"{parent_teacher_pronoun} {teacher.fullname} a annulé l’absence de "
+                f"{child_pronoun} {son.fullname} pour {absent_classes_to_delete_count} "
+                f"séance(s) de {group.teacher_subject.subject.name}."
+            )
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -1063,7 +1117,11 @@ def mark_payment(request, group_id):
         
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {attended_classes_to_mark_their_payment_count} séance(s) de {group.teacher_subject.subject.name} comme payée(s)."
+            student_message = (
+                f"{student_teacher_pronoun} {teacher.fullname} a marqué votre paiement "
+                f"pour {attended_classes_to_mark_their_payment_count} séance(s) de "
+                f"{group.teacher_subject.subject.name}."
+            )
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -1075,7 +1133,11 @@ def mark_payment(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {attended_classes_to_mark_their_payment_count} séance(s) de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
+            parent_message = (
+                f"{parent_teacher_pronoun} {teacher.fullname} a marqué le paiement de "
+                f"{child_pronoun} {son.fullname} pour {attended_classes_to_mark_their_payment_count} "
+                f"séance(s) de {group.teacher_subject.subject.name}."
+            )
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -1125,35 +1187,41 @@ def unmark_payment(request, group_id):
 
         # i have to get the list of paid and attended classes to process 
         ## get all of the classes of the student 
-        student_classes = Class.objects.filter(
+        paid_classes = Class.objects.filter(
             group_enrollment=student_group_enrollment,
-            status_in= ['attended_and_paid','attended_and_the_payment_due','attended_and_the_payment_not_due']
-        ).order_by('attendance_date','attendance_start_time','id')
-        student_classes_count = student_classes.count()
-        ## get all of the attended classes of the student 
-        attended_classes = student_classes.filter(status_in=['attended_and_the_payment_due','attended_and_the_payment_not_due'])
-        attended_classes_count = attended_classes.count() 
-
-        # calculate the start idx which starts at the first paid class to process
-        start_idx = student_classes_count - ( attended_classes_count + num_classes_to_unmark)
-        # add this student to list of students students_without_enough_paid_classes_to_unmark
-        if start_idx < 0 :
-            missing_number_of_classes_to_unmark =- start_idx
+            status_in= ['attended_and_paid']
+        )
+        paid_classes_count = paid_classes.count()
+        missing_number_of_paid_classes_to_unmark =  num_classes_to_unmark - paid_classes_count
+        if missing_number_of_paid_classes_to_unmark > 0 : 
             students_without_enough_paid_classes_to_unmark.append({
                 'id': student.id,
                 'fullname': student.fullname,
                 'image' : student.image.url,
-                'missing_number_of_classes_to_unmark' : missing_number_of_classes_to_unmark
+                'missing_number_of_paid_classes_to_unmark' : missing_number_of_paid_classes_to_unmark
             })
-        start_idx = student_classes_count if start_idx < 0 else start_idx
+
+        if paid_classes_count == 0 :
+            continue 
+
+        ## get all of the attended classes of the student 
+        attended_classes =  Class.objects.filter(group_enrollment=student_group_enrollment,
+                                                 status_in=['attended_and_the_payment_due','attended_and_the_payment_not_due'])
+        attended_classes_count = attended_classes.count() 
+
+        # calculate the start idx which starts to be at the first paid class to process
+        start_idx = (paid_classes_count + attended_classes) - ( attended_classes_count + num_classes_to_unmark)
+        start_idx = paid_classes_count + attended_classes if start_idx < 0 else start_idx
         
-        paid_and_attended_classes = student_classes[start_idx:]
-        paid_and_attended_classes_count = paid_and_attended_classes.count()
+        paid_and_attended_classes = list(paid_classes) + list(attended_classes)
+        paid_and_attended_classes = paid_and_attended_classes[start_idx:]
+        paid_and_attended_classes_count = len(paid_and_attended_classes)
 
         number_of_classes_to_mark_as_attended_and_not_due = paid_and_attended_classes_count % 4
         number_of_classes_to_mark_as_attended_and_due = paid_and_attended_classes_count - number_of_classes_to_mark_as_attended_and_not_due
 
         real_number_of_classes_we_unmarked_their_payment = 0 
+        unpaid_amount_did_increase = False
         # Unmark the payment of the specified number of classes 
         for idx,klass in enumerate(paid_and_attended_classes,start=1):
             # mark the classes with status attended_and_paid or attended_and_the_payment_not_due with 
@@ -1171,11 +1239,13 @@ def unmark_payment(request, group_id):
                     group.total_paid -= teacher_subject.price_per_class
                     group.total_unpaid += teacher_subject.price_per_class
                     real_number_of_classes_we_unmarked_their_payment += 1
+                    unpaid_amount_did_increase = True
                 elif klass.status == "attended_and_the_payment_not_due" : 
                     klass.status = "attended_and_the_payment_due" 
                     student_group_enrollment.unpaid_amount += teacher_subject.price_per_class
                     student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class
                     group.total_unpaid += teacher_subject.price_per_class
+                    unpaid_amount_did_increase = True 
             else : 
                 # mark the classes with the status attended_and_paid or attended_and_the_payment_due as attended_and_the_payment_not_due
                 if klass.status == "attended_and_paid" : 
@@ -1199,7 +1269,19 @@ def unmark_payment(request, group_id):
 
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué {real_number_of_classes_we_unmarked_their_payment} séance(s) de {group.teacher_subject.subject.name} comme payée(s)."
+            student_message = (
+                f"{student_teacher_pronoun} {teacher.fullname} a annulé "
+                f"votre paiement pour {real_number_of_classes_we_unmarked_their_payment} séance(s) "
+                f"de {group.teacher_subject.subject.name}"
+            )
+            if unpaid_amount_did_increase:
+                student_message += (
+                    f", et le montant impayé pour cette matière est désormais de "
+                    f"{student_group_enrollment.unpaid_amount} DT."
+                )
+            else:
+                student_message += "."
+
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -1211,7 +1293,19 @@ def unmark_payment(request, group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué {real_number_of_classes_we_unmarked_their_payment} séance(s) de {group.teacher_subject.subject.name} de {child_pronoun} {son.fullname} comme payée(s)."
+            parent_message = (
+                f"{parent_teacher_pronoun} {teacher.fullname} a annulé le paiement pour "
+                f"{real_number_of_classes_we_unmarked_their_payment} séance(s) de "
+                f"{group.teacher_subject.subject.name} pour {child_pronoun} {son.fullname}"
+            )
+            if unpaid_amount_did_increase:
+                parent_message += (
+                    f", et le montant impayé pour cette matière est désormais de "
+                    f"{student_group_enrollment.unpaid_amount} DT."
+                )
+            else:
+                parent_message += "." 
+                      
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
