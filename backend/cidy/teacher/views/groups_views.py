@@ -8,6 +8,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+from cidy import student, teacher
 from student.models import Student, StudentNotification, StudentUnreadNotification
 from parent.models import ParentNotification,Son 
 from common.tools import increment_student_unread_notifications, increment_parent_unread_notifications
@@ -562,8 +563,10 @@ def mark_attendance(request, group_id):
             group_enrollment=student_group_enrollment,
             attendance_date=attendance_date
         ).filter(
-           Q(attendance_start_time__lt=attendance_end_time) & Q(attendance_end_time__gt=attendance_start_time)
+           Q(Q(absence_date=attendance_date) & Q(absence_start_time__lt=attendance_end_time) & Q(absence_end_time__gt=attendance_start_time)) |
+            Q(Q(attendance_date=attendance_date) & Q(attendance_start_time__lt=attendance_end_time) & Q(attendance_end_time__gt=attendance_start_time))
         )
+        
         if overlapping_classes.exists() : 
             students_with_overlapping_classes.append(student)
             continue
@@ -628,7 +631,6 @@ def mark_attendance(request, group_id):
     return Response({
         'success': True,
         'students_with_overlapping_classes': StudentsWithOverlappingClasses(students_with_overlapping_classes,many=True),
-        'message': 'Attendance marked successfully'
     })
 
 @api_view(['PUT'])
@@ -797,61 +799,64 @@ def mark_absence(request,group_id):
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
 
-    response = {'success': True, 
-             'number_of_students_their_absence_was_marked_successfully': 0,
-             'the_students_that_their_absence_was_not_marked_successfully': []}
+    students_with_an_existing_class_on_the_same_date_and_timerange = []
     
     for student in students:
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
         # check that there is no class that has the same attendance date
-        existing_classes = student_group_enrollment.class_set.filter(Q(attendance_date=absence_date) | Q(absence_date=absence_date))
-        if  existing_classes.exists():
-            existing_class = existing_classes.first()
-            if existing_class.status == 'absent':
-                response['the_students_that_their_absence_was_not_marked_successfully'].append({
-                    'student_id': student.id,
-                    'student_name': student.fullname,
-                    'error': 'Absence for this date has already been marked'
-                })
-            else:
-                response['the_students_that_their_absence_was_not_marked_successfully'].append({
-                    'student_id': student.id,
-                    'student_name': student.fullname,
-                    'error': 'Attendance for this date has already been marked'
-                })
-
-        Class.objects.create(group_enrollment=student_group_enrollment,
-                            absence_date=absence_date,
-                            absence_start_time=absence_start_time,
-                            absence_end_time=absence_end_time,
-                            status='absent')
-        response['number_of_students_their_absence_was_marked_successfully'] += 1
+        existing_classes = student_group_enrollment.class_set.filter(
+            Q(Q(absence_date=absence_date) & Q(absence_start_time__lt=absence_end_time) & Q(absence_end_time__gt=absence_start_time)) |
+            Q(Q(attendance_date=absence_date) & Q(attendance_start_time__lt=absence_end_time) & Q(attendance_end_time__gt=absence_start_time))
+        )
         
+        if existing_classes.exists():
+            existing_class = existing_classes.first()
+            students_with_an_existing_class_on_the_same_date_and_timerange.append({
+                'id': student.id,
+                'image': student.image.url,
+                'fullname': student.fullname,
+                'class': {
+                    'status': existing_class.status,
+                    'date': existing_class.attendance_date if existing_class.attendance_date else existing_class.absence_date,
+                    'start_time': existing_class.attendance_start_time if existing_class.attendance_start_time else existing_class.absence_start_time,
+                    'end_time': existing_class.attendance_end_time if existing_class.attendance_end_time else existing_class.absence_end_time,  
+                },
 
-        # Notify the student
-        if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué votre absence dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
-            StudentNotification.objects.create(
-                student=student,
-                image=teacher.image,
-                message=student_message,
-                meta_data={"group_id": group.id}
-            )
-            increment_student_unread_notifications(student)
+            })
+        else:
+            Class.objects.create(group_enrollment=student_group_enrollment,
+                                absence_date=absence_date,
+                                absence_start_time=absence_start_time,
+                                absence_end_time=absence_end_time,
+                                status='absent')
+        
+            # Notify the student
+            if student.user:
+                student_message = f"{student_teacher_pronoun} {teacher.fullname} a marqué votre absence dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
+                StudentNotification.objects.create(
+                    student=student,
+                    image=teacher.image,
+                    message=student_message,
+                    meta_data={"group_id": group.id}
+                )
+                increment_student_unread_notifications(student)
 
-        # Notify the parents
-        child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
-        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué l'absence de {child_pronoun} {son.fullname} dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
-            ParentNotification.objects.create(
-                parent=son.parent,
-                image=son.image,
-                message=parent_message,
-                meta_data={"son_id": son.id, "group_id": group.id}
-            )
-            increment_parent_unread_notifications(son.parent)
+            # Notify the parents
+            child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
+            for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
+                parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a marqué l'absence de {child_pronoun} {son.fullname} dans la séance de {group.teacher_subject.subject.name} qui a eu lieu le {absence_date} de {absence_start_time} à {absence_end_time}."
+                ParentNotification.objects.create(
+                    parent=son.parent,
+                    image=son.image,
+                    message=parent_message,
+                    meta_data={"son_id": son.id, "group_id": group.id}
+                )
+                increment_parent_unread_notifications(son.parent)
 
-    return Response(response)
+    return Response({
+        'success': True,
+        'students_with_an_existing_class_on_the_same_date_and_timerange': students_with_an_existing_class_on_the_same_date_and_timerange,
+    })
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
@@ -882,22 +887,35 @@ def unmark_absence(request,group_id):
 
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
-
+    students_without_enough_absent_classes_to_unmark = []
     for student in students:
 
         # get the absent classes of this student 
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
-        existing_classes = student_group_enrollment.class_set.filter(status='absent').order_by('-absence_date')[:number_of_classes_to_unmark]
-        if not existing_classes.exists():
-            return Response({'error': 'No absent classes found to unmark'}, status=404)
+        absent_classes = student_group_enrollment.class_set.filter(status='absent').order_by('absence_date','absence_start_time','id')
         
-        classes_to_unmark_their_absence_count = existing_classes.count()
-        # delete these absent classes
-        existing_classes.delete()
+         # check if the student has enough absent classes to unmark
+        absent_classes_count = absent_classes.count()
+        missing_number_of_classes_to_unmark = number_of_classes_to_unmark - absent_classes_count
+        if (missing_number_of_classes_to_unmark > 0):
+            students_without_enough_absent_classes_to_unmark.append({
+                'id' : student.id,
+                'image' : student.image.url,  
+                'fullname': student.fullname,
+                'missing_number_of_classes_to_unmark' : missing_number_of_classes_to_unmark
+            })
+        if (absent_classes_count == 0):
+            continue
+        
+        # get the recent {number_of_classes_to_unmark} absent classes to delete them
+        start_idx = absent_classes.count() if absent_classes.count()-number_of_classes_to_unmark <= 0 else absent_classes.count()-number_of_classes_to_unmark
+        absent_classes_to_delete = absent_classes[start_idx:]  
+        absent_classes_to_delete_count = absent_classes_to_delete.count() 
+        absent_classes_to_delete.delete()
 
         # Notify the student
         if student.user:
-            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé pour vous l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.teacher_subject.subject.name}."
+            student_message = f"{student_teacher_pronoun} {teacher.fullname} a annulé pour vous l'absence de {absent_classes_to_delete_count} séance(s) de {group.teacher_subject.subject.name}."
             StudentNotification.objects.create(
                 student=student,
                 image=teacher.image,
@@ -909,7 +927,7 @@ def unmark_absence(request,group_id):
         # Notify the parents
         child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
-            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé pour {child_pronoun} {son.fullname} l'absence de {classes_to_unmark_their_absence_count} séance(s) de {group.teacher_subject.subject.name}."
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a annulé pour {child_pronoun} {son.fullname} l'absence de {absent_classes_to_delete_count} séance(s) de {group.teacher_subject.subject.name}."
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -920,7 +938,7 @@ def unmark_absence(request,group_id):
 
     return Response({
         'success': True,
-        'message': 'Absences were unmarked successfully.'
+        'students_without_enough_absent_classes_to_unmark' : students_without_enough_absent_classes_to_unmark
     })
 
 @api_view(['PUT'])
@@ -1108,7 +1126,7 @@ def unmark_payment(request, group_id):
         # i have to get the list of paid and attended classes to process 
         ## get all of the classes of the student 
         student_classes = Class.objects.filter(
-            group_enrollment=student_group_enrollment
+            group_enrollment=student_group_enrollment,
             status_in= ['attended_and_paid','attended_and_the_payment_due','attended_and_the_payment_not_due']
         ).order_by('attendance_date','attendance_start_time','id')
         student_classes_count = student_classes.count()
@@ -1207,8 +1225,133 @@ def unmark_payment(request, group_id):
         'message': 'Payment marked successfully'
     })
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def mark_attendance_and_payment(request,group_id):
+    """Mark attendance for selected students in a group"""
+    # validate the request data
+    student_ids = request.data.get('student_ids', [])
+    print(f"student_ids : {student_ids}")
+    print(f"group id  : {group_id}")
+    if not student_ids:
+        print("No student IDs provided")
+        return Response({'error': 'No student IDs provided'}, status=400)
+
+    attendance_date = request.data.get('date')
+    attendance_start_time = request.data.get('start_time')
+    attendance_end_time = request.data.get('end_time')
+    payment_datetime = request.data.get('payment_datetime')
+
+    
+    if not attendance_date or not attendance_start_time or not attendance_end_time or not payment_datetime:
+        print("The date, start time, end time and payment datetime are required")
+        return Response({'error': 'The date, start time, end time and payment datetime are required'}, status=400)
+
+    attendance_date = datetime.strptime(attendance_date, "%d/%m/%Y").date()
+    attendance_start_time = datetime.strptime(attendance_start_time, "%H:%M").time()
+    attendance_end_time = datetime.strptime(attendance_end_time, "%H:%M").time()
+    payment_datetime = request.data.get('payment_datetime')
+
+    teacher = request.user.teacher
+
+    # check if the group exists and belongs to the teacher
+    try:
+        group = Group.objects.get(id=group_id, teacher=teacher)
+    except Group.DoesNotExist:
+        return Response({'error': 'Group not found'}, status=404)
+
+    # check if these students are enrolled in the group of the teacher
+    students = group.students.filter(id__in=student_ids, teacherenrollment__teacher=teacher)
+    if not students.exists():
+        return Response({'error': 'No students found in the group'}, status=404)
+
+    teacher_subject = group.teacher_subject
+
+    student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
+    parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
+
+    print("starting to mark attendance and payment for students...")
+    students_with_overlapping_classes = []
+    for student in students:
+
+        # check if the attendance date and time of this class overlaps with another class, accross all of the groups of this teacher where the student is enrolled
+        overlapping_classes = Class.objects.filter(
+            group_enrollment__in=GroupEnrollment.objects.filter(student=student, group__teacher=teacher),
+        ).filter(
+            Q(Q(absence_date=attendance_date) & Q(absence_start_time__lt=attendance_end_time) & Q(absence_end_time__gt=attendance_start_time)) |
+            Q(Q(attendance_date=attendance_date) & Q(attendance_start_time__lt=attendance_end_time) & Q(attendance_end_time__gt=attendance_start_time))
+        )
+        if overlapping_classes.exists() : 
+            overlapping_class = overlapping_classes.first()
+            students_with_overlapping_classes.append({
+                'id': student.id,
+                'image': student.image.url,
+                'fullname': student.fullname,
+                'overlapping_class': [
+                    {
+                        'status': overlapping_class.status,
+                        'date': overlapping_class.attendance_date if overlapping_class.attendance_date else overlapping_class.absence_date,
+                        'start_time': overlapping_class.attendance_start_time if overlapping_class.attendance_start_time else overlapping_class.absence_start_time,
+                        'end_time': overlapping_class.attendance_end_time if overlapping_class.attendance_end_time else overlapping_class.absence_end_time,
+                    }
+                ]
+            })
+            continue
+
+        student_teacher_enrollment = TeacherEnrollment.objects.get(student=student, teacher=teacher)
+        student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+        Class.objects.create(group_enrollment=student_group_enrollment,
+                            attendance_date=attendance_date,
+                            attendance_start_time=attendance_start_time,
+                            attendance_end_time=attendance_end_time,
+                            status = 'attended_and_paid',
+                            paid_at = payment_datetime)
+        # increase the paid amount by the price of the class 
+        student_group_enrollment.paid_amount += teacher_subject.price_per_class
+        student_teacher_enrollment.paid_amount += teacher_subject.price_per_class
+        group.total_paid += teacher_subject.price_per_class
+        student_group_enrollment.save()
+        student_teacher_enrollment.save()
+        group.save()
+
+        # Notify the student
+        if student.user:
+            student_message = (
+                f"{student_teacher_pronoun} {teacher.fullname.capitalize()} a marqué votre "
+                f"présence et paiement pour la séance de {group.teacher_subject.subject.name} "
+                f"qui a eu lieu le {attendance_date.strftime('%d/%m/%Y')} "
+                f"de {attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+            )
+            StudentNotification.objects.create(
+                student=student,
+                image=teacher.image,
+                message=student_message,
+                meta_data={"group_id": group.id}
+            )
+            increment_student_unread_notifications(student)
+
+        # Notify the parents
+        child_pronoun = "votre fils" if student.gender == "M" else "votre fille"
+        for son in Son.objects.filter(student_teacher_enrollments__student=student).all():
+            parent_message = (
+               f"{parent_teacher_pronoun} {teacher.fullname.capitalize()} a marqué la présence et le paiement de "
+               f"{child_pronoun} {son.fullname} pour la séance de {group.teacher_subject.subject.name} "
+               f"qui a eu lieu le {attendance_date.strftime('%d/%m/%Y')} de "
+               f"{attendance_start_time.strftime('%H:%M')} à {attendance_end_time.strftime('%H:%M')}."
+            )   
+            ParentNotification.objects.create(
+                parent=son.parent,
+                image=son.image,
+                message=parent_message,
+                meta_data={"son_id": son.id,"group_id": group.id}
+            )
+            increment_parent_unread_notifications(son.parent)
 
 
+    return Response({
+        'success': True,
+        'students_with_overlapping_classes': StudentsWithOverlappingClasses(students_with_overlapping_classes,many=True),
+    })
 
 """
 
