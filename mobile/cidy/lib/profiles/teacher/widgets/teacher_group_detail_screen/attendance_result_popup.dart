@@ -27,7 +27,6 @@ class AttendanceResultPopup extends StatelessWidget {
         .cast<Map<String, dynamic>>()
         .toList();
 
-    final hasOverlaps = normalizedOverlaps.isNotEmpty;
     final studentsMarkedLabel = studentsMarkedCount.toString();
 
     return Dialog(
@@ -47,29 +46,22 @@ class AttendanceResultPopup extends StatelessWidget {
           shape: BoxShape.rectangle,
           borderRadius: BorderRadius.circular(popupBorderRadius),
         ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxDialogHeight),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primaryContainer.withOpacity(0.25),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_outline, color: primaryColor),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final availableHeight = constraints.maxHeight.isFinite
+                ? constraints.maxHeight
+                : maxDialogHeight;
+            final maxListHeight = availableHeight * 0.6;
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxDialogHeight),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
                         'Résultat',
                         style: TextStyle(
                           fontSize: headerFontSize,
@@ -77,94 +69,217 @@ class AttendanceResultPopup extends StatelessWidget {
                           color: primaryColor,
                         ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.close,
-                        size: headerIconSize,
-                        color: primaryColor,
+                      IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          size: headerIconSize,
+                          color: primaryColor,
+                        ),
+                        onPressed: onClose,
                       ),
-                      onPressed: onClose,
-                      tooltip: 'Fermer',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _ResultHighlights(
-                        studentsMarkedLabel: studentsMarkedLabel,
-                        overlappingCount: normalizedOverlaps.length,
-                      ),
-                      const SizedBox(height: 20),
-                      if (hasOverlaps) ...[
-                        const Text(
-                          'Étudiants avec chevauchement',
-                          style: TextStyle(
-                            fontSize: mediumFontSize,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ...normalizedOverlaps.map(
-                          (student) =>
-                              _OverlappingStudentCard(student: student),
-                        ),
-                      ] else
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surfaceVariant.withOpacity(0.6),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.done_all, color: primaryColor),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Aucun chevauchement détecté.',
-                                  style: TextStyle(fontSize: mediumFontSize),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                     ],
                   ),
-                ),
+                  const Divider(height: 5),
+                  const SizedBox(height: 10.0),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildHighlightsRow(
+                            context,
+                            markedLabel: studentsMarkedLabel,
+                            overlapCount: normalizedOverlaps.length,
+                          ),
+                          const SizedBox(height: 10),
+                          _buildOverlapsSection(
+                            context,
+                            normalizedOverlaps,
+                            maxListHeight: maxListHeight,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Divider(height: 30),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: primaryButtonStyle,
+                      onPressed: onClose,
+                      child: const Text(
+                        'Ok',
+                        style: TextStyle(fontSize: mediumFontSize),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 18),
-              ElevatedButton(
-                style: primaryButtonStyle,
-                onPressed: onClose,
-                child: const Text(
-                  'Ok',
-                  style: TextStyle(fontSize: mediumFontSize),
-                ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHighlightsRow(
+    BuildContext context, {
+    required String markedLabel,
+    required int overlapCount,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _buildKpiCard(
+              context,
+              title: 'Étudiant(s) marqué(s) comme présent(s)',
+              value: markedLabel,
+              icon: Icons.check_circle,
+              color: Colors.green.shade600,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: _buildKpiCard(
+              context,
+              title: 'Étudiant(s) non marqués comme présent(s)',
+              value: overlapCount.toString(),
+              icon: Icons.warning_amber_rounded,
+              color: overlapCount > 0
+                  ? Colors.orangeAccent.shade700
+                  : Colors.blueGrey,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKpiCard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      height: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 15,
+              color: color.withOpacity(0.85),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverlapsSection(
+    BuildContext context,
+    List<Map<String, dynamic>> overlaps, {
+    required double maxListHeight,
+  }) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Les étudiants non marqués présents',
+              style: TextStyle(
+                fontSize: headerFontSize,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).primaryColor,
               ),
-            ],
+            ),
+            const Divider(height: 20),
+            const Text(
+              'Ces étudiants n’ont pas été marqués comme présents en raison d’un conflit d’horaire avec une autre séance.',
+              style: TextStyle(fontSize: 15),
+            ),
+            const SizedBox(height: 12),
+            _buildScrollableOverlapsList(context, overlaps, maxListHeight),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScrollableOverlapsList(
+    BuildContext context,
+    List<Map<String, dynamic>> overlaps,
+    double maxHeight,
+  ) {
+    final ScrollController? primaryScrollController =
+        PrimaryScrollController.of(context);
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is OverscrollNotification &&
+            primaryScrollController != null &&
+            primaryScrollController.hasClients) {
+          final parentPosition = primaryScrollController.position;
+          final targetOffset = (parentPosition.pixels + notification.overscroll)
+              .clamp(
+                parentPosition.minScrollExtent,
+                parentPosition.maxScrollExtent,
+              )
+              .toDouble();
+
+          if (targetOffset != parentPosition.pixels) {
+            parentPosition.jumpTo(targetOffset);
+            return true;
+          }
+        }
+        return false;
+      },
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: maxHeight),
+        child: Scrollbar(
+          thumbVisibility: overlaps.length > 3,
+          child: ListView.builder(
+            shrinkWrap: true,
+            primary: false,
+            padding: EdgeInsets.zero,
+            physics: const ClampingScrollPhysics(),
+            itemCount: overlaps.length,
+            itemBuilder: (context, index) =>
+                _buildOverlappingStudentCard(overlaps[index]),
           ),
         ),
       ),
     );
   }
-}
 
-class _OverlappingStudentCard extends StatelessWidget {
-  final Map<String, dynamic> student;
-
-  const _OverlappingStudentCard({required this.student});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildOverlappingStudentCard(Map<String, dynamic> student) {
     final imageUrl = _resolveImageUrl(student['image']);
     final fullName = (student['fullname'] ?? '').toString();
 
@@ -188,116 +303,33 @@ class _OverlappingStudentCard extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                fullName.isEmpty ? 'Nom indisponible' : fullName,
+                fullName,
                 style: const TextStyle(fontSize: mediumFontSize),
               ),
             ),
-            const Icon(Icons.warning_amber_rounded, color: Colors.orangeAccent),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orangeAccent,
+              size: 30,
+            ),
           ],
         ),
       ),
     );
   }
-}
 
-class _ResultHighlights extends StatelessWidget {
-  final String studentsMarkedLabel;
-  final int overlappingCount;
+  String _resolveImageUrl(dynamic imageValue) {
+    if (imageValue == null) {
+      return '${Config.backendUrl}/media/defaults/student.png';
+    }
 
-  const _ResultHighlights({
-    required this.studentsMarkedLabel,
-    required this.overlappingCount,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _HighlightCard(
-            title: 'Présences marquées',
-            value: studentsMarkedLabel,
-            icon: Icons.check_circle,
-            color: Colors.green.shade600,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _HighlightCard(
-            title: 'Chevauchements',
-            value: overlappingCount.toString(),
-            icon: Icons.warning_amber_rounded,
-            color: overlappingCount > 0
-                ? Colors.orangeAccent.shade700
-                : Colors.blueGrey,
-          ),
-        ),
-      ],
-    );
+    final imagePath = imageValue.toString();
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath;
+    }
+    if (imagePath.startsWith('/')) {
+      return '${Config.backendUrl}$imagePath';
+    }
+    return '${Config.backendUrl}/$imagePath';
   }
-}
-
-class _HighlightCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _HighlightCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: mediumFontSize,
-              color: color.withOpacity(0.85),
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-String _resolveImageUrl(dynamic imageValue) {
-  if (imageValue == null) {
-    return '${Config.backendUrl}/media/defaults/student.png';
-  }
-
-  final imagePath = imageValue.toString();
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    return imagePath;
-  }
-  if (imagePath.startsWith('/')) {
-    return '${Config.backendUrl}$imagePath';
-  }
-  return '${Config.backendUrl}/$imagePath';
 }

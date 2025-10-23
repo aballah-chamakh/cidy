@@ -806,7 +806,7 @@ def unmark_attendance(request, group_id):
 
     return Response({
         'success': True,
-        'message': 'Attendance unmarked successfully'
+        'students_without_enough_classes_to_unmark_their_attendance':students_without_enough_classes_to_unmark_their_attendance
     })
         
 @api_view(['PUT'])
@@ -1160,7 +1160,6 @@ def mark_payment(request, group_id):
     return Response({
         'success': True,
         'students_without_enough_classes_to_mark_their_payment':students_without_enough_classes_to_mark_their_payment,
-        'message': 'Payment marked successfully'
     })
 
 
@@ -1327,7 +1326,7 @@ def unmark_payment(request, group_id):
 
     return Response({
         'success': True,
-        'message': 'Payment marked successfully'
+        'students_without_enough_paid_classes_to_unmark' : students_without_enough_paid_classes_to_unmark
     })
 
 @api_view(['PUT'])
@@ -1455,7 +1454,7 @@ def mark_attendance_and_payment(request,group_id):
 
     return Response({
         'success': True,
-        'students_with_overlapping_classes': StudentsWithOverlappingClasses(students_with_overlapping_classes,many=True),
+        'students_with_overlapping_classes': students_with_overlapping_classes,
     })
 
 """
