@@ -9,7 +9,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from cidy import student, teacher
 from student.models import Student, StudentNotification, StudentUnreadNotification
 from parent.models import ParentNotification,Son 
 from common.tools import increment_student_unread_notifications, increment_parent_unread_notifications
@@ -513,6 +512,7 @@ def remove_students_from_group(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def mark_attendance(request, group_id):
+    time.sleep(3)
     """Mark attendance for selected students in a group"""
     # validate the request data
     student_ids = request.data.get('student_ids', [])
@@ -569,7 +569,11 @@ def mark_attendance(request, group_id):
         )
         
         if overlapping_classes.exists() : 
-            students_with_overlapping_classes.append(student)
+            students_with_overlapping_classes.append({
+                "id" : student.id,
+                "image" : student.image.url,
+                "fullname": student.fullname
+            })
             continue
         
         unpaid_amount_did_increase = False 
@@ -656,10 +660,17 @@ def mark_attendance(request, group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
+    print("response :")
+    print({
+        'success': True,
+        'students_with_overlapping_classes': students_with_overlapping_classes,
+        'students_marked_count': len(student_ids) - len(students_with_overlapping_classes)
 
+    })
     return Response({
         'success': True,
-        'students_with_overlapping_classes': StudentsWithOverlappingClasses(students_with_overlapping_classes,many=True),
+        'students_marked_count': len(student_ids) - len(students_with_overlapping_classes),
+        'students_with_overlapping_classes': students_with_overlapping_classes,
     })
 
 @api_view(['PUT'])
@@ -1305,7 +1316,7 @@ def unmark_payment(request, group_id):
                 )
             else:
                 parent_message += "." 
-                      
+
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,

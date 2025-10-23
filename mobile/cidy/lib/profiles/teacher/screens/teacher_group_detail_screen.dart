@@ -17,6 +17,7 @@ import '../widgets/teacher_group_detail_screen/mark_attendance_popup.dart';
 import '../widgets/teacher_group_detail_screen/mark_payment_popup.dart';
 import '../widgets/teacher_group_detail_screen/remove_students_popup.dart';
 import '../widgets/teacher_group_detail_screen/unmark_attendance_popup.dart';
+import '../widgets/teacher_group_detail_screen/attendance_result_popup.dart';
 
 class TeacherGroupDetailScreen extends StatefulWidget {
   final int groupId;
@@ -937,6 +938,36 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             if (!mounted) return;
             Navigator.of(context).pop();
             _showError('Erreur du serveur (500)');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
+          },
+          onOverlapDetected:
+              (int studentsMarkedCount, List overlappingStudents) {
+                if (!mounted) return;
+                Navigator.of(context).pop();
+                _showAttendanceResultDialog(
+                  studentsMarkedCount,
+                  overlappingStudents,
+                );
+              },
+        );
+      },
+    );
+  }
+
+  void _showAttendanceResultDialog(
+    int studentsMarkedCount,
+    List overlappingStudents,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AttendanceResultPopup(
+          studentsMarkedCount: studentsMarkedCount,
+          overlappingStudents: overlappingStudents,
+          onClose: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
             clearFiltersAndSelectedStudents();
             _fetchGroupDetails(showLoading: true);
           },
