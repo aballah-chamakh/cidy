@@ -111,10 +111,10 @@ def get_dashboard_data(request):
             
             if start_date and end_date:
                 paid_classes_of_teacher_subject = paid_classes_of_teacher_subject.filter(
-                    last_status_datetime__date__gte=start_date, last_status_datetime__date__lte=end_date)
+                    paid_at__date__gte=start_date, paid_at__date__lte=end_date)
                 
                 unpaid_classes_of_teacher_subject = unpaid_classes_of_teacher_subject.filter(
-                    last_status_datetime__date__gte=start_date, last_status_datetime__date__lte=end_date)
+                    attendance_date__gte=start_date, attendance_date__lte=end_date)
 
 
             paid_amount += paid_classes_of_teacher_subject.count() * class_price

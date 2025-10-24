@@ -26,7 +26,9 @@ def test_runner(test_class):
     test.test()
 
     
-test_runner(TestMarkPayment)
+#test_runner(TestMarkPayment)
+test_runner(TestDateRangeFilter)
+
 quit()
 test_runner(TestListingWeekSchedule)
 test_runner(TestDateRangeFilter)

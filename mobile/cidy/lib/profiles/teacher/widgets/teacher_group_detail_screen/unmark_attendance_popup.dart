@@ -55,6 +55,7 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
 
   Future<void> _unmarkAttendance() async {
     if (!mounted) return;
+    if (_isLoading) return;
 
     if (!_formKey.currentState!.validate()) {
       return;
@@ -183,72 +184,63 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
             ),
             const Divider(height: 5),
             const SizedBox(height: 20.0),
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.all(40),
-                child: Center(
-                  child: CircularProgressIndicator(color: primaryColor),
-                ),
-              )
-            else
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.event_busy,
-                      size: 100,
-                      color: primaryColor,
-                    ),
-                    const SizedBox(height: 20),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: mediumFontSize,
-                          color: Colors.black,
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const Icon(Icons.event_busy, size: 100, color: primaryColor),
+                  const SizedBox(height: 20),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: mediumFontSize,
+                        color: Colors.black,
+                      ),
+                      children: <TextSpan>[
+                        const TextSpan(text: 'Annuler la présence de '),
+                        TextSpan(
+                          text: '${widget.studentCount}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        children: <TextSpan>[
-                          const TextSpan(text: 'Annuler la présence de '),
-                          TextSpan(
-                            text: '${widget.studentCount}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text:
-                                ' ${widget.studentCount > 1 ? 'étudiants' : 'étudiant'} pour le nombre de séances indiqué.',
-                          ),
-                        ],
-                      ),
+                        TextSpan(
+                          text:
+                              ' ${widget.studentCount > 1 ? 'étudiants' : 'étudiant'} pour le nombre de séances indiqué.',
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _numberOfClassesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de seances à annuler',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Veuillez entrer un nombre';
-                        }
-                        final n = int.tryParse(value);
-                        if (n == null) {
-                          return 'Veuillez entrer un nombre valide';
-                        }
-                        if (n <= 0) {
-                          return 'Le nombre doit être supérieur à zéro';
-                        }
-                        return null;
-                      },
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _numberOfClassesController,
+                    enabled: !_isLoading,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre de seances à annuler',
+                      border: OutlineInputBorder(),
                     ),
-                    const Divider(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez entrer un nombre';
+                      }
+                      final n = int.tryParse(value);
+                      if (n == null) {
+                        return 'Veuillez entrer un nombre valide';
+                      }
+                      if (n <= 0) {
+                        return 'Le nombre doit être supérieur à zéro';
+                      }
+                      return null;
+                    },
+                  ),
+                  const Divider(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: AbsorbPointer(
+                          absorbing: _isLoading,
                           child: TextButton(
                             style: secondaryButtonStyle,
                             onPressed: () {
@@ -261,22 +253,43 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 5),
-                        Expanded(
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: AbsorbPointer(
+                          absorbing: _isLoading,
                           child: ElevatedButton(
                             style: primaryButtonStyle,
                             onPressed: _unmarkAttendance,
-                            child: const Text(
-                              'Confirmer',
-                              style: TextStyle(fontSize: mediumFontSize),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Confirmer',
+                                  style: TextStyle(fontSize: mediumFontSize),
+                                ),
+                                if (_isLoading) ...[
+                                  const SizedBox(width: 12),
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
           ],
         ),
       ),

@@ -39,7 +39,7 @@ class TeacherClient:
         if response.status_code == 200:
             return response.json()
         else:
-            print("Failed to fetch dashboard data:", response.json())
+            print("Failed to fetch dashboard data:", response.text)
             return None
 
 

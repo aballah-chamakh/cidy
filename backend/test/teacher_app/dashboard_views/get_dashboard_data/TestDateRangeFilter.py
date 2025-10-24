@@ -136,13 +136,13 @@ class TestDateRangeFilter:
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_paid',
-                        last_status_datetime=TestDateRangeFilter.THIS_WEEK_DATES[0]  # within this week
+                        paid_at=TestDateRangeFilter.THIS_WEEK_DATES[0]  # within this week
                     )
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_the_payment_due',
-                        last_status_datetime=TestDateRangeFilter.THIS_WEEK_DATES[0]  # within this week
+                        attendance_date=TestDateRangeFilter.THIS_WEEK_DATES[0]  # within this week
                     )
             elif j < 8 :
                 # create 2 paid classes and 2 unpaid classes in this month : 1 Oct 2025
@@ -150,13 +150,13 @@ class TestDateRangeFilter:
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_paid',
-                        last_status_datetime=TestDateRangeFilter.THIS_MONTH_DATES[0]  # within this month
+                        paid_at=TestDateRangeFilter.THIS_MONTH_DATES[0]  # within this month
                     )
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_the_payment_due',
-                        last_status_datetime=TestDateRangeFilter.THIS_MONTH_DATES[0]  # within this month
+                        attendance_date=TestDateRangeFilter.THIS_MONTH_DATES[0]  # within this month
                     )
             else:
                 # create 2 paid classes and 2 unpaid classes in this year : 10 Aug and 14 Aug 2025
@@ -164,18 +164,17 @@ class TestDateRangeFilter:
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_paid',
-                        last_status_datetime=TestDateRangeFilter.THIS_YEAR_DATES[0]  # within this year
+                        paid_at=TestDateRangeFilter.THIS_YEAR_DATES[0]  # within this year
                     )
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_the_payment_due',
-                        last_status_datetime=TestDateRangeFilter.THIS_YEAR_DATES[1]  # within this year
+                        attendance_date=TestDateRangeFilter.THIS_YEAR_DATES[1]  # within this year
                     )
     def test(self):
         print("START TESTING DATE RANGE FILTER WITH DIFFERENT DATE RANGES :")
         teacher_client = TeacherClient("teacher10@gmail.com","iloveuu")
-        teacher_client.authenticate()
 
         # test with no filters 
         dashboard_data = teacher_client.get_dashboard_data()

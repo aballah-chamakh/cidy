@@ -593,8 +593,6 @@ def mark_attendance(request, group_id):
             student_group_enrollment.unpaid_amount += teacher_subject.price_per_class * 4
             student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class * 4
             group.total_unpaid += teacher_subject.price_per_class * 4
-            student_group_enrollment.save()
-            student_teacher_enrollment.save()
             unpaid_amount_did_increase = True
         else : 
             # create the class of this attendance as not due
@@ -606,6 +604,8 @@ def mark_attendance(request, group_id):
                                 )
         
         student_group_enrollment.attended_non_paid_classes +=  1
+        student_group_enrollment.save()
+        student_teacher_enrollment.save()
         group.save()
         
         print(f"group_enrollment.attended_non_paid_classes : {student_group_enrollment.attended_non_paid_classes}")
@@ -676,6 +676,7 @@ def mark_attendance(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def unmark_attendance(request, group_id):
+    time.sleep(3)
 
     """Unmark attendance for selected students in a group"""
     teacher = request.user.teacher
@@ -708,10 +709,11 @@ def unmark_attendance(request, group_id):
         attended_classes = Class.objects.filter(
             group_enrollment=student_group_enrollment,
             status__in=['attended_and_the_payment_not_due', 'attended_and_the_payment_due']
-        ).order_by('attendance_date','attendance_datetime','id')
+        ).order_by('attendance_date','attendance_start_time','id')
 
         attended_classes_count = attended_classes.count()
-
+        print(f"attended_classes_count : {attended_classes_count}")
+        print(f"num_classes_to_unmark : {num_classes_to_unmark}")
         # collect student with missing classes to unmark their attendance
         missing_number_of_classes_to_unmark = num_classes_to_unmark - attended_classes_count
         if (missing_number_of_classes_to_unmark > 0): 
@@ -722,8 +724,11 @@ def unmark_attendance(request, group_id):
                 'missing_number_of_classes_to_unmark' : missing_number_of_classes_to_unmark
             })
 
+        if attended_classes_count == 0 :
+            continue
+
         # get the recent {num_classes_to_unmark} attended classes to delete them
-        start_idx = attended_classes.count() if attended_classes.count()-num_classes_to_unmark <= 0 else attended_classes.count()-num_classes_to_unmark
+        start_idx = 0 if attended_classes_count-num_classes_to_unmark <= 0 else attended_classes_count-num_classes_to_unmark
         attended_classes_to_delete = attended_classes[start_idx:]
         attended_classes_to_delete_count = attended_classes_to_delete.count()
         print(f"attended_classes_to_delete_count : {attended_classes_to_delete_count}")
@@ -731,7 +736,6 @@ def unmark_attendance(request, group_id):
         # delete these classes
         for attended_class in attended_classes_to_delete :
             
-
             # decrease unpaid amount by the price of the class if it was due
             if attended_class.status == 'attended_and_the_payment_due' :
                 student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class
@@ -751,7 +755,7 @@ def unmark_attendance(request, group_id):
             # get the remaining classes 
             remaining_classes = Class.objects.filter(group_enrollment=student_group_enrollment,
                                                               status__in=['attended_and_the_payment_not_due',
-                                                                           'attended_and_the_payment_due']).order_by('-attendance_date','-attendance_datetime','-id')[:remaining_classes_count]
+                                                                           'attended_and_the_payment_due']).order_by('-attendance_date','-attendance_start_time','-id')[:remaining_classes_count]
             for remaining_class in remaining_classes :
                 # for each class marked as due
                 if remaining_class.status == 'attended_and_the_payment_due' :
@@ -803,11 +807,13 @@ def unmark_attendance(request, group_id):
                 meta_data={"son_id": son.id, "group_id": group.id}
             )
             increment_parent_unread_notifications(son.parent)
-
-    return Response({
+    response = {
         'success': True,
+        'students_unmarked_completely_count': len(student_ids) - len(students_without_enough_classes_to_unmark_their_attendance),
         'students_without_enough_classes_to_unmark_their_attendance':students_without_enough_classes_to_unmark_their_attendance
-    })
+    }
+    print(response)
+    return Response(response)
         
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

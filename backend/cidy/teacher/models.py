@@ -123,7 +123,7 @@ class Class(models.Model):
     paid_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"Class for {self.group_enrollment.group.name} - {self.status} - {self.last_status_datetime}"
+        return f"Class for {self.group_enrollment.group.name} - {self.status}"
 
 class TeacherUnreadNotification(models.Model):
     teacher = models.OneToOneField(Teacher, on_delete=models.CASCADE)
