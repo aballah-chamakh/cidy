@@ -11,7 +11,12 @@ import 'package:http/http.dart' as http;
 class UnmarkAttendancePopup extends StatefulWidget {
   final int studentCount;
   final int groupId;
-  final VoidCallback onSuccess;
+  final void Function({
+    required int requestedClasses,
+    required int fullyUnmarkedCount,
+    required List studentsWithMissingClasses,
+  })
+  onSuccess;
   final VoidCallback onError;
   final Set<int> studentIds;
 
@@ -91,7 +96,24 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        widget.onSuccess();
+        final responseData = jsonDecode(utf8.decode(response.bodyBytes));
+        final dynamic rawList =
+            responseData['students_without_enough_classes_to_unmark_their_attendance'];
+        final List studentsWithMissingClasses = rawList is List
+            ? rawList
+            : const [];
+
+        final targetedStudents = widget.studentIds.length;
+        final missingCount = studentsWithMissingClasses.length;
+        final fullyUnmarkedCount = targetedStudents - missingCount < 0
+            ? 0
+            : targetedStudents - missingCount;
+
+        widget.onSuccess(
+          requestedClasses: numberOfClasses,
+          fullyUnmarkedCount: fullyUnmarkedCount,
+          studentsWithMissingClasses: studentsWithMissingClasses,
+        );
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),

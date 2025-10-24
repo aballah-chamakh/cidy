@@ -18,6 +18,7 @@ import '../widgets/teacher_group_detail_screen/mark_payment_popup.dart';
 import '../widgets/teacher_group_detail_screen/remove_students_popup.dart';
 import '../widgets/teacher_group_detail_screen/unmark_attendance_popup.dart';
 import '../widgets/teacher_group_detail_screen/attendance_result_popup.dart';
+import '../widgets/teacher_group_detail_screen/unattendance_result_popup.dart';
 
 class TeacherGroupDetailScreen extends StatefulWidget {
   final int groupId;
@@ -976,6 +977,29 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     );
   }
 
+  void _showUnattendanceResultDialog({
+    required int requestedClasses,
+    required int fullyUnmarkedCount,
+    required List studentsWithMissingClasses,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return UnattendanceResultPopup(
+          requestedClasses: requestedClasses,
+          fullyUnmarkedCount: fullyUnmarkedCount,
+          studentsWithMissingClasses: studentsWithMissingClasses,
+          onClose: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
+          },
+        );
+      },
+    );
+  }
+
   void _showUnmarkAttendanceDialog() {
     showDialog(
       context: context,
@@ -984,13 +1008,27 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           groupId: _groupDetail!['id'],
           studentCount: _selectedStudentIds.length,
           studentIds: _selectedStudentIds,
-          onSuccess: () {
-            if (!mounted) return;
-            Navigator.of(context).pop();
-            _showSuccess('Présence(s) annulée(s) avec succès');
-            clearFiltersAndSelectedStudents();
-            _fetchGroupDetails(showLoading: true);
-          },
+          onSuccess:
+              ({
+                required int requestedClasses,
+                required int fullyUnmarkedCount,
+                required List studentsWithMissingClasses,
+              }) {
+                if (!mounted) return;
+                Navigator.of(context).pop();
+
+                if (studentsWithMissingClasses.isEmpty) {
+                  _showSuccess('Présence(s) annulée(s) avec succès');
+                  clearFiltersAndSelectedStudents();
+                  _fetchGroupDetails(showLoading: true);
+                } else {
+                  _showUnattendanceResultDialog(
+                    requestedClasses: requestedClasses,
+                    fullyUnmarkedCount: fullyUnmarkedCount,
+                    studentsWithMissingClasses: studentsWithMissingClasses,
+                  );
+                }
+              },
           onError: () {
             if (!mounted) return;
             Navigator.of(context).pop();
