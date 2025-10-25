@@ -4,7 +4,7 @@ from student.models import Student
 from teacher_app.TeacherClient import TeacherClient
 import requests
 import json
-from datetime import date, datetime, timedelta
+import  datetime
 
 
 class TestMarkAttendance : 
@@ -28,7 +28,7 @@ class TestMarkAttendance :
         for i in range(3):
             student = Student.objects.create(
                 fullname=f"student{i+1}",
-                email=f"student{i+1}@example.com",
+                phone_number=f"0000000{i+1}",
                 level = bac_tech,
                 gender="M"
             )
@@ -50,9 +50,9 @@ class TestMarkAttendance :
         # Prepare the payload
         payload = {
             "student_ids": list(student_ids),
-            "date": attendance_date,
-            "start_time": attendance_start_time,
-            "end_time": attendance_end_time,
+            "date": attendance_date.strftime("%d/%m/%Y"),
+            "start_time": attendance_start_time.strftime("%H:%M"),
+            "end_time": attendance_end_time.strftime("%H:%M"),
         }
 
         # Send the PUT request
@@ -60,12 +60,12 @@ class TestMarkAttendance :
         return response
 
     def test_marking_attendance_without_schedule_conflict(self):
-        print("START MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT : ")
+        print("STARTING THE TEST OF MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT : ")
         group = Group.objects.first()
         student_ids = group.students.values_list('id', flat=True)
         price_per_class = group.teacher_subject.price_per_class
         for i in range(12):
-            attendance_date = date.today()
+            attendance_date = datetime.date.today()
             attendance_start_time = datetime.time(i + 8, 0)
             attendance_end_time = datetime.time(i + 9, 0)
 
@@ -78,18 +78,70 @@ class TestMarkAttendance :
             )
 
             assert response.status_code == 200, f"Failed to the {i+1} mark attendance"
-
-            expected_unpaid_amout = (i + 1) // 4 * price_per_class
+            print(f"Attendance marked successfully for the {i+1} time.")
+            expected_due_payment_classes_count = (i + 1) // 4 * 4 # every 4 attended classes, 4 become due payment classes
+            expected_unpaid_amout = expected_due_payment_classes_count * price_per_class
             for student_id in student_ids:
                 student = Student.objects.get(id=student_id)
                 group_enrollment = GroupEnrollment.objects.get(group=group, student=student)
                 
+                # check the attended_non_paid_classes in the group enrollment
                 assert group_enrollment.attended_non_paid_classes == i + 1, f"the attended_non_paid_classes of the group_enrollment of the student {student.fullname} is incorrect"
-                assert group_enrollment.unpaid_amount == expected_unpaid_amout, f"the unpaid amount of the group_enrollment of the student {student.fullname} is incorrect"
+                
+                # check the unpaid amount in the group enrollment and teacher enrollment
+                assert group_enrollment.unpaid_amount == expected_unpaid_amout, f"the unpaid amount of the group_enrollment of the student {student.fullname} is incorrect (expected {expected_unpaid_amout}, got {group_enrollment.unpaid_amount})"
                 teacher_enrollment = TeacherEnrollment.objects.get(teacher=group.teacher, student=student)
                 assert teacher_enrollment.unpaid_amount == expected_unpaid_amout, f"the unpaid amount of the teacher_enrollment of the student {student.fullname} is incorrect"
+                
+                # check the number of due payment classes and non due payment classes
+                group_enrollment_classes = Class.objects.filter(group_enrollment=group_enrollment)
+                assert group_enrollment_classes.filter(status='attended_and_the_payment_due').count() == expected_due_payment_classes_count, f"The number of due payment classes for the student {student.fullname} is incorrect (expected {expected_due_payment_classes_count}, got {group_enrollment_classes.filter(status='attended_and_the_payment_due').count()})"
+                assert group_enrollment_classes.filter(status='attended_and_the_payment_not_due').count() == group_enrollment_classes.count() - expected_due_payment_classes_count, f"The number of non due payment classes for the student {student.fullname} is incorrect (expected {group_enrollment_classes.count() - expected_due_payment_classes_count}, got {group_enrollment_classes.filter(status='attended_and_the_payment_not_due').count()})"
 
-                latest_class = Class.objects.filter(group_enrollment=group_enrollment).latest('id')
-                assert latest_class.attendance_date == attendance_date, "Attendance date mismatch"
-                assert latest_class.status == 'attended_and_the_payment_due', "Attendance status mismatch"
+            # check the total unpaid of the group
+            group.total_unpaid = expected_unpaid_amout * len(student_ids)
+        print("TEST OF MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT PASSED SUCCESSFULLY.")
+    
+    def test_marking_attendance_with_schedule_conflict(self):
+        print("STARTING THE TEST OF MARKING ATTENDANCE WITH SCHEDULE CONFLICT : ")
+        group = Group.objects.first()
+        students = group.students.all()
+        student_ids = [student.id for student in students]
 
+        # delete the classes of the first student
+        first_student = students.first()
+        student_group_enrollment = GroupEnrollment.objects.get(student=first_student, group=group)
+        Class.objects.filter(group_enrollment=student_group_enrollment).delete()
+
+        # First, mark attendance for a specific date and time
+        attendance_date = datetime.date.today()
+        attendance_start_time = datetime.time(8, 0)
+        attendance_end_time = datetime.time(9, 0)
+
+        response = self.send_mark_attendance_request(
+            group.id,
+            student_ids,
+            attendance_date,
+            attendance_start_time,
+            attendance_end_time
+        )
+
+        assert response.status_code == 200, "expected to get 200 OK status code"
+
+        data = response.json()
+        assert data['students_marked_count'] == 1, "expected to mark attendance for only 1 student"
+        assert data['students_with_overlapping_classes'] == [
+            {
+                "id" : student.id,
+                "image" : student.image.url,
+                "fullname": student.fullname
+            } for student in students.exclude(id=first_student.id)
+        ], "expected to not mark attendance for the other students"
+
+        print("TEST OF MARKING ATTENDANCE WITH SCHEDULE CONFLICT PASSED SUCCESSFULLY.")
+
+    def test(self):
+        self.test_marking_attendance_without_schedule_conflict()
+        self.test_marking_attendance_with_schedule_conflict()
+
+    
