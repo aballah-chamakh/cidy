@@ -60,11 +60,12 @@ class TestMarkAttendance :
         return response
 
     def test_marking_attendance_without_schedule_conflict(self):
-        print("STARTING THE TEST OF MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT : ")
+        print("\tSTARTING THE TEST OF MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT : ")
         group = Group.objects.first()
         student_ids = group.students.values_list('id', flat=True)
         price_per_class = group.teacher_subject.price_per_class
         for i in range(12):
+            group = Group.objects.first()
             attendance_date = datetime.date.today()
             attendance_start_time = datetime.time(i + 8, 0)
             attendance_end_time = datetime.time(i + 9, 0)
@@ -78,9 +79,9 @@ class TestMarkAttendance :
             )
 
             assert response.status_code == 200, f"Failed to the {i+1} mark attendance"
-            print(f"Attendance marked successfully for the {i+1} time.")
+            print(f"\t\tAttendance marked successfully for the {i+1} time.")
             expected_due_payment_classes_count = (i + 1) // 4 * 4 # every 4 attended classes, 4 become due payment classes
-            expected_unpaid_amout = expected_due_payment_classes_count * price_per_class
+            expected_unpaid_amount = expected_due_payment_classes_count * price_per_class
             for student_id in student_ids:
                 student = Student.objects.get(id=student_id)
                 group_enrollment = GroupEnrollment.objects.get(group=group, student=student)
@@ -89,9 +90,9 @@ class TestMarkAttendance :
                 assert group_enrollment.attended_non_paid_classes == i + 1, f"the attended_non_paid_classes of the group_enrollment of the student {student.fullname} is incorrect"
                 
                 # check the unpaid amount in the group enrollment and teacher enrollment
-                assert group_enrollment.unpaid_amount == expected_unpaid_amout, f"the unpaid amount of the group_enrollment of the student {student.fullname} is incorrect (expected {expected_unpaid_amout}, got {group_enrollment.unpaid_amount})"
+                assert group_enrollment.unpaid_amount == expected_unpaid_amount, f"the unpaid amount of the group_enrollment of the student {student.fullname} is incorrect (expected {expected_unpaid_amount}, got {group_enrollment.unpaid_amount})"
                 teacher_enrollment = TeacherEnrollment.objects.get(teacher=group.teacher, student=student)
-                assert teacher_enrollment.unpaid_amount == expected_unpaid_amout, f"the unpaid amount of the teacher_enrollment of the student {student.fullname} is incorrect"
+                assert teacher_enrollment.unpaid_amount == expected_unpaid_amount, f"the unpaid amount of the teacher_enrollment of the student {student.fullname} is incorrect"
                 
                 # check the number of due payment classes and non due payment classes
                 group_enrollment_classes = Class.objects.filter(group_enrollment=group_enrollment)
@@ -99,11 +100,11 @@ class TestMarkAttendance :
                 assert group_enrollment_classes.filter(status='attended_and_the_payment_not_due').count() == group_enrollment_classes.count() - expected_due_payment_classes_count, f"The number of non due payment classes for the student {student.fullname} is incorrect (expected {group_enrollment_classes.count() - expected_due_payment_classes_count}, got {group_enrollment_classes.filter(status='attended_and_the_payment_not_due').count()})"
 
             # check the total unpaid of the group
-            group.total_unpaid = expected_unpaid_amout * len(student_ids)
-        print("TEST OF MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT PASSED SUCCESSFULLY.")
+            group.total_unpaid == expected_unpaid_amount * len(student_ids) ,f"the total unpaid of the group is incorrect (expecteded : {expected_unpaid_amount * len(student_ids)}, got:{group.total_unpaid})"
+        print("\tTHE TEST OF MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT PASSED SUCCESSFULLY.\n")
     
     def test_marking_attendance_with_schedule_conflict(self):
-        print("STARTING THE TEST OF MARKING ATTENDANCE WITH SCHEDULE CONFLICT : ")
+        print("\tSTARTING THE TEST OF MARKING ATTENDANCE WITH SCHEDULE CONFLICT : ")
         group = Group.objects.first()
         students = group.students.all()
         student_ids = [student.id for student in students]
@@ -138,10 +139,14 @@ class TestMarkAttendance :
             } for student in students.exclude(id=first_student.id)
         ], "expected to not mark attendance for the other students"
 
-        print("TEST OF MARKING ATTENDANCE WITH SCHEDULE CONFLICT PASSED SUCCESSFULLY.")
+        print("\tTHE TEST OF MARKING ATTENDANCE WITH SCHEDULE CONFLICT PASSED SUCCESSFULLY.\n")
 
     def test(self):
+        print("START TESTTING THE MARK ATTENDANCE VIEW \n")
+
         self.test_marking_attendance_without_schedule_conflict()
         self.test_marking_attendance_with_schedule_conflict()
+
+        print("\nTHE TEST OF THE MARKING ATTENDANCE VIEW PASSES SUCCESSFULLY\n")
 
     

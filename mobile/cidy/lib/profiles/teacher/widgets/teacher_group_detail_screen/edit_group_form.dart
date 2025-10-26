@@ -347,6 +347,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
               labelText: 'Nom du groupe',
               labelStyle: TextStyle(color: primaryColor),
               contentPadding: inputContentPadding,
+              errorMaxLines: 2,
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: primaryColor),
                 borderRadius: BorderRadius.circular(inputBorderRadius),
@@ -398,6 +399,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
               labelText: 'Jour de la semaine',
               labelStyle: TextStyle(color: primaryColor),
               contentPadding: inputContentPadding,
+              errorMaxLines: 2,
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: primaryColor),
                 borderRadius: BorderRadius.circular(inputBorderRadius),
@@ -523,6 +525,11 @@ class _EditGroupFormState extends State<EditGroupForm> {
                               time.minute > _endTime!.minute))) {
                     return 'Début > Fin';
                   }
+                  if (_endTime != null &&
+                      time.hour == _endTime!.hour &&
+                      time.minute == _endTime!.minute) {
+                    return 'Début == Fin';
+                  }
                   return null;
                 },
                 onChanged: (value) {
@@ -583,6 +590,11 @@ class _EditGroupFormState extends State<EditGroupForm> {
                           (time.hour == _startTime!.hour &&
                               time.minute < _startTime!.minute))) {
                     return 'Fin < Début';
+                  }
+                  if (_startTime != null &&
+                      time.hour == _startTime!.hour &&
+                      time.minute == _startTime!.minute) {
+                    return 'Début == Fin';
                   }
                   return null;
                 },

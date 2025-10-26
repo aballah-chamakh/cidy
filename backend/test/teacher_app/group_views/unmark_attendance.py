@@ -24,7 +24,7 @@ class TestUnMarkAttendance :
 
         teacher_subject = TeacherSubject.objects.create(teacher=self.teacher,level=bac_tech,subject=math_subject,price_per_class=20)
         self.group = Group.objects.create(teacher=self.teacher,name="Groupe A",teacher_subject=teacher_subject,week_day="Monday",start_time="10:00",end_time="12:00")    
-        price_per_class = teacher_subject.price_per_class
+        self.price_per_class = teacher_subject.price_per_class
         self.number_of_attended_classes_foreach_student = 10
         self.student_ids = []
         self.student_kpis = {}
@@ -39,7 +39,6 @@ class TestUnMarkAttendance :
             self.student_ids.append(student.id)
             group_enrollment = GroupEnrollment.objects.create(student=student,group=self.group)
             teacher_enrollment = TeacherEnrollment.objects.create(teacher=self.teacher,student=student)
-            self.student_kpis[f"{student.id}"] = {'group_enrollment_unpaid_amount':group_enrollment.unpaid_amount,'teacher_enrollment_unpaid_amount':teacher_enrollment.unpaid_amount}
             for i in range(self.number_of_attended_classes_foreach_student) : 
                 attendance_date = datetime.date.today()
                 attendance_start_time = datetime.time(i + 8, 0)
@@ -53,9 +52,10 @@ class TestUnMarkAttendance :
                 )
 
             group_enrollment.attended_non_paid_classes = self.number_of_attended_classes_foreach_student
-            group_enrollment.unpaid_amount = 8 * price_per_class
-            teacher_enrollment.unpaid_amount = 8 * price_per_class
-            self.group.total_unpaid = 8 * price_per_class
+            unpaid_amount = 8 * self.price_per_class  # first 8 classes are due payment
+            group_enrollment.unpaid_amount = unpaid_amount
+            teacher_enrollment.unpaid_amount = unpaid_amount
+            self.group.total_unpaid = unpaid_amount * 3
 
             self.student_kpis[f"{student.id}"] = {'group_enrollment_unpaid_amount':group_enrollment.unpaid_amount,'teacher_enrollment_unpaid_amount':teacher_enrollment.unpaid_amount,
                                                   'group_enrollment_attended_non_paid_classes':group_enrollment.attended_non_paid_classes}
@@ -67,7 +67,7 @@ class TestUnMarkAttendance :
 
         self.teacher_client = TeacherClient("teacher10@gmail.com", "iloveuu")
 
-    def send_unmark_attendance_request(self, number_of_classes):
+    def send_unmark_attendance_request(self, number_of_classes, student_ids=None):
         # Example variables (replace them with your actual values)
         backend_url = f"{self.teacher_client.BACKEND_BASE_URL}/api/teacher/groups/{self.group.id}/students/unmark_attendance/"
 
@@ -79,7 +79,7 @@ class TestUnMarkAttendance :
 
         # Prepare the payload
         payload = {
-            "student_ids": self.student_ids,
+            "student_ids": self.student_ids if not student_ids else student_ids,
             "number_of_classes": number_of_classes
         }
 
@@ -88,55 +88,142 @@ class TestUnMarkAttendance :
         return response
 
     def test_unmarking_non_due_payment_classes(self):
-        print("TEST UNMARKING THE NON DUE PAYMENT ATTENCE CLASSES")
+        print("\tTEST UNMARKING 2 NON DUE PAYMENT ATTENDED CLASSES")
 
-        number_of_non_due_payment_classes = self.number_of_attended_classes_foreach_student % 4  # unmark the non due payment classes
+        number_of_non_due_payment_classes = 2  # unmark the non due payment classes
         response = self.send_unmark_attendance_request(number_of_non_due_payment_classes)
 
         # ensure that the response of the request is as expected 
         assert response.status_code == 200, f"expected 200 but got {response.status_code} when unmarking attendance for non due payment classes"
         data = response.json()
-        assert data['students_unmarked_completely_count'] == len(self.student_ids), f"the number of students that their non due payment classes unmarked completely is incorrect (expected {len(self.student_ids)}, got {data['students_unmarked_completely_count']})"
-        assert len(data['students_without_enough_classes_to_unmark_their_attendance'])  == 0, f"the number of students that don't have enough attended classes is incorrect (expected 0, got {data['students_without_enough_classes_to_unmark_their_attendance']})"
-
+        assert data['students_unmarked_completely_count'] == len(self.student_ids), f"the number of students that their non due payment classes unmarked completely is incorrect (expecteded {len(self.student_ids)}, got {data['students_unmarked_completely_count']})"
+        assert len(data['students_without_enough_classes_to_unmark_their_attendance'])  == 0, f"the number of students that don't have enough attended classes is incorrect (expecteded 0, got {len(data['students_without_enough_classes_to_unmark_their_attendance'])})"
+        expected_due_payment_classes_count = 8  # after unmarking non due payment classes, 8 due payment classes should remain for each student
         for student_id in self.student_ids : 
             student = Student.objects.get(id=student_id)
             new_group_enrollment = GroupEnrollment.objects.get(student=student,group=self.group)
             new_teacher_enrollment = TeacherEnrollment.objects.get(teacher=self.teacher,student=student)
             
             # ensure that the unpaid amount of the group enrollment and techer enrollment are correct
-            assert new_group_enrollment.unpaid_amount == self.student_kpis[f'{student.id}']['group_enrollment_unpaid_amount'],f"the group enrollment unpaid amount of the student {student.fullname} is incorrect (expect : 0, got:{new_group_enrollment.unpaid_amount})"
-            assert new_teacher_enrollment.unpaid_amount == self.student_kpis[f'{student.id}']['teacher_enrollment_unpaid_amount'],f"the teacher enrollment unpaid amount of the student {student.fullname} is incorrect (expect : 0, got:{new_teacher_enrollment.unpaid_amount})"
+            assert new_group_enrollment.unpaid_amount == expected_due_payment_classes_count * self.price_per_class,f"the group enrollment unpaid amount of the student {student.fullname} is incorrect (expected : 0, got:{new_group_enrollment.unpaid_amount})"
+            assert new_teacher_enrollment.unpaid_amount ==  expected_due_payment_classes_count * self.price_per_class ,f"the teacher enrollment unpaid amount of the student {student.fullname} is incorrect (expected : 0, got:{new_teacher_enrollment.unpaid_amount})"
             
             # ensure that the number of attended non paid classes is correct 
-            assert new_group_enrollment.attended_non_paid_classes == self.student_kpis[f'{student.id}']['group_enrollment_attended_non_paid_classes'] - number_of_non_due_payment_classes,f"the group enrollment attended non paid classes of the student {student.fullname} is incorrect (expect : {self.student_kpis[f'{student.id}']['group_enrollment_attended_non_paid_classes'] - number_of_non_due_payment_classes}, got:{new_group_enrollment.attended_non_paid_classes})"
+            assert new_group_enrollment.attended_non_paid_classes == expected_due_payment_classes_count,f"the group enrollment attended non paid classes of the student {student.fullname} is incorrect (expected : {expected_due_payment_classes_count}, got:{new_group_enrollment.attended_non_paid_classes})"
 
             # ensure that the number of attended due payment classes  and the number of attended non due payment classes are correct
             student_classes = Class.objects.filter(group_enrollment=new_group_enrollment)
-            attented_due_payment_classes_count = student_classes.filter(status='attended_and_the_payment_due')
-            assert attented_due_payment_classes_count == self.number_of_attended_classes_foreach_student // 4 * 4 ,f"the attended due payment classes of the student {student.fullname} is incorrect (expect : {self.number_of_attended_classes_foreach_student // 4 * 4}, got:{attented_due_payment_classes_count})"
-            attented_non_due_payment_classes_count = student_classes.filter(status='attended_and_the_payment_not_due')
-            assert attented_non_due_payment_classes_count == (self.number_of_attended_classes_foreach_student % 4) - number_of_non_due_payment_classes ,f"the attended non due payment classes of the student {student.fullname} is incorrect (expect : {(self.number_of_attended_classes_foreach_student % 4) - number_of_non_due_payment_classes}, got:{attented_non_due_payment_classes_count})"
+            attented_due_payment_classes_count = student_classes.filter(status='attended_and_the_payment_due').count()
+            assert attented_due_payment_classes_count == expected_due_payment_classes_count ,f"the attended due payment classes of the student {student.fullname} is incorrect (expected : {expected_due_payment_classes_count}, got:{attented_due_payment_classes_count})"
+            attented_non_due_payment_classes_count = student_classes.filter(status='attended_and_the_payment_not_due').count()
+            assert attented_non_due_payment_classes_count == 0 ,f"the attended non due payment classes of the student {student.fullname} is incorrect (expected : 0, got:{attented_non_due_payment_classes_count})"
 
         # ensure that the total unpaid of the group is correct 
         new_group = Group.objects.first()
-        assert new_group.total_unpaid == self.group.total_unpaid,f"the total unpaid of the group is incorrect (expected : 0, got:{new_group.total_unpaid})"
+        expected_group_total_unpaid = expected_due_payment_classes_count * self.price_per_class * len(self.student_ids)
+        assert new_group.total_unpaid == expected_group_total_unpaid,f"the total unpaid of the group is incorrect (expecteded : {expected_group_total_unpaid}, got:{new_group.total_unpaid})"
 
-        print("THE TEST UNMARKING THE NON DUE PAYMENT ATTENDANCE CLASSES PASSED SUCCESSFULLY")
+        print("\tTHE TEST of UNMARKING 2 NON DUE PAYMENT ATTENDED CLASSES PASSED SUCCESSFULLY\n")
 
-
+    # unmark 2 of the due payment classes for the last 2 students
     def test_unmarking_due_payment_classes(self):
-        pass
+        print("\tTEST UNMARKING 2 DUE PAYMENT ATTENDED CLASSES")
+        response = self.send_unmark_attendance_request(2,student_ids=self.student_ids[1:])  # unmark due payment classes for only one student
 
+        # ensure that the response of the request is as expected 
+        assert response.status_code == 200, f"expected 200 but got {response.status_code} when unmarking attendance for due payment classes"
+        data = response.json()
+        assert data['students_unmarked_completely_count'] == len(self.student_ids[1:]), f"the number of students that their  due payment classes unmarked completely is incorrect (expecteded {len(self.student_ids[1:])}, got {data['students_unmarked_completely_count']})"
+        assert len(data['students_without_enough_classes_to_unmark_their_attendance'])  == 0, f"the number of students that don't have enough attended classes is incorrect (expecteded 0, got {len(data['students_without_enough_classes_to_unmark_their_attendance'])})"
+        expected_due_payment_classes_count = 4 
+        expected_non_due_payment_classes_count = 2  
+        for student_id in self.student_ids[1:] : 
+            student = Student.objects.get(id=student_id)
+            new_group_enrollment = GroupEnrollment.objects.get(student=student,group=self.group)
+            new_teacher_enrollment = TeacherEnrollment.objects.get(teacher=self.teacher,student=student)
+            
+            # ensure that the unpaid amount of the group enrollment and techer enrollment are correct
+            expected_unpaid_amount = expected_due_payment_classes_count * self.price_per_class
+            assert new_group_enrollment.unpaid_amount == expected_unpaid_amount,f"the group enrollment unpaid amount of the student {student.fullname} is incorrect (expected : {expected_unpaid_amount}, got:{new_group_enrollment.unpaid_amount})"
+            assert new_teacher_enrollment.unpaid_amount ==  expected_unpaid_amount ,f"the teacher enrollment unpaid amount of the student {student.fullname} is incorrect (expected : {expected_unpaid_amount}, got:{new_teacher_enrollment.unpaid_amount})"
+
+            # ensure that the number of attended non paid classes is correct
+            assert new_group_enrollment.attended_non_paid_classes == expected_due_payment_classes_count + expected_non_due_payment_classes_count,f"the group enrollment attended non paid classes of the student {student.fullname} is incorrect (expected : {expected_due_payment_classes_count + expected_non_due_payment_classes_count}, got:{new_group_enrollment.attended_non_paid_classes})"
+
+            # ensure that the number of attended due payment classes  and the number of attended non due payment classes are correct
+            student_classes = Class.objects.filter(group_enrollment=new_group_enrollment)
+            attented_due_payment_classes_count = student_classes.filter(status='attended_and_the_payment_due').count()
+            assert attented_due_payment_classes_count == expected_due_payment_classes_count ,f"the attended due payment classes of the student {student.fullname} is incorrect (expected : {expected_due_payment_classes_count}, got:{attented_due_payment_classes_count})"
+            attented_non_due_payment_classes_count = student_classes.filter(status='attended_and_the_payment_not_due').count()
+            assert attented_non_due_payment_classes_count == expected_non_due_payment_classes_count ,f"the attended non due payment classes of the student {student.fullname} is incorrect (expected : {expected_non_due_payment_classes_count}, got:{attented_non_due_payment_classes_count})"
+
+        # ensure that the total unpaid of the group is correct 
+        new_group = Group.objects.first()
+        expected_group_total_unpaid = expected_due_payment_classes_count * self.price_per_class * len(self.student_ids[1:]) + 8 * self.price_per_class  # first student still has 8 due payment classes
+        assert new_group.total_unpaid == expected_group_total_unpaid,f"the total unpaid of the group is incorrect (expecteded : {expected_group_total_unpaid}, got:{new_group.total_unpaid})"
+        print("\tTHE TEST of UNMARKING 2 DUE PAYMENT ATTENDED CLASSES PASSED SUCCESSFULLY`\n")
+        
     def test_unmarking_more_than_the_existing_attended_classes(self):
-        pass
+        print("\tTEST UNMARKING MORE THAN THE EXISTING ATTENDED CLASSES")
+        # now we have two student with 6 attended classes and one with 8 classes 
+        # and we will test by unmarking 8 classes to get one completely unmarked 
+        # and the other two not completly unmarked 
+        number_of_classes_to_unmark = 8 
+        response = self.send_unmark_attendance_request(number_of_classes_to_unmark)
+
+        # ensure that the response of the request is as expected 
+        assert response.status_code == 200, f"expected 200 but got {response.status_code} when unmarking more the existing attended classes"
+        data = response.json()
+        assert data['students_unmarked_completely_count'] == 1, f"the number of students that their attended classes unmarked completely is incorrect (expecteded 1, got {data['students_unmarked_completely_count']})"
+        assert len(data['students_without_enough_classes_to_unmark_their_attendance'])  == 2, f"the number of students that don't have enough attended classes is incorrect (expecteded 2, got {len(data['students_without_enough_classes_to_unmark_their_attendance'])})"
+        
+        # note i reverse the student ids to match the order in which they appear in the response
+        for idx, student_id in enumerate(self.student_ids[1:][::-1]) :
+            student = Student.objects.get(id=student_id)
+            
+            assert data['students_without_enough_classes_to_unmark_their_attendance'][idx]  == {
+                'id' : student.id,
+                'image' : student.image.url,  
+                'fullname': student.fullname,
+                'missing_number_of_classes_to_unmark' : 2
+            },f"the data of the student {student.fullname} is incorrect in the students_without_enough_classes_to_unmark_their_attendance list"
+        
+        expected_attended_classes_count = 0
+        for student_id in self.student_ids : 
+            student = Student.objects.get(id=student_id)
+            new_group_enrollment = GroupEnrollment.objects.get(student=student,group=self.group)
+            new_teacher_enrollment = TeacherEnrollment.objects.get(teacher=self.teacher,student=student)
+            
+            # ensure that the unpaid amount of the group enrollment and techer enrollment are correct
+            expected_unpaid_amount = expected_attended_classes_count * self.price_per_class
+            assert new_group_enrollment.unpaid_amount == expected_unpaid_amount,f"the group enrollment unpaid amount of the student {student.fullname} is incorrect (expected : {expected_unpaid_amount}, got:{new_group_enrollment.unpaid_amount})"
+            assert new_teacher_enrollment.unpaid_amount ==  expected_unpaid_amount ,f"the teacher enrollment unpaid amount of the student {student.fullname} is incorrect (expected : {expected_unpaid_amount}, got:{new_teacher_enrollment.unpaid_amount})"
+
+            # ensure that the number of attended non paid classes is correct
+            assert new_group_enrollment.attended_non_paid_classes == expected_attended_classes_count,f"the group enrollment attended non paid classes of the student {student.fullname} is incorrect (expected : {expected_attended_classes_count}, got:{new_group_enrollment.attended_non_paid_classes})"
+
+            # ensure that the number of attended due payment classes  and the number of attended non due payment classes are correct
+            student_classes = Class.objects.filter(group_enrollment=new_group_enrollment)
+            attented_due_payment_classes_count = student_classes.filter(status='attended_and_the_payment_due').count()
+            assert attented_due_payment_classes_count == expected_attended_classes_count ,f"the attended due payment classes of the student {student.fullname} is incorrect (expected : {expected_attended_classes_count}, got:{attented_due_payment_classes_count})"
+            attented_non_due_payment_classes_count = student_classes.filter(status='attended_and_the_payment_not_due').count()
+            assert attented_non_due_payment_classes_count == expected_attended_classes_count ,f"the attended non due payment classes of the student {student.fullname} is incorrect (expected : {expected_attended_classes_count}, got:{attented_non_due_payment_classes_count})"
+
+        # ensure that the total unpaid of the group is correct 
+        new_group = Group.objects.first()
+        expected_group_total_unpaid = expected_attended_classes_count * self.price_per_class * len(self.student_ids) 
+        assert new_group.total_unpaid == expected_group_total_unpaid,f"the total unpaid of the group is incorrect (expecteded : {expected_group_total_unpaid}, got:{new_group.total_unpaid})"
+
+        print("\tTHE TEST OF UNMARKING MORE THAN THE EXISTING ATTENDED CLASSES PASSED SUCCESSFULLY.\n")
 
     def test(self):
-        print("START TESTTING THE UNMARK ATTENDANCE VIEW")
+        print("START TESTTING THE UNMARK ATTENDANCE VIEW \n")
 
         self.test_unmarking_non_due_payment_classes()
+        self.test_unmarking_due_payment_classes()
+        self.test_unmarking_more_than_the_existing_attended_classes()
  
-        print("THE TEST OF THE UNMARKING ATTENDANCE VIEW PASSES SUCCESSFULLY")
+        print("\n THE TEST OF THE UNMARKING ATTENDANCE VIEW PASSES SUCCESSFULLY")
         
 
 

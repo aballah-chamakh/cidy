@@ -17,7 +17,7 @@ import '../widgets/teacher_group_detail_screen/mark_attendance_popup.dart';
 import '../widgets/teacher_group_detail_screen/mark_payment_popup.dart';
 import '../widgets/teacher_group_detail_screen/remove_students_popup.dart';
 import '../widgets/teacher_group_detail_screen/unmark_attendance_popup.dart';
-import '../widgets/teacher_group_detail_screen/attendance_result_popup.dart';
+import '../widgets/teacher_group_detail_screen/action_result_popup.dart';
 import '../widgets/teacher_group_detail_screen/unattendance_result_popup.dart';
 
 class TeacherGroupDetailScreen extends StatefulWidget {

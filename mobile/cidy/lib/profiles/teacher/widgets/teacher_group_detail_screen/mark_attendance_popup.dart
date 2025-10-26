@@ -295,6 +295,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                               decoration: const InputDecoration(
                                 labelText: 'Date (jj/mm/aaaa) *',
                                 border: OutlineInputBorder(),
+                                errorMaxLines: 2,
                               ),
                               keyboardType: TextInputType.datetime,
                               inputFormatters: [
@@ -334,6 +335,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                               decoration: const InputDecoration(
                                 labelText: 'Heure de début (HH:mm) *',
                                 border: OutlineInputBorder(),
+                                errorMaxLines: 2,
                               ),
                               keyboardType: TextInputType.datetime,
                               inputFormatters: [
@@ -374,6 +376,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                               decoration: const InputDecoration(
                                 labelText: 'Heure de fin (HH:mm) *',
                                 border: OutlineInputBorder(),
+                                errorMaxLines: 2,
                               ),
                               keyboardType: TextInputType.datetime,
                               inputFormatters: [
@@ -414,6 +417,10 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                                           (hour == startHour &&
                                               minute < startMinute)) {
                                         return 'L\'heure de fin doit être après l\'heure de début';
+                                      }
+                                      if (hour == startHour &&
+                                          minute == startMinute) {
+                                        return 'L\'heure de fin doit être différente de l\'heure de début';
                                       }
                                     }
                                   }

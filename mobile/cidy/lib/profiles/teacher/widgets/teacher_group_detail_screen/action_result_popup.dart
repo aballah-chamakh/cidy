@@ -1,16 +1,24 @@
+import 'dart:collection';
+
 import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
 
-class AttendanceResultPopup extends StatelessWidget {
-  final int studentsMarkedCount;
-  final List overlappingStudents;
+class ActionResultPopup extends StatelessWidget {
+  Map<String, dynamic>? successKpi;
+  Map<String, dynamic>? failedKpi;
+  String? failedListTitle;
+  String? failedListDescription;
+  List? failedList;
   final VoidCallback onClose;
 
   const AttendanceResultPopup({
     super.key,
-    required this.studentsMarkedCount,
-    required this.overlappingStudents,
+    required this.successKpi,
+    required this.failedKpi,
+    required this.failedListTitle,
+    required this.failedListDescription,
+    required this.failedList,
     required this.onClose,
   });
 
