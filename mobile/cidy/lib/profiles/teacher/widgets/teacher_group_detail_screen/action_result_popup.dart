@@ -5,15 +5,17 @@ import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
 
 class ActionResultPopup extends StatelessWidget {
-  Map<String, dynamic>? successKpi;
-  Map<String, dynamic>? failedKpi;
-  String? failedListTitle;
-  String? failedListDescription;
-  List? failedList;
+  final String type;
+  final Map<String, dynamic> successKpi;
+  final Map<String, dynamic> failedKpi;
+  final String failedListTitle;
+  final String failedListDescription;
+  final List failedList;
   final VoidCallback onClose;
 
-  const AttendanceResultPopup({
+  const ActionResultPopup({
     super.key,
+    required this.type,
     required this.successKpi,
     required this.failedKpi,
     required this.failedListTitle,
@@ -25,17 +27,6 @@ class ActionResultPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maxDialogHeight = MediaQuery.of(context).size.height * 0.8;
-
-    final normalizedOverlaps = overlappingStudents
-        .whereType<Map>()
-        .map(
-          (student) =>
-              student.map((key, value) => MapEntry(key.toString(), value)),
-        )
-        .cast<Map<String, dynamic>>()
-        .toList();
-
-    final studentsMarkedLabel = studentsMarkedCount.toString();
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(
@@ -95,15 +86,11 @@ class ActionResultPopup extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _buildHighlightsRow(
-                            context,
-                            markedLabel: studentsMarkedLabel,
-                            overlapCount: normalizedOverlaps.length,
-                          ),
+                          _buildKpisRow(context),
                           const SizedBox(height: 10),
-                          _buildOverlapsSection(
+                          _buildFailedListSection(
                             context,
-                            normalizedOverlaps,
+                            failedList,
                             maxListHeight: maxListHeight,
                           ),
                         ],
@@ -131,11 +118,7 @@ class ActionResultPopup extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightsRow(
-    BuildContext context, {
-    required String markedLabel,
-    required int overlapCount,
-  }) {
+  Widget _buildKpisRow(BuildContext context) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -143,8 +126,8 @@ class ActionResultPopup extends StatelessWidget {
           Expanded(
             child: _buildKpiCard(
               context,
-              title: 'Étudiant(s) marqué(s) comme présent(s)',
-              value: markedLabel,
+              label: successKpi['label'],
+              value: successKpi['value'].toString(),
               icon: Icons.check_circle,
               color: Colors.green.shade600,
             ),
@@ -153,12 +136,10 @@ class ActionResultPopup extends StatelessWidget {
           Expanded(
             child: _buildKpiCard(
               context,
-              title: 'Étudiant(s) non marqués comme présent(s)',
-              value: overlapCount.toString(),
+              label: failedKpi['label'],
+              value: failedKpi['value'].toString(),
               icon: Icons.warning_amber_rounded,
-              color: overlapCount > 0
-                  ? Colors.orangeAccent.shade700
-                  : Colors.blueGrey,
+              color: Colors.orangeAccent.shade700,
             ),
           ),
         ],
@@ -168,7 +149,7 @@ class ActionResultPopup extends StatelessWidget {
 
   Widget _buildKpiCard(
     BuildContext context, {
-    required String title,
+    required String label,
     required String value,
     required IconData icon,
     required Color color,
@@ -195,7 +176,7 @@ class ActionResultPopup extends StatelessWidget {
           ),
           const SizedBox(height: 5),
           Text(
-            title,
+            label,
             style: TextStyle(
               fontSize: 15,
               color: color.withOpacity(0.85),
@@ -207,9 +188,9 @@ class ActionResultPopup extends StatelessWidget {
     );
   }
 
-  Widget _buildOverlapsSection(
+  Widget _buildFailedListSection(
     BuildContext context,
-    List<Map<String, dynamic>> overlaps, {
+    List failedList, {
     required double maxListHeight,
   }) {
     return Card(
@@ -221,7 +202,7 @@ class ActionResultPopup extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Les étudiants non marqués présents',
+              failedListTitle,
               style: TextStyle(
                 fontSize: headerFontSize,
                 fontWeight: FontWeight.w600,
@@ -229,12 +210,9 @@ class ActionResultPopup extends StatelessWidget {
               ),
             ),
             const Divider(height: 20),
-            const Text(
-              'Ces étudiants n’ont pas été marqués comme présents en raison d’un conflit d’horaire avec une autre séance.',
-              style: TextStyle(fontSize: 15),
-            ),
+            _buildHighlightedDescription(context, failedListDescription),
             const SizedBox(height: 12),
-            _buildScrollableOverlapsList(context, overlaps, maxListHeight),
+            _buildScrollableOverlapsList(context, failedList, maxListHeight),
           ],
         ),
       ),
@@ -243,16 +221,16 @@ class ActionResultPopup extends StatelessWidget {
 
   Widget _buildScrollableOverlapsList(
     BuildContext context,
-    List<Map<String, dynamic>> overlaps,
+    List failedList,
     double maxHeight,
   ) {
-    final ScrollController? primaryScrollController =
-        PrimaryScrollController.of(context);
+    final ScrollController primaryScrollController = PrimaryScrollController.of(
+      context,
+    );
 
     return NotificationListener<ScrollNotification>(
       onNotification: (notification) {
         if (notification is OverscrollNotification &&
-            primaryScrollController != null &&
             primaryScrollController.hasClients) {
           final parentPosition = primaryScrollController.position;
           final targetOffset = (parentPosition.pixels + notification.overscroll)
@@ -272,22 +250,22 @@ class ActionResultPopup extends StatelessWidget {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxHeight: maxHeight),
         child: Scrollbar(
-          thumbVisibility: overlaps.length > 3,
+          thumbVisibility: failedList.length > 3,
           child: ListView.builder(
             shrinkWrap: true,
             primary: false,
             padding: EdgeInsets.zero,
             physics: const ClampingScrollPhysics(),
-            itemCount: overlaps.length,
+            itemCount: failedList.length,
             itemBuilder: (context, index) =>
-                _buildOverlappingStudentCard(overlaps[index]),
+                _buildStudentCard(failedList[index]),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOverlappingStudentCard(Map<String, dynamic> student) {
+  Widget _buildStudentCard(Map<String, dynamic> student) {
     final imageUrl = _resolveImageUrl(student['image']);
     final fullName = (student['fullname'] ?? '').toString();
 
@@ -310,9 +288,34 @@ class ActionResultPopup extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                fullName,
-                style: const TextStyle(fontSize: mediumFontSize),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    fullName,
+                    style: const TextStyle(fontSize: mediumFontSize),
+                  ),
+                  if (type == "missing_classes")
+                    RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black,
+                        ),
+                        children: [
+                          const TextSpan(text: 'Séances manquantes : '),
+                          TextSpan(
+                            text: student['missing_number_of_classes_to_unmark']
+                                .toString(),
+                            style: TextStyle(
+                              color: Colors.orangeAccent.shade700,
+                              fontWeight: FontWeight.bold,
+                            ), // 👈 your custom color here
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
             ),
             const Icon(
@@ -339,5 +342,38 @@ class ActionResultPopup extends StatelessWidget {
       return '${Config.backendUrl}$imagePath';
     }
     return '${Config.backendUrl}/$imagePath';
+  }
+
+  Widget _buildHighlightedDescription(
+    BuildContext context,
+    String description,
+  ) {
+    final baseStyle = DefaultTextStyle.of(context).style.copyWith(fontSize: 15);
+    final highlightStyle = baseStyle.copyWith(
+      color: Colors.orangeAccent.shade700,
+      fontWeight: FontWeight.bold,
+    );
+    final spans = <TextSpan>[];
+    final numberPattern = RegExp(r'(\d+(?:[.,]\d+)*)');
+    var currentIndex = 0;
+
+    for (final match in numberPattern.allMatches(description)) {
+      if (match.start > currentIndex) {
+        spans.add(
+          TextSpan(text: description.substring(currentIndex, match.start)),
+        );
+      }
+
+      spans.add(TextSpan(text: match.group(0), style: highlightStyle));
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < description.length) {
+      spans.add(TextSpan(text: description.substring(currentIndex)));
+    }
+
+    return RichText(
+      text: TextSpan(style: baseStyle, children: spans),
+    );
   }
 }

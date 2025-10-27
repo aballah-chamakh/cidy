@@ -825,9 +825,9 @@ def mark_absence(request,group_id):
     if not student_ids:
         return Response({'error': 'No student IDs provided'}, status=400)
 
-    absence_date = request.data.get('absence_date')
-    absence_start_time = request.data.get('absence_start_time')
-    absence_end_time = request.data.get('absence_end_time')
+    absence_date = request.data.get('date')
+    absence_start_time = request.data.get('start_time')
+    absence_end_time = request.data.get('end_time')
 
     if not absence_date or not absence_start_time or not absence_end_time:
         return Response({'error': 'Date and time range are required'}, status=400)
@@ -845,7 +845,7 @@ def mark_absence(request,group_id):
         return Response({'error': 'Group not found'}, status=404)
 
     # check if these students have a relationship with the teacher
-    students = Student.objects.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
+    students = Student.objects.filter(id__in=student_ids, teacherenrollment__teacher=teacher)
     if not students.exists():
         return Response({'error': 'No students found in the group'}, status=404)
 
@@ -853,7 +853,7 @@ def mark_absence(request,group_id):
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
 
 
-    students_with_an_existing_class_on_the_same_date_and_timerange = []
+    students_with_overlapping_classes = []
     
     for student in students:
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
@@ -864,18 +864,10 @@ def mark_absence(request,group_id):
         )
         
         if existing_classes.exists():
-            existing_class = existing_classes.first()
-            students_with_an_existing_class_on_the_same_date_and_timerange.append({
+            students_with_overlapping_classes.append({
                 'id': student.id,
                 'image': student.image.url,
-                'fullname': student.fullname,
-                'class': {
-                    'status': existing_class.status,
-                    'date': existing_class.attendance_date if existing_class.attendance_date else existing_class.absence_date,
-                    'start_time': existing_class.attendance_start_time if existing_class.attendance_start_time else existing_class.absence_start_time,
-                    'end_time': existing_class.attendance_end_time if existing_class.attendance_end_time else existing_class.absence_end_time,  
-                },
-
+                'fullname': student.fullname
             })
         else:
             Class.objects.create(group_enrollment=student_group_enrollment,
@@ -918,7 +910,8 @@ def mark_absence(request,group_id):
 
     return Response({
         'success': True,
-        'students_with_an_existing_class_on_the_same_date_and_timerange': students_with_an_existing_class_on_the_same_date_and_timerange,
+        'students_marked_count': len(student_ids) - len(students_with_overlapping_classes),
+        'students_with_overlapping_classes': students_with_overlapping_classes,
     })
 
 @api_view(['PUT'])
@@ -931,7 +924,7 @@ def unmark_absence(request,group_id):
     if not student_ids:
         return Response({'error': 'No student IDs provided'}, status=400)
 
-    number_of_classes_to_unmark = request.data.get('number_of_classes_to_unmark')
+    number_of_classes_to_unmark = request.data.get('number_of_classes')
     if not number_of_classes_to_unmark or not isinstance(number_of_classes_to_unmark, int) or number_of_classes_to_unmark < 1:
         return Response({'error': 'Invalid number of classes to unmark'}, status=400)
 
@@ -944,7 +937,7 @@ def unmark_absence(request,group_id):
         return Response({'error': 'Group not found'}, status=404)
 
     # check if these students have a relationship with the teacher
-    students = Student.objects.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
+    students = Student.objects.filter(id__in=student_ids, teacherenrollment__teacher=teacher)
     if not students.exists():
         return Response({'error': 'No students found in the group'}, status=404)
 
@@ -969,12 +962,13 @@ def unmark_absence(request,group_id):
             })
         if (absent_classes_count == 0):
             continue
-        
+        print(f"absent_classes_count : {absent_classes_count}")
         # get the recent {number_of_classes_to_unmark} absent classes to delete them
-        start_idx = absent_classes.count() if absent_classes.count()-number_of_classes_to_unmark <= 0 else absent_classes.count()-number_of_classes_to_unmark
+        start_idx = 0 if absent_classes_count-number_of_classes_to_unmark <= 0 else absent_classes_count-number_of_classes_to_unmark
         absent_classes_to_delete = absent_classes[start_idx:]  
         absent_classes_to_delete_count = absent_classes_to_delete.count() 
-        absent_classes_to_delete.delete()
+        for obj in absent_classes_to_delete:
+            obj.delete()
 
         # Notify the student
         if student.user:

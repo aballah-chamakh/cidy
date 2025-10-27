@@ -18,7 +18,8 @@ import '../widgets/teacher_group_detail_screen/mark_payment_popup.dart';
 import '../widgets/teacher_group_detail_screen/remove_students_popup.dart';
 import '../widgets/teacher_group_detail_screen/unmark_attendance_popup.dart';
 import '../widgets/teacher_group_detail_screen/action_result_popup.dart';
-import '../widgets/teacher_group_detail_screen/unattendance_result_popup.dart';
+import '../widgets/teacher_group_detail_screen/mark_absence_popup.dart';
+import '../widgets/teacher_group_detail_screen/unmark_absence_popup.dart';
 
 class TeacherGroupDetailScreen extends StatefulWidget {
   final int groupId;
@@ -826,16 +827,30 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                   ),
                 ),
                 DropdownMenuItem(
+                  value: 'mark_absence',
+                  child: Text(
+                    "Marquer l'absence",
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'unmark_absence',
+                  child: Text(
+                    "Annuler l'absence",
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
+                ),
+                DropdownMenuItem(
                   value: 'mark_payment',
                   child: Text(
-                    'Marquer la paiement',
+                    'Marquer le paiement',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
                 DropdownMenuItem(
                   value: 'unmark_payment',
                   child: Text(
-                    'Annuler la paiement',
+                    'Annuler le paiement',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
@@ -880,6 +895,12 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         break;
       case 'unmark_attendance':
         _showUnmarkAttendanceDialog();
+        break;
+      case 'mark_absence':
+        _showMarkAbsenceDialog();
+        break;
+      case 'unmark_absence':
+        _showUnmarkAbsenceDialog();
         break;
       case 'mark_payment':
         _showMarkPaymentDialog();
@@ -942,58 +963,35 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             clearFiltersAndSelectedStudents();
             _fetchGroupDetails(showLoading: true);
           },
-          onOverlapDetected:
-              (int studentsMarkedCount, List overlappingStudents) {
-                if (!mounted) return;
-                Navigator.of(context).pop();
-                _showAttendanceResultDialog(
-                  studentsMarkedCount,
-                  overlappingStudents,
+          onOverlapDetected: (int studentsMarkedCount, List overlappingStudents) {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return ActionResultPopup(
+                  type: 'time_conflict',
+                  successKpi: {
+                    'value': studentsMarkedCount,
+                    'label': "Étudiant(s) marqué(s) comme présent(s)",
+                  },
+                  failedKpi: {
+                    'value': overlappingStudents.length,
+                    'label': "Étudiant(s) non marqués comme présent(s)",
+                  },
+                  failedListTitle: "Les étudiants non marqués présents",
+                  failedListDescription:
+                      "Ces étudiants n’ont pas été marqués comme présents en raison d’un conflit d’horaire avec une autre séance.",
+                  failedList: overlappingStudents,
+                  onClose: () {
+                    if (!mounted) return;
+                    Navigator.of(context).pop();
+                    clearFiltersAndSelectedStudents();
+                    _fetchGroupDetails(showLoading: true);
+                  },
                 );
               },
-        );
-      },
-    );
-  }
-
-  void _showAttendanceResultDialog(
-    int studentsMarkedCount,
-    List overlappingStudents,
-  ) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AttendanceResultPopup(
-          studentsMarkedCount: studentsMarkedCount,
-          overlappingStudents: overlappingStudents,
-          onClose: () {
-            if (!mounted) return;
-            Navigator.of(context).pop();
-            clearFiltersAndSelectedStudents();
-            _fetchGroupDetails(showLoading: true);
-          },
-        );
-      },
-    );
-  }
-
-  void _showUnattendanceResultDialog({
-    required int requestedClasses,
-    required int fullyUnmarkedCount,
-    required List studentsWithMissingClasses,
-  }) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return UnattendanceResultPopup(
-          requestedClasses: requestedClasses,
-          fullyUnmarkedCount: fullyUnmarkedCount,
-          studentsWithMissingClasses: studentsWithMissingClasses,
-          onClose: () {
-            if (!mounted) return;
-            Navigator.of(context).pop();
-            clearFiltersAndSelectedStudents();
-            _fetchGroupDetails(showLoading: true);
+            );
           },
         );
       },
@@ -1022,10 +1020,157 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                   clearFiltersAndSelectedStudents();
                   _fetchGroupDetails(showLoading: true);
                 } else {
-                  _showUnattendanceResultDialog(
-                    requestedClasses: requestedClasses,
-                    fullyUnmarkedCount: fullyUnmarkedCount,
-                    studentsWithMissingClasses: studentsWithMissingClasses,
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return ActionResultPopup(
+                        type: 'missing_classes',
+                        successKpi: {
+                          'value': fullyUnmarkedCount,
+                          'label': "Étudiant(s) – complètement annulée(s)",
+                        },
+                        failedKpi: {
+                          'value': studentsWithMissingClasses.length,
+                          'label': "Étudiant(s) - incomplètement annulée(s)",
+                        },
+                        failedListTitle:
+                            "Étudiants avec des séances marquées présentes manquantes",
+                        failedListDescription:
+                            "Ces étudiants n’avaient pas suffisamment de séances marquées comme présentes pour annuler les $requestedClasses prévues.",
+                        failedList: studentsWithMissingClasses,
+
+                        onClose: () {
+                          if (!mounted) return;
+                          Navigator.of(context).pop();
+                          clearFiltersAndSelectedStudents();
+                          _fetchGroupDetails(showLoading: true);
+                        },
+                      );
+                    },
+                  );
+                }
+              },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
+          },
+        );
+      },
+    );
+  }
+
+  void _showMarkAbsenceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return MarkAbsencePopup(
+          studentCount: _selectedStudentIds.length,
+          groupId: _groupDetail!['id'],
+          studentIds: _selectedStudentIds,
+          groupStartTime: _groupDetail!['start_time'],
+          groupEndTime: _groupDetail!['end_time'],
+          weekDay: _groupDetail!['week_day'],
+          onSuccess: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showSuccess('Absence(s) marquée(s) avec succès');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
+          },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
+          },
+          onOverlapDetected: (int studentsMarkedCount, List overlappingStudents) {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return ActionResultPopup(
+                  type: 'time_conflict',
+                  successKpi: {
+                    'value': studentsMarkedCount,
+                    'label': "Étudiant(s) marqué(s) comme absent(s)",
+                  },
+                  failedKpi: {
+                    'value': overlappingStudents.length,
+                    'label': "Étudiant(s) non marqués comme absent(s)",
+                  },
+                  failedListTitle: "Les étudiants non marqués absents",
+                  failedListDescription:
+                      "Ces étudiants n’ont pas été marqués comme absents en raison d’un conflit d’horaire avec une autre séance.",
+                  failedList: overlappingStudents,
+                  onClose: () {
+                    if (!mounted) return;
+                    Navigator.of(context).pop();
+                    clearFiltersAndSelectedStudents();
+                    _fetchGroupDetails(showLoading: true);
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showUnmarkAbsenceDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return UnmarkAbsencePopup(
+          groupId: _groupDetail!['id'],
+          studentCount: _selectedStudentIds.length,
+          studentIds: _selectedStudentIds,
+          onSuccess:
+              ({
+                required int requestedClasses,
+                required int fullyUnmarkedCount,
+                required List studentsWithMissingClasses,
+              }) {
+                if (!mounted) return;
+                Navigator.of(context).pop();
+
+                if (studentsWithMissingClasses.isEmpty) {
+                  _showSuccess('Absence(s) annulée(s) avec succès');
+                  clearFiltersAndSelectedStudents();
+                  _fetchGroupDetails(showLoading: true);
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return ActionResultPopup(
+                        type: 'missing_classes',
+                        successKpi: {
+                          'value': fullyUnmarkedCount,
+                          'label': "Étudiant(s) – complètement annulée(s)",
+                        },
+                        failedKpi: {
+                          'value': studentsWithMissingClasses.length,
+                          'label': "Étudiant(s) - incomplètement annulée(s)",
+                        },
+                        failedListTitle:
+                            "Étudiants avec des séances marquées absentes manquantes",
+                        failedListDescription:
+                            "Ces étudiants n’avaient pas suffisamment de séances marquées comme absentes pour annuler les $requestedClasses prévues.",
+                        failedList: studentsWithMissingClasses,
+
+                        onClose: () {
+                          if (!mounted) return;
+                          Navigator.of(context).pop();
+                          clearFiltersAndSelectedStudents();
+                          _fetchGroupDetails(showLoading: true);
+                        },
+                      );
+                    },
                   );
                 }
               },
