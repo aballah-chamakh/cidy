@@ -9,8 +9,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 class UnmarkAttendancePopup extends StatefulWidget {
-  final int studentCount;
   final int groupId;
+  final int studentCount;
   final void Function({
     required int requestedClasses,
     required int fullyUnmarkedCount,
@@ -104,11 +104,8 @@ class _UnmarkAttendancePopupState extends State<UnmarkAttendancePopup> {
             ? rawList
             : const [];
 
-        final targetedStudents = widget.studentIds.length;
-        final missingCount = studentsWithMissingClasses.length;
-        final fullyUnmarkedCount = targetedStudents - missingCount < 0
-            ? 0
-            : targetedStudents - missingCount;
+        final fullyUnmarkedCount =
+            responseData['students_unmarked_completely_count'];
 
         widget.onSuccess(
           requestedClasses: numberOfClasses,

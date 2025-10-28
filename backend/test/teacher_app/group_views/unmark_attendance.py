@@ -28,7 +28,8 @@ class TestUnMarkAttendance :
         self.number_of_attended_classes_foreach_student = 10
         self.student_ids = []
         self.student_kpis = {}
-        # Create a student and enroll him to the group
+        # Create 3 students and enroll them to the group
+        # and 8 attended due payment classes and 2 attended non due payment classes for each student
         for i in range(3):
             student = Student.objects.create(
                 fullname=f"student{i+1}",
@@ -68,7 +69,6 @@ class TestUnMarkAttendance :
         self.teacher_client = TeacherClient("teacher10@gmail.com", "iloveuu")
 
     def send_unmark_attendance_request(self, number_of_classes, student_ids=None):
-        # Example variables (replace them with your actual values)
         backend_url = f"{self.teacher_client.BACKEND_BASE_URL}/api/teacher/groups/{self.group.id}/students/unmark_attendance/"
 
         # Prepare the headers
@@ -88,6 +88,7 @@ class TestUnMarkAttendance :
         return response
 
     def test_unmarking_non_due_payment_classes(self):
+        # DB content : 3 students with 10 attended classes each (8 due payment classes and 2 non due payment classes)
         print("\tTEST UNMARKING 2 NON DUE PAYMENT ATTENDED CLASSES")
 
         number_of_non_due_payment_classes = 2  # unmark the non due payment classes
@@ -127,7 +128,9 @@ class TestUnMarkAttendance :
 
     # unmark 2 of the due payment classes for the last 2 students
     def test_unmarking_due_payment_classes(self):
-        print("\tTEST UNMARKING 2 DUE PAYMENT ATTENDED CLASSES")
+        # DB content : 3 students with 8 attended due payment classes
+
+        print("\tTEST UNMARKING 2 DUE PAYMENT ATTENDED CLASSES FOR THE LAST 2 STUDENTS")
         response = self.send_unmark_attendance_request(2,student_ids=self.student_ids[1:])  # unmark due payment classes for only one student
 
         # ensure that the response of the request is as expected 
@@ -165,8 +168,8 @@ class TestUnMarkAttendance :
         
     def test_unmarking_more_than_the_existing_attended_classes(self):
         print("\tTEST UNMARKING MORE THAN THE EXISTING ATTENDED CLASSES")
-        # now we have two student with 6 attended classes and one with 8 classes 
-        # and we will test by unmarking 8 classes to get one completely unmarked 
+        # DB content : first student has 8 due payment classes , the other two students have 4 due payment classes and 2 non due payment classes each
+        # and we will test unmarking 8 classes to get one completely unmarked 
         # and the other two not completly unmarked 
         number_of_classes_to_unmark = 8 
         response = self.send_unmark_attendance_request(number_of_classes_to_unmark)
@@ -185,7 +188,7 @@ class TestUnMarkAttendance :
                 'id' : student.id,
                 'image' : student.image.url,  
                 'fullname': student.fullname,
-                'missing_number_of_classes_to_unmark' : 2
+                'missing_number_of_classes' : 2
             },f"the data of the student {student.fullname} is incorrect in the students_without_enough_classes_to_unmark_their_attendance list"
         
         expected_attended_classes_count = 0
@@ -223,7 +226,7 @@ class TestUnMarkAttendance :
         self.test_unmarking_due_payment_classes()
         self.test_unmarking_more_than_the_existing_attended_classes()
  
-        print("\n THE TEST OF THE UNMARKING ATTENDANCE VIEW PASSES SUCCESSFULLY")
+        print("\n THE TEST OF THE UNMARK ATTENDANCE VIEW PASSED SUCCESSFULLY")
         
 
 

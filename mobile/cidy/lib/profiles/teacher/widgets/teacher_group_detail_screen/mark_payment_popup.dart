@@ -13,7 +13,12 @@ class MarkPaymentPopup extends StatefulWidget {
   final int studentCount;
   final Set<int> studentIds;
   final int groupId;
-  final VoidCallback onSuccess;
+  final void Function({
+    required int requestedClasses,
+    required int fullyUnmarkedCount,
+    required List studentsWithMissingClasses,
+  })
+  onSuccess;
   final VoidCallback onError;
 
   const MarkPaymentPopup({
@@ -128,7 +133,17 @@ class _MarkPaymentPopupState extends State<MarkPaymentPopup> {
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        widget.onSuccess();
+        final responseData = jsonDecode(response.body);
+        final fullyUnmarkedCount =
+            responseData['students_marked_completely_count'];
+        final studentsWithMissingClasses =
+            responseData['students_without_enough_classes_to_mark_their_payment'];
+
+        widget.onSuccess(
+          requestedClasses: numberOfClasses,
+          fullyUnmarkedCount: fullyUnmarkedCount,
+          studentsWithMissingClasses: studentsWithMissingClasses,
+        );
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -198,133 +213,130 @@ class _MarkPaymentPopupState extends State<MarkPaymentPopup> {
             ),
             const Divider(height: 5),
             const SizedBox(height: 20.0),
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.all(40),
-                child: Center(
-                  child: CircularProgressIndicator(color: primaryColor),
-                ),
-              )
-            else
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    const Icon(Icons.payment, size: 100, color: primaryColor),
-                    const SizedBox(height: 20),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontSize: mediumFontSize,
-                          color: Colors.black,
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const Icon(Icons.payment, size: 100, color: primaryColor),
+                  const SizedBox(height: 20),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: TextStyle(
+                        fontSize: mediumFontSize,
+                        color: Colors.black,
+                      ),
+                      children: <TextSpan>[
+                        const TextSpan(text: 'Marquer le paiement de '),
+                        TextSpan(
+                          text: '${widget.studentCount}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        children: <TextSpan>[
-                          const TextSpan(text: 'Marquer le paiement de '),
-                          TextSpan(
-                            text: '${widget.studentCount}',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text:
-                                ' ${widget.studentCount > 1 ? 'étudiants' : 'étudiant'} '
-                                'pour le nombre de séances, la date et l’heure spécifiés.',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _numberOfClassesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de séances',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Veuillez saisir le nombre de séances';
-                        }
-                        final count = int.tryParse(value);
-                        if (count == null || count <= 0) {
-                          return 'Nombre de séances invalide';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _dateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Date du paiement (jj/mm/aaaa)',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.datetime,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
-                        _DateTextInputFormatter(),
+                        TextSpan(
+                          text:
+                              ' ${widget.studentCount > 1 ? 'étudiants' : 'étudiant'} '
+                              'pour le nombre de séances, la date et l’heure spécifiés.',
+                        ),
                       ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Veuillez saisir une date';
-                        }
-                        try {
-                          final parts = value.split('/');
-                          if (parts.length != 3) throw FormatException();
-                          final day = int.parse(parts[0]);
-                          final month = int.parse(parts[1]);
-                          final year = int.parse(parts[2]);
-                          if (day < 1 || day > 31 || month < 1 || month > 12) {
-                            return 'Date invalide';
-                          }
-                          if (year < 2020) {
-                            return 'L\'année doit être 2020 ou plus';
-                          }
-                        } catch (e) {
-                          return 'Format invalide';
-                        }
-                        return null;
-                      },
                     ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _timeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Heure du paiement (HH:mm)',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.datetime,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
-                        _TimeTextInputFormatter(),
-                      ],
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Veuillez saisir l\'heure';
-                        }
-                        try {
-                          final parts = value.split(':');
-                          if (parts.length != 2) throw FormatException();
-                          final hour = int.parse(parts[0]);
-                          final minute = int.parse(parts[1]);
-                          if (hour < 0 ||
-                              hour > 23 ||
-                              minute < 0 ||
-                              minute > 59) {
-                            return 'Heure invalide';
-                          }
-                        } catch (e) {
-                          return 'Format invalide';
-                        }
-                        return null;
-                      },
+                  ),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _numberOfClassesController,
+                    enabled: !_isLoading,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre de séances',
+                      border: OutlineInputBorder(),
                     ),
-                    const Divider(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez saisir le nombre de séances';
+                      }
+                      final count = int.tryParse(value);
+                      if (count == null || count <= 0) {
+                        return 'Nombre de séances invalide';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _dateController,
+                    enabled: !_isLoading,
+                    decoration: const InputDecoration(
+                      labelText: 'Date du paiement (jj/mm/aaaa)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.datetime,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9/]')),
+                      _DateTextInputFormatter(),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez saisir une date';
+                      }
+                      try {
+                        final parts = value.split('/');
+                        if (parts.length != 3) throw FormatException();
+                        final day = int.parse(parts[0]);
+                        final month = int.parse(parts[1]);
+                        final year = int.parse(parts[2]);
+                        if (day < 1 || day > 31 || month < 1 || month > 12) {
+                          return 'Date invalide';
+                        }
+                        if (year < 2020) {
+                          return 'L\'année doit être 2020 ou plus';
+                        }
+                      } catch (e) {
+                        return 'Format invalide';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _timeController,
+                    enabled: !_isLoading,
+                    decoration: const InputDecoration(
+                      labelText: 'Heure du paiement (HH:mm)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.datetime,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9:]')),
+                      _TimeTextInputFormatter(),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez saisir l\'heure';
+                      }
+                      try {
+                        final parts = value.split(':');
+                        if (parts.length != 2) throw FormatException();
+                        final hour = int.parse(parts[0]);
+                        final minute = int.parse(parts[1]);
+                        if (hour < 0 ||
+                            hour > 23 ||
+                            minute < 0 ||
+                            minute > 59) {
+                          return 'Heure invalide';
+                        }
+                      } catch (e) {
+                        return 'Format invalide';
+                      }
+                      return null;
+                    },
+                  ),
+                  const Divider(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: AbsorbPointer(
+                          absorbing: _isLoading,
                           child: TextButton(
                             style: secondaryButtonStyle,
                             onPressed: () {
@@ -337,22 +349,43 @@ class _MarkPaymentPopupState extends State<MarkPaymentPopup> {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 5),
-                        Expanded(
+                      ),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: AbsorbPointer(
+                          absorbing: _isLoading,
                           child: ElevatedButton(
                             style: primaryButtonStyle,
                             onPressed: _markPayment,
-                            child: const Text(
-                              'Marquer',
-                              style: TextStyle(fontSize: mediumFontSize),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  'Marquer',
+                                  style: TextStyle(fontSize: mediumFontSize),
+                                ),
+                                if (_isLoading) ...[
+                                  const SizedBox(width: 12),
+                                  SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
           ],
         ),
       ),

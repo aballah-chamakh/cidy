@@ -24,7 +24,7 @@ class TestMarkAttendance :
         teacher_subject = TeacherSubject.objects.create(teacher=teacher,level=bac_tech,subject=math_subject,price_per_class=20)
         group = Group.objects.create(teacher=teacher,name="Groupe A",teacher_subject=teacher_subject,week_day="Monday",start_time="10:00",end_time="12:00")    
 
-        # Create a student and enroll him to the group
+        # Create 3 students and enroll them to the group
         for i in range(3):
             student = Student.objects.create(
                 fullname=f"student{i+1}",
@@ -38,7 +38,6 @@ class TestMarkAttendance :
         self.teacher_client = TeacherClient("teacher10@gmail.com", "iloveuu")
 
     def send_mark_attendance_request(self, group_id, student_ids, attendance_date, attendance_start_time, attendance_end_time):
-        # Example variables (replace them with your actual values)
         backend_url = f"{self.teacher_client.BACKEND_BASE_URL}/api/teacher/groups/{group_id}/students/mark_attendance/"
 
         # Prepare the headers
@@ -60,6 +59,8 @@ class TestMarkAttendance :
         return response
 
     def test_marking_attendance_without_schedule_conflict(self):
+        # DB content : 3 students with no attended classes yet        
+
         print("\tSTARTING THE TEST OF MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT : ")
         group = Group.objects.first()
         student_ids = group.students.values_list('id', flat=True)
@@ -78,7 +79,12 @@ class TestMarkAttendance :
                 attendance_end_time
             )
 
-            assert response.status_code == 200, f"Failed to the {i+1} mark attendance"
+            # ensure the response is correct
+            assert response.status_code == 200, f"the status code of the {i+1} mark attendance is incorrect, expected 200 but got {response.status_code}"
+            data = response.json()
+            assert data['students_marked_count'] == len(student_ids), f"the number of students marked attendance is incorrect for the {i+1} mark attendance (expected {len(student_ids)}, got {data['students_marked_count']})"
+            assert data['students_with_overlapping_classes'] == [], f"the list of students without enough classes to mark is incorrect for the {i+1} mark attendance (expected [], got {data['students_without_enough_classes_to_mark']})"
+
             print(f"\t\tAttendance marked successfully for the {i+1} time.")
             expected_due_payment_classes_count = (i + 1) // 4 * 4 # every 4 attended classes, 4 become due payment classes
             expected_unpaid_amount = expected_due_payment_classes_count * price_per_class
@@ -104,9 +110,10 @@ class TestMarkAttendance :
         print("\tTHE TEST OF MARKING ATTENDANCE WITHOUT SCHEDULE CONFLICT PASSED SUCCESSFULLY.\n")
     
     def test_marking_attendance_with_schedule_conflict(self):
+        # DB content : 3 students with 12 attended due payment classes each       
         print("\tSTARTING THE TEST OF MARKING ATTENDANCE WITH SCHEDULE CONFLICT : ")
         group = Group.objects.first()
-        students = group.students.all()
+        students = group.students.all().order_by('id')
         student_ids = [student.id for student in students]
 
         # delete the classes of the first student
@@ -127,18 +134,28 @@ class TestMarkAttendance :
             attendance_end_time
         )
 
+        # ensure the response is correct
         assert response.status_code == 200, "expected to get 200 OK status code"
-
         data = response.json()
         assert data['students_marked_count'] == 1, "expected to mark attendance for only 1 student"
-        assert data['students_with_overlapping_classes'] == [
+        expected_students_with_overlapping_classes = [
             {
                 "id" : student.id,
                 "image" : student.image.url,
                 "fullname": student.fullname
-            } for student in students.exclude(id=first_student.id)
-        ], "expected to not mark attendance for the other students"
+            } for student in students.exclude(id=first_student.id)[::-1]
+        ]
+        assert data['students_with_overlapping_classes'] == expected_students_with_overlapping_classes, f"the list of students with overlapping classes is incorrect (expected {expected_students_with_overlapping_classes}, got {data['students_with_overlapping_classes']})"
 
+        # ensure that the rows of the db are correct
+        for student in students[1:] :
+            group_enrollment = GroupEnrollment.objects.get(group=group, student=student)
+            attended_classes = Class.objects.filter(
+                group_enrollment=group_enrollment,
+            )
+            attended_classes_count = attended_classes.count()
+            assert attended_classes_count == 12, f"the number of attended classes for the student {student.fullname} is incorrect (expected 12, got {attended_classes_count})"
+        
         print("\tTHE TEST OF MARKING ATTENDANCE WITH SCHEDULE CONFLICT PASSED SUCCESSFULLY.\n")
 
     def test(self):
@@ -147,6 +164,6 @@ class TestMarkAttendance :
         self.test_marking_attendance_without_schedule_conflict()
         self.test_marking_attendance_with_schedule_conflict()
 
-        print("\nTHE TEST OF THE MARKING ATTENDANCE VIEW PASSES SUCCESSFULLY\n")
+        print("\nTHE TEST OF THE MARK ATTENDANCE VIEW PASSED SUCCESSFULLY\n")
 
     

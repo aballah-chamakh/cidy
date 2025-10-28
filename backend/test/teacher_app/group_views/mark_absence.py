@@ -24,7 +24,7 @@ class TestMarkAbsence :
         teacher_subject = TeacherSubject.objects.create(teacher=teacher,level=bac_tech,subject=math_subject,price_per_class=20)
         group = Group.objects.create(teacher=teacher,name="Groupe A",teacher_subject=teacher_subject,week_day="Monday",start_time="10:00",end_time="12:00")    
 
-        # Create a student and enroll him to the group
+        # Create 5 students and enroll them to the group
         for i in range(5):
             student = Student.objects.create(
                 fullname=f"student{i+1}",
@@ -60,6 +60,7 @@ class TestMarkAbsence :
         return response
 
     def test_marking_absence_without_schedule_conflict(self):
+        # DB content : 5  students have no absent classes yet 
         print("\tSTARTING THE TEST OF MARKING ABSENCE WITHOUT SCHEDULE CONFLICT : ")
         group = Group.objects.first()
         student_ids = group.students.order_by('id').values_list('id', flat=True)[:3]
@@ -98,6 +99,8 @@ class TestMarkAbsence :
         print("\tTHE TEST OF MARKING ABSENCE WITHOUT SCHEDULE CONFLICT PASSED SUCCESSFULLY.\n")
 
     def test_marking_absence_with_schedule_conflict(self):
+        # DB content : 3 first students have 3 absent classes , the other 2 students have no absent classes
+
         print("\tSTARTING THE TEST OF MARKING ABSENCE WITH SCHEDULE CONFLICT : ")
         group = Group.objects.first()
         students = group.students.all().order_by('id')
@@ -127,9 +130,9 @@ class TestMarkAbsence :
                 "id" : student.id,
                 "image" : student.image.url,
                 "fullname": student.fullname
-            } for student in students[:3]
+            } for student in students[:3][::-1]
         ]
-        assert data['students_with_overlapping_classes'] == expected_overlapping_students.reverse(), f"the expected overlapping students list is incorrect, expected : {expected_overlapping_students}, got : {data['students_with_overlapping_classes']}"
+        assert data['students_with_overlapping_classes'] == expected_overlapping_students, f"the expected overlapping students list is incorrect, expected : {expected_overlapping_students}, got : {data['students_with_overlapping_classes']}"
         
         ## ensure that rows in the db are correct
         for idx, student in enumerate(students, start=1):
@@ -152,6 +155,6 @@ class TestMarkAbsence :
         self.test_marking_absence_without_schedule_conflict()
         self.test_marking_absence_with_schedule_conflict()
 
-        print("\nTHE TEST OF THE MARKING ABSENCE VIEW PASSES SUCCESSFULLY\n")
+        print("\nTHE TEST OF THE MARK ABSENCE VIEW PASSED SUCCESSFULLY\n")
 
     

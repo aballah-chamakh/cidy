@@ -104,11 +104,8 @@ class _UnmarkAbsencePopupState extends State<UnmarkAbsencePopup> {
             ? rawList
             : const [];
 
-        final targetedStudents = widget.studentIds.length;
-        final missingCount = studentsWithMissingClasses.length;
-        final fullyUnmarkedCount = targetedStudents - missingCount < 0
-            ? 0
-            : targetedStudents - missingCount;
+        final fullyUnmarkedCount =
+            responseData['students_unmarked_completely_count'];
 
         widget.onSuccess(
           requestedClasses: numberOfClasses,

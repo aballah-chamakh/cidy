@@ -1027,11 +1027,13 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                         type: 'missing_classes',
                         successKpi: {
                           'value': fullyUnmarkedCount,
-                          'label': "Étudiant(s) – complètement annulée(s)",
+                          'label':
+                              "Étudiant(s) – présence(s) complètement annulée(s)",
                         },
                         failedKpi: {
                           'value': studentsWithMissingClasses.length,
-                          'label': "Étudiant(s) - incomplètement annulée(s)",
+                          'label':
+                              "Étudiant(s) - présence(s) incomplètement annulée(s)",
                         },
                         failedListTitle:
                             "Étudiants avec des séances marquées présentes manquantes",
@@ -1151,11 +1153,13 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                         type: 'missing_classes',
                         successKpi: {
                           'value': fullyUnmarkedCount,
-                          'label': "Étudiant(s) – complètement annulée(s)",
+                          'label':
+                              "Étudiant(s) – absence(s) complètement annulée(s)",
                         },
                         failedKpi: {
                           'value': studentsWithMissingClasses.length,
-                          'label': "Étudiant(s) - incomplètement annulée(s)",
+                          'label':
+                              "Étudiant(s) - absence(s) incomplètement annulée(s)",
                         },
                         failedListTitle:
                             "Étudiants avec des séances marquées absentes manquantes",
@@ -1194,13 +1198,52 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           studentCount: _selectedStudentIds.length,
           studentIds: _selectedStudentIds,
           groupId: widget.groupId,
-          onSuccess: () {
-            if (!mounted) return;
-            Navigator.of(context).pop();
-            _showSuccess('Paiement marqué avec succès');
-            clearFiltersAndSelectedStudents();
-            _fetchGroupDetails(showLoading: true);
-          },
+          onSuccess:
+              ({
+                required int requestedClasses,
+                required int fullyUnmarkedCount,
+                required List studentsWithMissingClasses,
+              }) {
+                if (!mounted) return;
+                Navigator.of(context).pop();
+
+                if (studentsWithMissingClasses.isEmpty) {
+                  _showSuccess('Paiement(s) marqué(s) avec succès');
+                  clearFiltersAndSelectedStudents();
+                  _fetchGroupDetails(showLoading: true);
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return ActionResultPopup(
+                        type: 'missing_classes',
+                        successKpi: {
+                          'value': fullyUnmarkedCount,
+                          'label':
+                              "Étudiant(s) – paiement(s) complètement marqué(s)",
+                        },
+                        failedKpi: {
+                          'value': studentsWithMissingClasses.length,
+                          'label':
+                              "Étudiant(s) - paiement(s) incomplètement marqué(s)",
+                        },
+                        failedListTitle:
+                            "Étudiants avec des séances marquées présentes manquantes",
+                        failedListDescription:
+                            "Ces étudiants n’avaient pas suffisamment de séances marquées comme présentes pour marquer les $requestedClasses prévues.",
+                        failedList: studentsWithMissingClasses,
+
+                        onClose: () {
+                          if (!mounted) return;
+                          Navigator.of(context).pop();
+                          clearFiltersAndSelectedStudents();
+                          _fetchGroupDetails(showLoading: true);
+                        },
+                      );
+                    },
+                  );
+                }
+              },
           onError: () {
             if (!mounted) return;
             Navigator.of(context).pop();
@@ -1218,12 +1261,61 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       context: context,
       builder: (BuildContext context) {
         return UnmarkPaymentPopup(
+          groupId: _groupDetail!['id'],
           studentCount: _selectedStudentIds.length,
           studentIds: _selectedStudentIds,
-          onSuccess: () {
-            _showSuccess('Paiement annulé avec succès');
+          onSuccess:
+              ({
+                required int requestedClasses,
+                required int fullyUnmarkedCount,
+                required List studentsWithMissingClasses,
+              }) {
+                if (!mounted) return;
+                Navigator.of(context).pop();
+
+                if (studentsWithMissingClasses.isEmpty) {
+                  _showSuccess('Paiement(s) annulé(s) avec succès');
+                  clearFiltersAndSelectedStudents();
+                  _fetchGroupDetails(showLoading: true);
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return ActionResultPopup(
+                        type: 'missing_classes',
+                        successKpi: {
+                          'value': fullyUnmarkedCount,
+                          'label':
+                              "Étudiant(s) – paiement(s) complètement annulé(s)",
+                        },
+                        failedKpi: {
+                          'value': studentsWithMissingClasses.length,
+                          'label':
+                              "Étudiant(s) - paiement(s) incomplètement annulé(s)",
+                        },
+                        failedListTitle:
+                            "Étudiants avec des séances marquées payées manquantes",
+                        failedListDescription:
+                            "Ces étudiants n’avaient pas suffisamment de séances marquées comme payées pour annuler les $requestedClasses prévues.",
+                        failedList: studentsWithMissingClasses,
+
+                        onClose: () {
+                          if (!mounted) return;
+                          Navigator.of(context).pop();
+                          clearFiltersAndSelectedStudents();
+                          _fetchGroupDetails(showLoading: true);
+                        },
+                      );
+                    },
+                  );
+                }
+              },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
             clearFiltersAndSelectedStudents();
-            _fetchGroupDetails(showLoading: false);
+            _fetchGroupDetails(showLoading: true);
           },
         );
       },

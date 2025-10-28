@@ -166,10 +166,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
         print(overlappingStudents);
         if (overlappingStudents.isNotEmpty) {
           if (!mounted) return;
-          print("call onOverlapDetected");
-          print(overlappingStudents.runtimeType);
           widget.onOverlapDetected(studentsMarkedCount, overlappingStudents);
-          print("call onOverlapDetected");
         } else {
           widget.onSuccess();
         }

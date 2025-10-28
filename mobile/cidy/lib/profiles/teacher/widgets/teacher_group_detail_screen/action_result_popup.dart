@@ -305,7 +305,7 @@ class ActionResultPopup extends StatelessWidget {
                         children: [
                           const TextSpan(text: 'Séances manquantes : '),
                           TextSpan(
-                            text: student['missing_number_of_classes_to_unmark']
+                            text: student['missing_number_of_classes']
                                 .toString(),
                             style: TextStyle(
                               color: Colors.orangeAccent.shade700,

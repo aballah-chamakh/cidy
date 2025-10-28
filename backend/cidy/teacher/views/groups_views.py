@@ -559,10 +559,10 @@ def mark_attendance(request, group_id):
         student_teacher_enrollment = TeacherEnrollment.objects.get(student=student, teacher=teacher)
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
 
-        # check if the attendance date and time of this class overlaps with another class 
+        # across all the classes of this student with this teacher, check if the attendance date and time overlaps with another class
         overlapping_classes = Class.objects.filter(
-            group_enrollment=student_group_enrollment,
-            attendance_date=attendance_date
+            group_enrollment__student=student,
+            group_enrollment__group__teacher=teacher
         ).filter(
            Q(Q(absence_date=attendance_date) & Q(absence_start_time__lt=attendance_end_time) & Q(absence_end_time__gt=attendance_start_time)) |
             Q(Q(attendance_date=attendance_date) & Q(attendance_start_time__lt=attendance_end_time) & Q(attendance_end_time__gt=attendance_start_time))
@@ -721,7 +721,7 @@ def unmark_attendance(request, group_id):
                 'id' : student.id,
                 'image' : student.image.url,  
                 'fullname': student.fullname,
-                'missing_number_of_classes_to_unmark' : missing_number_of_classes_to_unmark
+                'missing_number_of_classes' : missing_number_of_classes_to_unmark
             })
 
         if attended_classes_count == 0 :
@@ -856,9 +856,12 @@ def mark_absence(request,group_id):
     students_with_overlapping_classes = []
     
     for student in students:
-        student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
-        # check that there is no class that has the same attendance date
-        existing_classes = student_group_enrollment.class_set.filter(
+        
+        # across all the classes of this student with this teacher, check if the absence date and time overlaps with another class
+        existing_classes = Class.objects.filter(
+            group_enrollment__student=student,
+            group_enrollment__group__teacher=teacher
+        ).filter(
             Q(Q(absence_date=absence_date) & Q(absence_start_time__lt=absence_end_time) & Q(absence_end_time__gt=absence_start_time)) |
             Q(Q(attendance_date=absence_date) & Q(attendance_start_time__lt=absence_end_time) & Q(attendance_end_time__gt=absence_start_time))
         )
@@ -870,6 +873,7 @@ def mark_absence(request,group_id):
                 'fullname': student.fullname
             })
         else:
+            student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
             Class.objects.create(group_enrollment=student_group_enrollment,
                                 absence_date=absence_date,
                                 absence_start_time=absence_start_time,
@@ -958,7 +962,7 @@ def unmark_absence(request,group_id):
                 'id' : student.id,
                 'image' : student.image.url,  
                 'fullname': student.fullname,
-                'missing_number_of_classes_to_unmark' : missing_number_of_classes_to_unmark
+                'missing_number_of_classes' : missing_number_of_classes_to_unmark
             })
         if (absent_classes_count == 0):
             continue
@@ -1003,6 +1007,7 @@ def unmark_absence(request,group_id):
 
     return Response({
         'success': True,
+        'students_unmarked_completely_count': len(student_ids) - len(students_without_enough_absent_classes_to_unmark),
         'students_without_enough_absent_classes_to_unmark' : students_without_enough_absent_classes_to_unmark
     })
 
@@ -1062,7 +1067,7 @@ def mark_payment(request, group_id):
                 'id' : student.id,
                 'image' : student.image.url,  
                 'fullname': student.fullname,
-                'missing_number_of_classes_to_mark' : missing_number_of_classes_to_mark
+                'missing_number_of_classes' : missing_number_of_classes_to_mark
             })
 
         attended_classes_to_mark_their_payment = attended_classes[:num_classes_to_mark]
@@ -1159,6 +1164,7 @@ def mark_payment(request, group_id):
 
     return Response({
         'success': True,
+        'students_marked_completely_count': len(student_ids) - len(students_without_enough_classes_to_mark_their_payment),
         'students_without_enough_classes_to_mark_their_payment':students_without_enough_classes_to_mark_their_payment,
     })
 
@@ -1180,7 +1186,7 @@ def unmark_payment(request, group_id):
     if not student_ids:
         return Response({'error': 'No student IDs provided'}, status=400)
 
-    num_classes_to_unmark = request.data.get('num_classes_to_unmark')
+    num_classes_to_unmark = request.data.get('number_of_classes')
 
     if not num_classes_to_unmark or not isinstance(num_classes_to_unmark, int) or num_classes_to_unmark < 1:
         return Response({'error': 'Invalid number of classes to unmark their payment'}, status=400)
@@ -1199,7 +1205,7 @@ def unmark_payment(request, group_id):
         ## get all of the classes of the student 
         paid_classes = Class.objects.filter(
             group_enrollment=student_group_enrollment,
-            status_in= ['attended_and_paid']
+            status__in= ['attended_and_paid']
         )
         paid_classes_count = paid_classes.count()
         missing_number_of_paid_classes_to_unmark =  num_classes_to_unmark - paid_classes_count
@@ -1216,23 +1222,26 @@ def unmark_payment(request, group_id):
 
         ## get all of the attended classes of the student 
         attended_classes =  Class.objects.filter(group_enrollment=student_group_enrollment,
-                                                 status_in=['attended_and_the_payment_due','attended_and_the_payment_not_due'])
+                                                 status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due'])
         attended_classes_count = attended_classes.count() 
 
         # calculate the start idx which starts to be at the first paid class to process
-        start_idx = (paid_classes_count + attended_classes) - ( attended_classes_count + num_classes_to_unmark)
+        start_idx = (paid_classes_count + attended_classes_count) - ( attended_classes_count + num_classes_to_unmark)
         start_idx = paid_classes_count + attended_classes if start_idx < 0 else start_idx
         
         paid_and_attended_classes = list(paid_classes) + list(attended_classes)
         paid_and_attended_classes = paid_and_attended_classes[start_idx:]
         paid_and_attended_classes_count = len(paid_and_attended_classes)
 
-        number_of_classes_to_mark_as_attended_and_not_due = paid_and_attended_classes_count % 4
+        number_of_classes_to_mark_as_attended_and_not_due = paid_and_attended_classes_count % 4 
         number_of_classes_to_mark_as_attended_and_due = paid_and_attended_classes_count - number_of_classes_to_mark_as_attended_and_not_due
 
         real_number_of_classes_we_unmarked_their_payment = 0 
         unpaid_amount_did_increase = False
         # Unmark the payment of the specified number of classes 
+        print(f"paid_and_attended_classes_count : {paid_and_attended_classes_count}")
+        print(f"paid_and_attended_classes : {paid_and_attended_classes}")
+
         for idx,klass in enumerate(paid_and_attended_classes,start=1):
             # mark the classes with status attended_and_paid or attended_and_the_payment_not_due with 
             # the status attended_and_the_payment_due
@@ -1326,6 +1335,7 @@ def unmark_payment(request, group_id):
 
     return Response({
         'success': True,
+        'students_unmarked_completely_count': len(student_ids) - len(students_without_enough_paid_classes_to_unmark),
         'students_without_enough_paid_classes_to_unmark' : students_without_enough_paid_classes_to_unmark
     })
 
@@ -1378,9 +1388,10 @@ def mark_attendance_and_payment(request,group_id):
     students_with_overlapping_classes = []
     for student in students:
 
-        # check if the attendance date and time of this class overlaps with another class, accross all of the groups of this teacher where the student is enrolled
+        # across all the classes of this student with this teacher, check if the attendance date and time overlaps with another class
         overlapping_classes = Class.objects.filter(
-            group_enrollment__in=GroupEnrollment.objects.filter(student=student, group__teacher=teacher),
+            group_enrollment__student=student,
+            group_enrollment__group__teacher=teacher
         ).filter(
             Q(Q(absence_date=attendance_date) & Q(absence_start_time__lt=attendance_end_time) & Q(absence_end_time__gt=attendance_start_time)) |
             Q(Q(attendance_date=attendance_date) & Q(attendance_start_time__lt=attendance_end_time) & Q(attendance_end_time__gt=attendance_start_time))
