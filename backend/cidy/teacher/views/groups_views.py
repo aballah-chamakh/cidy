@@ -1060,6 +1060,8 @@ def mark_payment(request, group_id):
             status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due']
         ).order_by('attendance_date','attendance_start_time','id')
         attended_classes_count = attended_classes.count()
+        print(f"attended_classes_count after : {attended_classes_count}")
+
         
         missing_number_of_classes_to_mark = num_classes_to_mark - attended_classes_count
         if (missing_number_of_classes_to_mark > 0): 
@@ -1097,12 +1099,10 @@ def mark_payment(request, group_id):
             print(f"class with the id {attended_class.id} marked as paid")
             
         
-
         # correct the status of the remaining attended classes 
-        print("attended_classes_count : ", attended_classes_count)
         print("num_classes_to_mark : ", num_classes_to_mark)
         if attended_classes_count - num_classes_to_mark > 0 :
-            remaining_attended_classes = attended_classes[num_classes_to_mark:]
+            remaining_attended_classes = attended_classes.all()
             remaining_attended_classes_count = remaining_attended_classes.count()
             number_of_classes_to_mark_as_non_due_payment = remaining_attended_classes_count % 4
             number_of_classes_to_mark_as_due_payment = remaining_attended_classes_count - number_of_classes_to_mark_as_non_due_payment
