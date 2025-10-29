@@ -1099,12 +1099,16 @@ def mark_payment(request, group_id):
         
 
         # correct the status of the remaining attended classes 
+        print("attended_classes_count : ", attended_classes_count)
+        print("num_classes_to_mark : ", num_classes_to_mark)
         if attended_classes_count - num_classes_to_mark > 0 :
             remaining_attended_classes = attended_classes[num_classes_to_mark:]
             remaining_attended_classes_count = remaining_attended_classes.count()
             number_of_classes_to_mark_as_non_due_payment = remaining_attended_classes_count % 4
             number_of_classes_to_mark_as_due_payment = remaining_attended_classes_count - number_of_classes_to_mark_as_non_due_payment
-
+            print("remaining attended classes")
+            print(remaining_attended_classes)
+            print("remaining_attended_classes_count : ", remaining_attended_classes_count)
             for idx,remaining_attended_class in enumerate(remaining_attended_classes,start=1):
                 if idx <= number_of_classes_to_mark_as_due_payment :
                     if remaining_attended_class.status == 'attended_and_the_payment_not_due' :
@@ -1198,6 +1202,7 @@ def unmark_payment(request, group_id):
 
     students_without_enough_paid_classes_to_unmark = []
     for student in students:
+        print("for student : ", student.fullname)
         student_teacher_enrollment = TeacherEnrollment.objects.get(student=student, teacher=teacher)
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
 
@@ -1214,39 +1219,41 @@ def unmark_payment(request, group_id):
                 'id': student.id,
                 'fullname': student.fullname,
                 'image' : student.image.url,
-                'missing_number_of_paid_classes_to_unmark' : missing_number_of_paid_classes_to_unmark
+                'missing_number_of_classes' : missing_number_of_paid_classes_to_unmark
             })
 
         if paid_classes_count == 0 :
             continue 
 
         ## get all of the attended classes of the student 
-        attended_classes =  Class.objects.filter(group_enrollment=student_group_enrollment,
+        attended_classes = Class.objects.filter(group_enrollment=student_group_enrollment,
                                                  status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due'])
         attended_classes_count = attended_classes.count() 
 
         # calculate the start idx which starts to be at the first paid class to process
         start_idx = (paid_classes_count + attended_classes_count) - ( attended_classes_count + num_classes_to_unmark)
-        start_idx = paid_classes_count + attended_classes if start_idx < 0 else start_idx
+        start_idx = 0 if start_idx < 0 else start_idx
         
         paid_and_attended_classes = list(paid_classes) + list(attended_classes)
         paid_and_attended_classes = paid_and_attended_classes[start_idx:]
+        print("\tthe paid_and_attended_classes to process : ")
+        print(paid_and_attended_classes)
         paid_and_attended_classes_count = len(paid_and_attended_classes)
+        print(f"\tpaid_and_attended_classes_count : {paid_and_attended_classes_count}")
 
-        number_of_classes_to_mark_as_attended_and_not_due = paid_and_attended_classes_count % 4 
+        number_of_classes_to_mark_as_attended_and_not_due = paid_and_attended_classes_count % 4     
         number_of_classes_to_mark_as_attended_and_due = paid_and_attended_classes_count - number_of_classes_to_mark_as_attended_and_not_due
 
         real_number_of_classes_we_unmarked_their_payment = 0 
         unpaid_amount_did_increase = False
         # Unmark the payment of the specified number of classes 
-        print(f"paid_and_attended_classes_count : {paid_and_attended_classes_count}")
-        print(f"paid_and_attended_classes : {paid_and_attended_classes}")
 
         for idx,klass in enumerate(paid_and_attended_classes,start=1):
             # mark the classes with status attended_and_paid or attended_and_the_payment_not_due with 
             # the status attended_and_the_payment_due
             if idx <= number_of_classes_to_mark_as_attended_and_due :
                 if klass.status == "attended_and_paid" : 
+                    print(f"\tat the index : {idx} the class : {klass} will marked as attended_and_the_payment_due")
                     klass.status = "attended_and_the_payment_due"
                     klass.paid_at = None 
                     klass.save()
@@ -1259,8 +1266,11 @@ def unmark_payment(request, group_id):
                     group.total_unpaid += teacher_subject.price_per_class
                     real_number_of_classes_we_unmarked_their_payment += 1
                     unpaid_amount_did_increase = True
+
                 elif klass.status == "attended_and_the_payment_not_due" : 
+                    print(f"\tat the index : {idx} the class : {klass} will marked as attended_and_the_payment_due")
                     klass.status = "attended_and_the_payment_due" 
+                    klass.save()
                     student_group_enrollment.unpaid_amount += teacher_subject.price_per_class
                     student_teacher_enrollment.unpaid_amount += teacher_subject.price_per_class
                     group.total_unpaid += teacher_subject.price_per_class
@@ -1268,6 +1278,7 @@ def unmark_payment(request, group_id):
             else : 
                 # mark the classes with the status attended_and_paid or attended_and_the_payment_due as attended_and_the_payment_not_due
                 if klass.status == "attended_and_paid" : 
+                    print(f"\tat the index : {idx} the class : {klass} will marked as attended_and_the_payment_not_due")
                     klass.status = "attended_and_the_payment_not_due"
                     klass.paid_at = None 
                     klass.save()
@@ -1277,14 +1288,20 @@ def unmark_payment(request, group_id):
                     group.total_paid -= teacher_subject.price_per_class 
                     real_number_of_classes_we_unmarked_their_payment += 1
                 elif klass.status == "attended_and_the_payment_due" :
+                    print(f"\tat the index : {idx} the class : {klass} will marked as attended_and_the_payment_not_due")
                     klass.status = "attended_and_the_payment_not_due"
+                    klass.save()
                     student_group_enrollment.unpaid_amount -= teacher_subject.price_per_class
                     student_teacher_enrollment.unpaid_amount -= teacher_subject.price_per_class
                     group.total_unpaid -= teacher_subject.price_per_class
+
                 
         student_group_enrollment.save()
         student_teacher_enrollment.save()
         group.save()
+
+        print("\tthe paid_and_attended_classes after the processing : ")
+        print(paid_and_attended_classes)
 
         # Notify the student
         if student.user:

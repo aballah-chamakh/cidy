@@ -26,12 +26,14 @@ def test_runner(test_class):
     test.test()
 
 
-test_runner(TestDateRangeFilter)
+test_runner(TestMarkPayment)
 quit()
 test_runner(TestMarkAttendance)
 test_runner(TestUnMarkAttendance)
 test_runner(TestMarkAbsence)
 test_runner(TestUnMarkAbsence)
+quit()
+test_runner(TestDateRangeFilter)
 quit()
 
 #test_runner(TestMarkPayment)
