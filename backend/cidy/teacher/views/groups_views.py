@@ -1355,7 +1355,7 @@ def unmark_payment(request, group_id):
 
     return Response({
         'success': True,
-        'students_unmarked_completely_count': len(student_ids) - len(students_without_enough_paid_classes_to_unmark),
+        'students_unmarked_completely_count' : len(student_ids) - len(students_without_enough_paid_classes_to_unmark),
         'students_without_enough_paid_classes_to_unmark' : students_without_enough_paid_classes_to_unmark
     })
 
@@ -1422,14 +1422,6 @@ def mark_attendance_and_payment(request,group_id):
                 'id': student.id,
                 'image': student.image.url,
                 'fullname': student.fullname,
-                'overlapping_class': [
-                    {
-                        'status': overlapping_class.status,
-                        'date': overlapping_class.attendance_date if overlapping_class.attendance_date else overlapping_class.absence_date,
-                        'start_time': overlapping_class.attendance_start_time if overlapping_class.attendance_start_time else overlapping_class.absence_start_time,
-                        'end_time': overlapping_class.attendance_end_time if overlapping_class.attendance_end_time else overlapping_class.absence_end_time,
-                    }
-                ]
             })
             continue
 
