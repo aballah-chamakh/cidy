@@ -806,9 +806,9 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               ),
               items: const [
                 DropdownMenuItem(
-                  value: 'remove',
+                  value: 'mark_attendance_and_payment',
                   child: Text(
-                    'Retirer du groupe',
+                    'Marquer la présence et le paiement',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
@@ -851,6 +851,13 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                   value: 'unmark_payment',
                   child: Text(
                     'Annuler le paiement',
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'remove',
+                  child: Text(
+                    'Retirer du groupe',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
                 ),
