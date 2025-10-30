@@ -74,14 +74,14 @@ class TestMarkPayment :
         return response
 
     def test_marking_payment_without_missing_classes(self):
-        # DB content : 3 students with no attended classes yet        
+        # DB content : 3 students with 10 attended classes each (8 due payment and 2 not due payment)
+        # test : mark payment 5 times, each time for 2 classes     
 
-        print("\tSTARTING THE TEST OF MARKING PAYMENT WITHOUT MISSING CLASSES CONFLICT : ")
+        print("\tSTARTING THE TEST OF MARKING PAYMENT WITHOUT HAVING MISSING ATTENDED CLASSES : ")
         group = Group.objects.first()
         student_ids = group.students.values_list('id', flat=True)
         price_per_class = group.teacher_subject.price_per_class
         for i in range(5):
-            group = Group.objects.first()
             payment_datetime = datetime.datetime.now()
             number_of_classes = 2
 
@@ -132,45 +132,54 @@ class TestMarkPayment :
                         assert klass.status == 'attended_and_the_payment_not_due', f"in the {i+1} mark payment, The status of the class at index {idx} for the student {student.fullname} is incorrect (expected 'attended_and_the_payment_not_due', got {klass.status})"
 
             # check the total unpaid of the group
-            group.total_unpaid == expected_unpaid_amount * len(student_ids) ,f"in the {i+1} mark payment, the total unpaid of the group is incorrect (expecteded : {expected_unpaid_amount * len(student_ids)}, got:{group.total_unpaid})"
-        print("\tTHE TEST OF MARKING PAYMENT WITHOUT MISSING CLASSES PASSED SUCCESSFULLY.\n")
+            group.refresh_from_db()
+            assert group.total_unpaid == expected_unpaid_amount * len(student_ids) ,f"in the {i+1} mark payment, the total unpaid of the group is incorrect (expecteded : {expected_unpaid_amount * len(student_ids)}, got:{group.total_unpaid})"
+        print("\tTHE TEST OF MARKING PAYMENT WITHOUT HAVING MISSING ATTENDED CLASSES PASSED SUCCESSFULLY.\n")
     
     def test_marking_payment_with_missing_classes(self):
         # DB content : 
-        #  - first student has 16 attended classes (all due payment)
+        #  - first student has 10 attended classes (all due payment)
         #  - the other 2 students have 6 attended classes (4 due payment and 2 not due payment)
-
-        print("\tSTARTING THE TEST OF MARKING PAYMENT WITH MISSING CLASSES")
+        # test : mark payment for 10 classes for all students
+        print("\tSTARTING THE TEST OF MARKING PAYMENT WITH HAVING MISSING ATTENDED CLASSES")
         students = Student.objects.all().order_by('id')
         first_student = students.first()
         group = Group.objects.first()
-        for student in students:
+        for s_idx,student in enumerate(students):
             group_enrollment = GroupEnrollment.objects.get(student=student,group=group)
             teacher_enrollment = TeacherEnrollment.objects.get(student=student,teacher=group.teacher)
             attended_classes = Class.objects.filter(group_enrollment=group_enrollment).order_by('attendance_date','attendance_start_time','id')
-            for idx, klass in enumerate(attended_classes, start=1):
+            print(f"[BEFORE] number of attended classes for the {s_idx} student : {attended_classes.count()}")
+            for K_idx, klass in enumerate(attended_classes, start=1):
                 if student.id == first_student.id : 
-                    if idx <= 8:
+                    if K_idx <= 8:
                         klass.status = 'attended_and_the_payment_due'
                         klass.save()
                     else:
                         klass.status = 'attended_and_the_payment_not_due'
                         klass.save()
                 else:
-                    if idx <= 4:
+                    if K_idx <= 4:
                         klass.status = 'attended_and_the_payment_due'
                         klass.save()
-                    elif idx <= 6:
+                    elif K_idx <= 6:
                         klass.status = 'attended_and_the_payment_not_due'
                         klass.save()
                     else : 
+                        print(f"delete the class {klass}")
                         klass.delete()
 
+            print(f"[AFTER] the number of attended classes for the {s_idx} student : {attended_classes.all().count()}")
+
+
             group_enrollment.attended_non_paid_classes = 6 if student.id != first_student.id else 10
+            group_enrollment.paid_amount = 0 
             group_enrollment.unpaid_amount = 4 * group.teacher_subject.price_per_class if student.id != first_student.id else 8 * group.teacher_subject.price_per_class
+            teacher_enrollment.paid_amount = 0 
             teacher_enrollment.unpaid_amount = 4 * group.teacher_subject.price_per_class if student.id != first_student.id else 8 * group.teacher_subject.price_per_class
             group_enrollment.save()
             teacher_enrollment.save()
+        group.total_paid = 0
         group.total_unpaid = len(students[1:]) * 4 * group.teacher_subject.price_per_class + 8 * group.teacher_subject.price_per_class
         group.save()
 
@@ -199,10 +208,32 @@ class TestMarkPayment :
         ]
         assert data['students_without_enough_classes_to_mark_their_payment'] == expected_students_without_enough_classes_to_mark_their_payment, f"the list of students without enough classes to mark their payment is incorrect for the mark payment with missing classes (expected {expected_students_without_enough_classes_to_mark_their_payment}, got {data['students_without_enough_classes_to_mark_their_payment']})"
         
+        # ensure that the rows of the db are correct 
+        for idx, student in enumerate(students, start=1) : 
+            group_enrollment = GroupEnrollment.objects.get(student=student,group=group)
+            teacher_enrollment = TeacherEnrollment.objects.get(student=student,teacher=group.teacher)
+            attended_classes = Class.objects.filter(group_enrollment=group_enrollment,status__in=['attended_and_paid','attended_and_the_payment_due','attended_and_the_payment_not_due']).order_by('attendance_date','attendance_start_time','id')
+            if student.id == first_student.id :
+                # first student should have all his 10 classes marked as paid
+                expected_paid_amount = 10 * group.teacher_subject.price_per_class
+                assert teacher_enrollment.paid_amount == expected_paid_amount, f"the paid_amount of the teacher enrollment of the {idx} student is incorrect (expected {expected_paid_amount}, got {teacher_enrollment.paid_amount})"
+                assert group_enrollment.paid_amount == expected_paid_amount, f"the paid_amount of the group enrollment of the {idx} student is incorrect (expected {expected_paid_amount}, got {group_enrollment.paid_amount})"
+            else : 
+                # first student should have all his 10 classes marked as paid
+                expected_paid_amount = 6 * group.teacher_subject.price_per_class
+                assert teacher_enrollment.paid_amount == expected_paid_amount, f"the paid_amount of the teacher enrollment of the {idx} student is incorrect (expected {expected_paid_amount}, got {teacher_enrollment.paid_amount})"
+                assert group_enrollment.paid_amount == expected_paid_amount, f"the paid_amount of the group enrollment of the {idx} student is incorrect (expected {expected_paid_amount}, got {group_enrollment.paid_amount})"
 
-        
-
-        print("\tSTARTING THE TEST OF MARKING PAYMENT WITH MISSING CLASSES")
+            assert group_enrollment.attended_non_paid_classes == 0, f"the attended_non_paid_classes of the group enrollment of the {idx} student is incorrect (expected 0, got {group_enrollment.attended_non_paid_classes})"
+            assert group_enrollment.unpaid_amount == 0, f"the unpaid_amount of the group enrollment of the {idx} student is incorrect (expected 0, got {group_enrollment.unpaid_amount})"
+            assert teacher_enrollment.unpaid_amount == 0, f"the unpaid_amount of the teacher enrollment of the {idx} student is incorrect (expected 0, got {teacher_enrollment.unpaid_amount})"
+            for klass in attended_classes:
+                assert klass.status == 'attended_and_paid', f"The status of the class of the {idx} student is incorrect (expected 'attended_and_paid', got {klass.status})"
+        group.refresh_from_db()
+        assert group.total_unpaid == 0, f"the total_unpaid of the group is incorrect (expected 0, got {group.total_unpaid})"
+        expected_total_paid = (len(students[:1]) * 10 + len(students[1:]) * 6 ) * group.teacher_subject.price_per_class
+        assert group.total_paid == expected_total_paid, f"the total_paid of the group is incorrect (expected {expected_total_paid}, got {group.total_paid})"
+        print("\tSTARTING THE TEST OF MARKING PAYMENT WITH HAVING MISSING ATTENDED CLASSES")
 
 
 

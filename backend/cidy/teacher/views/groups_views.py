@@ -755,7 +755,8 @@ def unmark_attendance(request, group_id):
             # get the remaining classes 
             remaining_classes = Class.objects.filter(group_enrollment=student_group_enrollment,
                                                               status__in=['attended_and_the_payment_not_due',
-                                                                           'attended_and_the_payment_due']).order_by('-attendance_date','-attendance_start_time','-id')[:remaining_classes_count]
+                                                                           'attended_and_the_payment_due']
+                                                    ).order_by('-attendance_date','-attendance_start_time','-id')[:remaining_classes_count]
             for remaining_class in remaining_classes :
                 # for each class marked as due
                 if remaining_class.status == 'attended_and_the_payment_due' :
@@ -1211,7 +1212,7 @@ def unmark_payment(request, group_id):
         paid_classes = Class.objects.filter(
             group_enrollment=student_group_enrollment,
             status__in= ['attended_and_paid']
-        )
+        ).order_by('attendance_date','attendance_start_time','id')
         paid_classes_count = paid_classes.count()
         missing_number_of_paid_classes_to_unmark =  num_classes_to_unmark - paid_classes_count
         if missing_number_of_paid_classes_to_unmark > 0 : 
@@ -1227,7 +1228,9 @@ def unmark_payment(request, group_id):
 
         ## get all of the attended classes of the student 
         attended_classes = Class.objects.filter(group_enrollment=student_group_enrollment,
-                                                 status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due'])
+                                                 status__in=['attended_and_the_payment_due','attended_and_the_payment_not_due']
+                                                 ).order_by('attendance_date','attendance_start_time','id')
+        
         attended_classes_count = attended_classes.count() 
 
         # calculate the start idx which starts to be at the first paid class to process
