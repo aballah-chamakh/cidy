@@ -25,6 +25,8 @@ def test_runner(test_class):
     test.set_up()
     test.test()
 
+
+test_runner(TestUnMarkPayment)
 test_runner(TestMarkAttendance)
 test_runner(TestUnMarkAttendance)
 test_runner(TestMarkAbsence)
