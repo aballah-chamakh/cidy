@@ -21,7 +21,8 @@ from .groups_views import (
     create_group_student,get_the_possible_students_for_a_group,add_students_to_group,remove_students_from_group,
     mark_attendance, unmark_attendance,
     mark_absence, unmark_absence,
-    mark_payment, unmark_payment
+    mark_payment, unmark_payment,
+    mark_attendance_and_payment
 )
 
 from .students_views import (

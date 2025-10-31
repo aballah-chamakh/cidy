@@ -1345,6 +1345,7 @@ def unmark_payment(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def mark_attendance_and_payment(request,group_id):
+    time.sleep(3)
     """Mark attendance for selected students in a group"""
     # validate the request data
     student_ids = request.data.get('student_ids', [])
@@ -1367,7 +1368,7 @@ def mark_attendance_and_payment(request,group_id):
     attendance_date = datetime.strptime(attendance_date, "%d/%m/%Y").date()
     attendance_start_time = datetime.strptime(attendance_start_time, "%H:%M").time()
     attendance_end_time = datetime.strptime(attendance_end_time, "%H:%M").time()
-    payment_datetime = request.data.get('payment_datetime')
+    payment_datetime = datetime.strptime(payment_datetime, "%H:%M:%S-%d/%m/%Y")
 
     teacher = request.user.teacher
 
@@ -1409,6 +1410,7 @@ def mark_attendance_and_payment(request,group_id):
 
         student_teacher_enrollment = TeacherEnrollment.objects.get(student=student, teacher=teacher)
         student_group_enrollment = GroupEnrollment.objects.get(student=student, group=group)
+        print(f"the number of attended non paid classes of the student {student.fullname} is : {student_group_enrollment.attended_non_paid_classes}")
         Class.objects.create(group_enrollment=student_group_enrollment,
                             attendance_date=attendance_date,
                             attendance_start_time=attendance_start_time,
@@ -1456,9 +1458,10 @@ def mark_attendance_and_payment(request,group_id):
             )
             increment_parent_unread_notifications(son.parent)
 
-
+    print(f"students_with_overlapping_classes : {students_with_overlapping_classes}")
     return Response({
         'success': True,
+        'students_marked_count': len(student_ids) - len(students_with_overlapping_classes),
         'students_with_overlapping_classes': students_with_overlapping_classes,
     })
 

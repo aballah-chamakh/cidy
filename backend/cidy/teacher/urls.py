@@ -42,7 +42,7 @@ urlpatterns = [
     path('groups/<int:group_id>/students/unmark_absence/', views.unmark_absence, name='unmark_absence'),
     path('groups/<int:group_id>/students/mark_payment/', views.mark_payment, name='mark_payment'),
     path('groups/<int:group_id>/students/unmark_payment/', views.unmark_payment, name='unmark_payment'),
-
+    path('groups/<int:group_id>/students/mark_attendance_and_payment/', views.mark_attendance_and_payment, name='mark_attendance_and_payment'),
     # Student endpoints
     path('students/can_create/', views.can_create_student, name='can_create_student'),
     path('students/', views.get_students, name='get_students'),

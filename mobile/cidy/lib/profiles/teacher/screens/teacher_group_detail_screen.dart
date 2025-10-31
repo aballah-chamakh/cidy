@@ -13,6 +13,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
 
+import '../widgets/teacher_group_detail_screen/mark_attendance_and_payment_popup.dart';
 import '../widgets/teacher_group_detail_screen/mark_attendance_popup.dart';
 import '../widgets/teacher_group_detail_screen/mark_payment_popup.dart';
 import '../widgets/teacher_group_detail_screen/remove_students_popup.dart';
@@ -894,6 +895,9 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
 
   void _handleGroupAction(String action) {
     switch (action) {
+      case 'mark_attendance_and_payment':
+        _showMarkAttendanceAndPaymentDialog();
+        break;
       case 'remove':
         _showRemoveStudentsDialog();
         break;
@@ -939,6 +943,66 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             _showError('Erreur du serveur (500)');
             clearFiltersAndSelectedStudents();
             _fetchGroupDetails(showLoading: false);
+          },
+        );
+      },
+    );
+  }
+
+  void _showMarkAttendanceAndPaymentDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return MarkAttendanceAndPaymentPopup(
+          studentCount: _selectedStudentIds.length,
+          groupId: _groupDetail!['id'],
+          studentIds: _selectedStudentIds,
+          groupStartTime: _groupDetail!['start_time'],
+          groupEndTime: _groupDetail!['end_time'],
+          weekDay: _groupDetail!['week_day'],
+          onSuccess: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showSuccess('Présence(s) et paiement(s) marqués avec succès');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
+          },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            clearFiltersAndSelectedStudents();
+            _fetchGroupDetails(showLoading: true);
+          },
+          onOverlapDetected: (int studentsMarkedCount, List overlappingStudents) {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return ActionResultPopup(
+                  type: 'time_conflict',
+                  successKpi: {
+                    'value': studentsMarkedCount,
+                    'label': "Étudiant(s) marqué(s) comme présents et payés",
+                  },
+                  failedKpi: {
+                    'value': overlappingStudents.length,
+                    'label': "Étudiant(s) non marqués comme présents et payés",
+                  },
+                  failedListTitle: "Étudiants non marqués présents et payés",
+                  failedListDescription:
+                      "Ces étudiants n’ont pas été marqués comme présents et payés en raison d’un conflit d’horaire avec une autre séance.",
+                  failedList: overlappingStudents,
+                  onClose: () {
+                    if (!mounted) return;
+                    Navigator.of(context).pop();
+                    clearFiltersAndSelectedStudents();
+                    _fetchGroupDetails(showLoading: true);
+                  },
+                );
+              },
+            );
           },
         );
       },
