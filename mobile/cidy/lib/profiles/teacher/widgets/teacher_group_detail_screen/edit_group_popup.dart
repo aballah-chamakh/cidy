@@ -8,12 +8,12 @@ import 'package:flutter/services.dart';
 import 'package:cidy/authentication/login.dart';
 import 'package:cidy/constants.dart';
 
-class EditGroupForm extends StatefulWidget {
+class EditGroupPopup extends StatefulWidget {
   final Map<String, dynamic> group;
   final VoidCallback onGroupUpdated;
   final Function onServerError;
 
-  const EditGroupForm({
+  const EditGroupPopup({
     super.key,
     required this.group,
     required this.onGroupUpdated,
@@ -21,10 +21,10 @@ class EditGroupForm extends StatefulWidget {
   });
 
   @override
-  State<EditGroupForm> createState() => _EditGroupFormState();
+  State<EditGroupPopup> createState() => _EditGroupPopupState();
 }
 
-class _EditGroupFormState extends State<EditGroupForm> {
+class _EditGroupPopupState extends State<EditGroupPopup> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final _startTimeController = TextEditingController();
@@ -107,6 +107,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
 
   Future<void> _editGroup() async {
     if (!mounted) return;
+    if (_isLoading) return;
     // Clear previous errors
     setState(() {
       _nameError = null;
@@ -215,7 +216,6 @@ class _EditGroupFormState extends State<EditGroupForm> {
               _timeError = 'Cet horaire entre en conflit avec un autre groupe.';
             });
           } else {
-            // For other 400 errors, show snackbar
             widget.onServerError('Erreur de validation (400)');
           }
         } else {
@@ -267,9 +267,10 @@ class _EditGroupFormState extends State<EditGroupForm> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildHeader(),
-                const Divider(height: 10, thickness: 1),
+                const Divider(height: 5),
+                const SizedBox(height: 5.0),
                 Flexible(child: _buildFormContent()),
-                const SizedBox(height: 16),
+                const Divider(height: 30),
                 _buildFooter(),
               ],
             ),
@@ -295,39 +296,72 @@ class _EditGroupFormState extends State<EditGroupForm> {
         IconButton(
           icon: Icon(Icons.close, size: headerIconSize, color: primaryColor),
           padding: EdgeInsets.zero, // 👈 removes default padding
-          constraints: BoxConstraints(), // 👈 removes default constraints
-          onPressed: () {
-            if (!mounted) return;
-            Navigator.of(context).pop();
-          },
+          constraints: const BoxConstraints(), // 👈 removes default constraints
+          onPressed: _isLoading
+              ? null
+              : () {
+                  if (!mounted) return;
+                  Navigator.of(context).pop();
+                },
         ),
       ],
     );
   }
 
   Widget _buildFooter() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _editGroup,
-        style: primaryButtonStyle,
-        child: _isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : const Text(
-                'Modifier',
-                style: TextStyle(
-                  fontSize: mediumFontSize,
-                  fontWeight: FontWeight.bold,
-                ),
+    return Row(
+      children: [
+        Expanded(
+          child: AbsorbPointer(
+            absorbing: _isLoading,
+            child: TextButton(
+              style: secondaryButtonStyle,
+              onPressed: () {
+                if (!mounted) return;
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'Annuler',
+                style: TextStyle(fontSize: mediumFontSize),
               ),
-      ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: AbsorbPointer(
+            absorbing: _isLoading,
+            child: ElevatedButton(
+              onPressed: _editGroup,
+              style: primaryButtonStyle,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Modifier',
+                    style: TextStyle(
+                      fontSize: mediumFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (_isLoading) ...[
+                    const SizedBox(width: 12),
+                    const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -339,6 +373,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
           const SizedBox(height: 10),
           TextFormField(
             controller: _nameController,
+            enabled: !_isLoading,
             cursorColor: primaryColor,
             style: TextStyle(
               fontSize: mediumFontSize, // 👈 sets the input text size
@@ -347,7 +382,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
               labelText: 'Nom du groupe',
               labelStyle: TextStyle(color: primaryColor),
               contentPadding: inputContentPadding,
-              errorMaxLines: 2,
+              errorMaxLines: 3,
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: primaryColor),
                 borderRadius: BorderRadius.circular(inputBorderRadius),
@@ -399,7 +434,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
               labelText: 'Jour de la semaine',
               labelStyle: TextStyle(color: primaryColor),
               contentPadding: inputContentPadding,
-              errorMaxLines: 2,
+              errorMaxLines: 3,
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: primaryColor),
                 borderRadius: BorderRadius.circular(inputBorderRadius),
@@ -416,12 +451,14 @@ class _EditGroupFormState extends State<EditGroupForm> {
                 ),
               ),
             ],
-            onChanged: (value) {
-              if (!mounted) return;
-              setState(() {
-                _selectedDayEnglish = value;
-              });
-            },
+            onChanged: _isLoading
+                ? null
+                : (value) {
+                    if (!mounted) return;
+                    setState(() {
+                      _selectedDayEnglish = value;
+                    });
+                  },
             validator: (value) => value == null ? 'Sélectionnez un jour' : null,
           ),
           const SizedBox(height: 16),
@@ -436,6 +473,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
                 labelText: 'Type de changement d\'horaire',
                 contentPadding: inputContentPadding,
                 labelStyle: TextStyle(color: primaryColor),
+                errorMaxLines: 3,
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: primaryColor),
                   borderRadius: BorderRadius.circular(inputBorderRadius),
@@ -461,12 +499,14 @@ class _EditGroupFormState extends State<EditGroupForm> {
                   ),
                 ),
               ],
-              onChanged: (String? value) {
-                if (!mounted) return;
-                setState(() {
-                  _scheduleChangeType = value;
-                });
-              },
+              onChanged: _isLoading
+                  ? null
+                  : (String? value) {
+                      if (!mounted) return;
+                      setState(() {
+                        _scheduleChangeType = value;
+                      });
+                    },
               validator: (value) {
                 if (_hasScheduleChanged() && (value == null || value.isEmpty)) {
                   return 'Veuillez spécifier le type de changement';
@@ -489,6 +529,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
             Expanded(
               child: TextFormField(
                 controller: _startTimeController,
+                enabled: !_isLoading,
                 cursorColor: primaryColor,
                 style: TextStyle(
                   fontSize: mediumFontSize, // 👈 sets the input text size
@@ -506,6 +547,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
                   hintStyle: TextStyle(
                     fontSize: mediumFontSize, // 👈 sets the input text size
                   ),
+                  errorMaxLines: 3,
                 ),
                 keyboardType: TextInputType.datetime,
                 inputFormatters: [
@@ -558,6 +600,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
             Expanded(
               child: TextFormField(
                 controller: _endTimeController,
+                enabled: !_isLoading,
                 cursorColor: primaryColor,
                 decoration: InputDecoration(
                   contentPadding: inputContentPadding,
@@ -572,6 +615,7 @@ class _EditGroupFormState extends State<EditGroupForm> {
                   hintStyle: TextStyle(
                     fontSize: mediumFontSize, // 👈 sets the input text size
                   ),
+                  errorMaxLines: 3,
                 ),
                 keyboardType: TextInputType.datetime,
                 inputFormatters: [
@@ -624,15 +668,17 @@ class _EditGroupFormState extends State<EditGroupForm> {
                 _endTimeController.text.isNotEmpty)
               IconButton(
                 icon: const Icon(Icons.clear),
-                onPressed: () {
-                  if (!mounted) return;
-                  setState(() {
-                    _startTime = null;
-                    _endTime = null;
-                    _startTimeController.clear();
-                    _endTimeController.clear();
-                  });
-                },
+                onPressed: _isLoading
+                    ? null
+                    : () {
+                        if (!mounted) return;
+                        setState(() {
+                          _startTime = null;
+                          _endTime = null;
+                          _startTimeController.clear();
+                          _endTimeController.clear();
+                        });
+                      },
               ),
           ],
         ),

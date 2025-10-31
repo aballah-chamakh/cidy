@@ -9,13 +9,13 @@ import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:cidy/authentication/login.dart';
 
-class CreateNewStudentForm extends StatefulWidget {
+class CreateNewStudentPopup extends StatefulWidget {
   final int groupId;
   final Function onStudentAdded;
   final VoidCallback onServerError;
   final VoidCallback? onBack;
 
-  const CreateNewStudentForm({
+  const CreateNewStudentPopup({
     super.key,
     required this.groupId,
     required this.onStudentAdded,
@@ -24,10 +24,10 @@ class CreateNewStudentForm extends StatefulWidget {
   });
 
   @override
-  State<CreateNewStudentForm> createState() => _CreateNewStudentFormState();
+  State<CreateNewStudentPopup> createState() => _CreateNewStudentPopupState();
 }
 
-class _CreateNewStudentFormState extends State<CreateNewStudentForm> {
+class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();

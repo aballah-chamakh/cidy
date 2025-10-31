@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cidy/app_styles.dart';
-import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/add_existing_student_form.dart';
-import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/create_new_student_form.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/add_existing_student_popup.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/create_new_student_popup.dart';
 
 class AddStudentPopup extends StatefulWidget {
   final int groupId;
@@ -22,12 +22,13 @@ class AddStudentPopup extends StatefulWidget {
 class _AddStudentPopupState extends State<AddStudentPopup> {
   String? _selectedOption;
   bool _showNextForm = false;
+  String? _errorText;
 
   @override
   Widget build(BuildContext context) {
     // If next button was clicked and an option is selected, show the respective form
     if (_showNextForm && _selectedOption == 'existing') {
-      return AddExistingStudentForm(
+      return AddExistingStudentPopup(
         groupId: widget.groupId,
         onStudentsAdded: widget.onStudentsAdded,
         onServerError: widget.onServerError,
@@ -39,7 +40,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
     }
 
     if (_showNextForm && _selectedOption == 'new') {
-      return CreateNewStudentForm(
+      return CreateNewStudentPopup(
         groupId: widget.groupId,
         onStudentAdded: widget.onStudentsAdded,
         onServerError: widget.onServerError,
@@ -128,7 +129,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
         // Label
         Text(
           'Choisissez entre ajouter des élèves existants ou créer un nouvel élève puis l\'ajouter',
-          style: TextStyle(fontSize: mediumFontSize, color: Colors.grey[700]),
+          style: TextStyle(fontSize: mediumFontSize),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 10.0),
@@ -168,15 +169,23 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
           onChanged: (value) {
             setState(() {
               _selectedOption = value;
+              _errorText = null;
             });
           },
-          validator: (value) {
-            if (value == null) {
-              return 'Veuillez sélectionner une option';
-            }
-            return null;
-          },
         ),
+        if (_errorText != null) ...[
+          const SizedBox(height: 8.0),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _errorText!,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+                fontSize: 15,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -200,7 +209,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
         Expanded(
           child: ElevatedButton(
             style: primaryButtonStyle,
-            onPressed: _selectedOption != null ? _handleNext : null,
+            onPressed: _handleNext,
             child: const Text(
               'Suivant',
               style: TextStyle(fontSize: mediumFontSize),
@@ -212,9 +221,14 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
   }
 
   void _handleNext() {
+    if (_selectedOption == null) {
+      setState(() {
+        _errorText = 'Vous devez sélectionner une option.';
+      });
+      return;
+    }
+
     if (_selectedOption == 'existing' || _selectedOption == 'new') {
-      // TODO: Check if teacher has students in the same level/section
-      // Set the flag to show the next form
       setState(() {
         _showNextForm = true;
       });

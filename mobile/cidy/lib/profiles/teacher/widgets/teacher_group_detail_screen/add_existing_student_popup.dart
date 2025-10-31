@@ -7,13 +7,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
 
-class AddExistingStudentForm extends StatefulWidget {
+class AddExistingStudentPopup extends StatefulWidget {
   final int groupId;
   final Function onStudentsAdded;
   final Function onServerError;
   final VoidCallback? onBack;
 
-  const AddExistingStudentForm({
+  const AddExistingStudentPopup({
     super.key,
     required this.groupId,
     required this.onStudentsAdded,
@@ -22,10 +22,11 @@ class AddExistingStudentForm extends StatefulWidget {
   });
 
   @override
-  State<AddExistingStudentForm> createState() => _AddExistingStudentFormState();
+  State<AddExistingStudentPopup> createState() =>
+      _AddExistingStudentPopupState();
 }
 
-class _AddExistingStudentFormState extends State<AddExistingStudentForm> {
+class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
   List _availableStudents = [];
   int _availableStudentsCount = 0;
   int _page = 1;

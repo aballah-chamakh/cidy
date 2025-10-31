@@ -1,13 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:cidy/app_styles.dart';
 
-class DeleteGroupPopup extends StatelessWidget {
+class DeleteGroupPopup extends StatefulWidget {
   final String groupName;
+  final Future<void> Function() onDelete;
 
-  const DeleteGroupPopup({super.key, required this.groupName});
+  const DeleteGroupPopup({
+    super.key,
+    required this.groupName,
+    required this.onDelete,
+  });
+
+  @override
+  State<DeleteGroupPopup> createState() => _DeleteGroupPopupState();
+}
+
+class _DeleteGroupPopupState extends State<DeleteGroupPopup> {
+  bool _isLoading = false;
+
+  Future<void> _handleDelete() async {
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await widget.onDelete();
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _handleCancel() {
+    if (_isLoading) return;
+    Navigator.of(context).pop(false);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final ButtonStyle deleteButtonStyle = primaryButtonStyle.copyWith(
+      backgroundColor: MaterialStateProperty.resolveWith<Color>(
+        (states) => primaryColor,
+      ),
+      foregroundColor: MaterialStateProperty.resolveWith<Color>(
+        (states) => Colors.white,
+      ),
+    );
+
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(
         horizontal: popupHorizontalMargin,
@@ -46,9 +90,7 @@ class DeleteGroupPopup extends StatelessWidget {
                     size: headerIconSize,
                     color: primaryColor,
                   ),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
+                  onPressed: _isLoading ? null : _handleCancel,
                 ),
               ],
             ),
@@ -57,43 +99,48 @@ class DeleteGroupPopup extends StatelessWidget {
             Icon(Icons.delete, color: primaryColor, size: 100),
             const SizedBox(height: 15.0),
             Text(
-              'Êtes-vous sûr de vouloir supprimer le groupe : $groupName ?',
+              'Êtes-vous sûr de vouloir supprimer le groupe : ${widget.groupName} ?',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: mediumFontSize),
             ),
-            const SizedBox(height: 20.0),
-            Column(
-              children: <Widget>[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(true);
-                    },
-                    style: primaryButtonStyle,
+            const Divider(height: 30),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    style: secondaryButtonStyle,
+                    onPressed: _isLoading ? null : _handleCancel,
                     child: const Text(
-                      'Supprimer',
-                      style: TextStyle(
-                        fontSize: mediumFontSize,
-                        color: Colors.white,
-                      ),
+                      'Annuler',
+                      style: TextStyle(fontSize: mediumFontSize),
                     ),
                   ),
                 ),
-                const SizedBox(height: 5),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(false);
-                    },
-                    style: secondaryButtonStyle,
-                    child: Text(
-                      'Annuler',
-                      style: TextStyle(
-                        fontSize: mediumFontSize,
-                        color: primaryColor,
-                      ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: ElevatedButton(
+                    style: deleteButtonStyle,
+                    onPressed: _isLoading ? null : _handleDelete,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Supprimer',
+                          style: TextStyle(fontSize: mediumFontSize),
+                        ),
+                        if (_isLoading) ...[
+                          const SizedBox(width: 12),
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),

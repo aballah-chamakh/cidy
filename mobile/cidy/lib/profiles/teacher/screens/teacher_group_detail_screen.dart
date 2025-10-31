@@ -5,7 +5,7 @@ import 'package:cidy/constants.dart';
 import 'package:cidy/config.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/add_student_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/delete_group_popup.dart';
-import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/edit_group_form.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/edit_group_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/unmark_payment_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_layout.dart';
 import 'package:flutter/material.dart';
@@ -699,7 +699,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return EditGroupForm(
+        return EditGroupPopup(
           group: _groupDetail!,
           onGroupUpdated: () {
             if (mounted) {
@@ -754,17 +754,16 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
 
   Future<void> _showDeleteGroupConfirmationDialog() async {
     if (!mounted) return;
-    final bool? confirmed = await showDialog<bool>(
+    await showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
-        return DeleteGroupPopup(groupName: _groupDetail!['name']);
+      builder: (BuildContext _) {
+        return DeleteGroupPopup(
+          groupName: _groupDetail!['name'],
+          onDelete: _deleteGroup,
+        );
       },
     );
     if (!mounted) return;
-
-    if (confirmed == true) {
-      _deleteGroup();
-    }
   }
 
   Widget _buildStickyActionBar() {

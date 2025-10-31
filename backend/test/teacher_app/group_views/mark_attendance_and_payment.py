@@ -55,7 +55,7 @@ class TestMarkAttendanceAndPayment :
     
         self.teacher_client = TeacherClient("teacher10@gmail.com", "iloveuu")
 
-    def send_mark_attendance_request(self, group_id, student_ids, attendance_date, attendance_start_time, attendance_end_time, payment_datetime):
+    def send_mark_attendance_and_payment_request(self, group_id, student_ids, attendance_date, attendance_start_time, attendance_end_time, payment_datetime):
         backend_url = f"{self.teacher_client.BACKEND_BASE_URL}/api/teacher/groups/{group_id}/students/mark_attendance_and_payment/"
 
         # Prepare the headers
@@ -88,7 +88,7 @@ class TestMarkAttendanceAndPayment :
         attendance_start_time = datetime.time(20, 0)
         attendance_end_time = datetime.time(21, 0)
         payment_datetime = datetime.datetime.now()
-        response = self.send_mark_attendance_request(
+        response = self.send_mark_attendance_and_payment_request(
             group.id,
             student_ids,
             attendance_date,
@@ -124,10 +124,10 @@ class TestMarkAttendanceAndPayment :
         students = group.students.all().order_by('id')
         student_ids = [student.id for student in students]  # Select first 3 students
         attendance_date = datetime.date.today()
-        attendance_start_time = datetime.time(8, 30)  # This time overlaps with the group's schedule (10:00 - 12:00)
-        attendance_end_time = datetime.time(9, 30)
+        attendance_start_time = datetime.time(20, 30)  # This time overlaps with the group's schedule (10:00 - 12:00)
+        attendance_end_time = datetime.time(21, 30)
         payment_datetime = datetime.datetime.now()
-        response = self.send_mark_attendance_request(
+        response = self.send_mark_attendance_and_payment_request(
             group.id,
             student_ids,
             attendance_date,
@@ -139,7 +139,7 @@ class TestMarkAttendanceAndPayment :
         # ensure that the response is correct
         assert response.status_code == 200, f"the status code of the mark attendance and payment is incorrect, expected 200 but got {response.status_code}"
         response_data = response.json()
-        assert response_data['students_marked_count'] == 1, f"the number of students marked is incorrect (expected 0, got {response_data['students_marked_count']})"
+        assert response_data['students_marked_count'] == 1, f"the number of students marked is incorrect (expected 1, got {response_data['students_marked_count']})"
         assert len(response_data['students_with_overlapping_classes']) == 3, f"the number of students with overlapping classes is incorrect (expected 3, got {len(response_data['students_with_overlapping_classes'])})"
         expected_students_with_overlapping_classes = [
             {

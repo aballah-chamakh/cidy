@@ -176,6 +176,7 @@ def create_group(request):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_groups(request):
+    time.sleep(3)
 
     """Delete selected groups"""
     teacher = request.user.teacher
@@ -241,6 +242,7 @@ def get_group_details(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_group(request, group_id):
+    time.sleep(3)
     """Edit an existing group"""
     teacher = request.user.teacher
     try:
