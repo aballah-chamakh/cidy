@@ -292,7 +292,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                               decoration: const InputDecoration(
                                 labelText: 'Date (jj/mm/aaaa) *',
                                 border: OutlineInputBorder(),
-                                errorMaxLines: 2,
+                                errorMaxLines: 3,
                               ),
                               keyboardType: TextInputType.datetime,
                               inputFormatters: [
@@ -332,7 +332,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                               decoration: const InputDecoration(
                                 labelText: 'Heure de début (HH:mm) *',
                                 border: OutlineInputBorder(),
-                                errorMaxLines: 2,
+                                errorMaxLines: 3,
                               ),
                               keyboardType: TextInputType.datetime,
                               inputFormatters: [
@@ -373,7 +373,7 @@ class _MarkAttendancePopupState extends State<MarkAttendancePopup> {
                               decoration: const InputDecoration(
                                 labelText: 'Heure de fin (HH:mm) *',
                                 border: OutlineInputBorder(),
-                                errorMaxLines: 2,
+                                errorMaxLines: 3,
                               ),
                               keyboardType: TextInputType.datetime,
                               inputFormatters: [

@@ -556,7 +556,7 @@ class _EditGroupPopupState extends State<EditGroupPopup> {
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Veuillez saisir une heure de début';
+                    return 'Requis';
                   }
                   final time = _parseTime(value);
                   if (time == null) return 'Format invalide';
@@ -624,7 +624,7 @@ class _EditGroupPopupState extends State<EditGroupPopup> {
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Veuillez saisir une heure de fin';
+                    return 'Requis';
                   }
                   final time = _parseTime(value);
                   if (time == null) return 'Format invalide';
@@ -708,6 +708,22 @@ class _TimeTextInputFormatter extends TextInputFormatter {
     }
 
     String text = newText.replaceAll(':', '');
+
+    if (text.length == 2) {
+      final hour = int.tryParse(text);
+      if (hour != null && hour > 23) {
+        if (oldValue.text.length == 1 && int.tryParse(oldValue.text) != null) {
+          final firstDigit = oldValue.text;
+          final secondDigit = text.substring(1);
+          text = '0$firstDigit:$secondDigit';
+          return TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        }
+      }
+    }
+
     if (text.length > 2) {
       text = '${text.substring(0, 2)}:${text.substring(2)}';
     }
@@ -722,6 +738,11 @@ class _TimeTextInputFormatter extends TextInputFormatter {
         return oldValue;
       }
       if (minute != null && minute > 59) {
+        return oldValue;
+      }
+    } else if (text.length == 2) {
+      final hour = int.tryParse(text);
+      if (hour != null && hour > 23) {
         return oldValue;
       }
     }

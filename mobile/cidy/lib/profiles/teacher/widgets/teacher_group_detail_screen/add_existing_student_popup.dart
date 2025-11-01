@@ -208,6 +208,30 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
     });
   }
 
+  bool _areAllStudentsSelected() {
+    if (_availableStudents.isEmpty) {
+      return false;
+    }
+    return _availableStudents.every(
+      (student) => _selectedStudentIds.contains(student['id'] as int),
+    );
+  }
+
+  void _toggleSelectAllStudents() {
+    final allSelected = _areAllStudentsSelected();
+    setState(() {
+      if (allSelected) {
+        _selectedStudentIds.clear();
+      } else {
+        _selectedStudentIds
+          ..clear()
+          ..addAll(
+            _availableStudents.map<int>((student) => student['id'] as int),
+          );
+      }
+    });
+  }
+
   Future<void> _loadNextPage() async {
     if (_isLoading || _isLoadingMore || _isSubmitting) return;
 
@@ -275,8 +299,11 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
               const Divider(height: 16),
               _buildSearchField(),
               const SizedBox(height: 8),
-              if (_availableStudentsCount > 0) _buildStudentsHeader(),
-              const SizedBox(height: 8),
+              if (_availableStudentsCount > 0) ...[
+                _buildSelectAllToggle(),
+                _buildStudentsHeader(),
+                const SizedBox(height: 8),
+              ],
               Flexible(
                 fit: FlexFit.loose,
                 child: AbsorbPointer(
@@ -331,11 +358,39 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
   Widget _buildStudentsHeader() {
     return Text(
       '$_availableStudentsCount Étudiants',
+      textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: mediumFontSize,
         fontWeight: FontWeight.w600,
         color: primaryColor,
       ),
+    );
+  }
+
+  Widget _buildSelectAllToggle() {
+    final allSelected = _areAllStudentsSelected();
+    final hasStudents = _availableStudents.isNotEmpty;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Transform.scale(
+          scale: 1.1,
+          child: Checkbox(
+            value: hasStudents && allSelected,
+            activeColor: primaryColor,
+            checkColor: Colors.white,
+            onChanged: hasStudents ? (_) => _toggleSelectAllStudents() : null,
+          ),
+        ),
+        Flexible(
+          child: Text(
+            allSelected
+                ? 'Désélectionner tous les étudiants'
+                : 'Sélectionner tous les étudiants',
+            style: const TextStyle(fontSize: mediumFontSize),
+          ),
+        ),
+      ],
     );
   }
 
