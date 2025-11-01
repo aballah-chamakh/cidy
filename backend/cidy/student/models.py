@@ -8,7 +8,7 @@ class Student(models.Model):
     image = models.ImageField(default='defaults/student.png',upload_to='student_images/')
     user = models.OneToOneField(User, on_delete=models.CASCADE,null=True)
     fullname = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=8,default='00000000', unique=True)
+    phone_number = models.CharField(max_length=8,default='00000000')
     gender = models.CharField(max_length=10, choices=(('M', 'Male'), ('F', 'Female')), default='M')
     level = models.ForeignKey(Level, on_delete=models.CASCADE) 
     join_date = models.DateField(auto_now_add=True)

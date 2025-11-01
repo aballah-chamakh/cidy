@@ -130,7 +130,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Veuillez sélectionner au moins un élève.',
+            'Veuillez sélectionner au moins un étudiant.',
             style: TextStyle(fontSize: mediumFontSize),
           ),
         ),
@@ -173,8 +173,8 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
       if (response.statusCode == 200) {
         final studentCount = _selectedStudentIds.length;
         final message = studentCount == 1
-            ? 'L’élève a été ajouté avec succès.'
-            : '$studentCount élèves ont été ajoutés avec succès.';
+            ? 'L’étudiant a été ajouté avec succès.'
+            : '$studentCount étudiants ont été ajoutés avec succès.';
         widget.onStudentsAdded(message: message);
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -197,6 +197,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
   }
 
   void _toggleStudentSelection(int studentId) {
+    if (_isSubmitting) return;
     if (!mounted) return;
     setState(() {
       if (_selectedStudentIds.contains(studentId)) {
@@ -208,7 +209,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
   }
 
   Future<void> _loadNextPage() async {
-    if (_isLoading || _isLoadingMore) return;
+    if (_isLoading || _isLoadingMore || _isSubmitting) return;
 
     // Check if there are more students to load
     if (_availableStudents.length >= _availableStudentsCount) {
@@ -216,7 +217,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Tous les élèves ont été chargés.',
+            'Tous les étudiants ont été chargés.',
             style: TextStyle(fontSize: mediumFontSize),
           ),
           duration: Duration(seconds: 1),
@@ -234,7 +235,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
 
   void _onScroll() {
     // Prevent starting pagination while an initial or ongoing load is in progress
-    if (_isLoading || _isLoadingMore) return;
+    if (_isLoading || _isLoadingMore || _isSubmitting) return;
 
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
@@ -278,11 +279,14 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
               const SizedBox(height: 8),
               Flexible(
                 fit: FlexFit.loose,
-                child: Scrollbar(
-                  controller: _scrollController,
-                  child: SingleChildScrollView(
+                child: AbsorbPointer(
+                  absorbing: _isSubmitting,
+                  child: Scrollbar(
                     controller: _scrollController,
-                    child: _buildStudentsList(),
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      child: _buildStudentsList(),
+                    ),
                   ),
                 ),
               ),
@@ -300,7 +304,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Ajouter des élèves existants',
+          'Ajouter des étudiants existants',
           style: TextStyle(
             fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
@@ -314,9 +318,11 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
             size: headerIconSize,
             color: primaryColor,
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
       ],
     );
@@ -324,7 +330,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
 
   Widget _buildStudentsHeader() {
     return Text(
-      '$_availableStudentsCount Élèves',
+      '$_availableStudentsCount Étudiants',
       style: TextStyle(
         fontSize: mediumFontSize,
         fontWeight: FontWeight.w600,
@@ -336,10 +342,11 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
   Widget _buildSearchField() {
     return TextField(
       controller: _searchController,
+      enabled: !_isSubmitting,
       cursorColor: primaryColor,
       style: const TextStyle(fontSize: mediumFontSize),
       decoration: InputDecoration(
-        hintText: 'Rechercher un élève...',
+        hintText: 'Rechercher un étudiant...',
         hintStyle: const TextStyle(fontSize: mediumFontSize),
         prefixIcon: const Icon(Icons.search),
         contentPadding: inputContentPadding,
@@ -382,7 +389,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
         padding: EdgeInsets.all(15.0),
         child: Center(
           child: Text(
-            'Aucun élève du même niveau que le groupe n’est disponible à ajouter.',
+            'Aucun étudiant du même niveau que le groupe n’est disponible à ajouter.',
             style: TextStyle(fontSize: mediumFontSize),
             textAlign: TextAlign.center,
           ),
@@ -393,7 +400,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
         padding: EdgeInsets.all(15.0),
         child: Center(
           child: Text(
-            'Aucun élève trouvé pour votre recherche.',
+            'Aucun étudiant trouvé pour votre recherche.',
 
             style: TextStyle(fontSize: mediumFontSize),
             textAlign: TextAlign.center,
@@ -420,7 +427,9 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
               ),
             ),
             child: InkWell(
-              onLongPress: () => _toggleStudentSelection(studentId),
+              onLongPress: _isSubmitting
+                  ? null
+                  : () => _toggleStudentSelection(studentId),
               borderRadius: BorderRadius.circular(8),
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
@@ -485,43 +494,55 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
     return Row(
       children: [
         Expanded(
-          child: TextButton(
-            style: secondaryButtonStyle,
-            onPressed: _isSubmitting
-                ? null
-                : () {
-                    if (widget.onBack != null) {
-                      widget.onBack!();
-                    } else {
-                      Navigator.of(context).pop();
-                    }
-                  },
-            child: const Text(
-              'Retour',
-              style: TextStyle(fontSize: mediumFontSize),
+          child: AbsorbPointer(
+            absorbing: _isSubmitting,
+            child: TextButton(
+              style: secondaryButtonStyle,
+              onPressed: () {
+                if (widget.onBack != null) {
+                  widget.onBack!();
+                } else {
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text(
+                'Retour',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
             ),
           ),
         ),
         const SizedBox(width: 5),
         Expanded(
-          child: ElevatedButton(
-            style: primaryButtonStyle,
-            onPressed: (_isSubmitting || _selectedStudentIds.isEmpty)
-                ? null
-                : _addStudentsToGroup,
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Text(
+          child: AbsorbPointer(
+            absorbing: _isSubmitting,
+            child: ElevatedButton(
+              style: primaryButtonStyle,
+              onPressed: _selectedStudentIds.isEmpty
+                  ? null
+                  : _addStudentsToGroup,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
                     'Ajouter',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
+                  if (_isSubmitting) ...[
+                    const SizedBox(width: 12),
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ],

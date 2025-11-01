@@ -340,6 +340,7 @@ def get_group_students(request,group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def create_group_student(request, group_id):
+    time.sleep(3)
     """Create a new student then add them to the specified group"""
     teacher = request.user.teacher
 
@@ -349,19 +350,21 @@ def create_group_student(request, group_id):
         return Response({'error': 'Group not found'}, status=404)
 
     # Create a serializer with the request data
-    serializer = GroupCreateStudentSerializer(data=request.data)
+    serializer = GroupCreateStudentSerializer(data=request.data,context={'request': request})
 
     # Validate the data
     if not serializer.is_valid():
         print(serializer.errors)
         return Response(serializer.errors, status=400)
 
-    # Save the student
+    # Save the student with the level of the group's teacher subject
     student = serializer.save(level=group.teacher_subject.level)
+
+    # Enroll the student with the teacher
+    TeacherEnrollment.objects.create(teacher=teacher, student=student)
 
     # Add the student to the group
     group.students.add(student)
-
     
     return Response({
         'success': True,
@@ -380,7 +383,9 @@ def get_the_possible_students_for_a_group(request,group_id):
     teacher_subject = group.teacher_subject 
     
     student_qs = Student.objects.filter(teacherenrollment__teacher=teacher,level=teacher_subject.level)
-
+    print("possible students")
+    for studentx in student_qs : 
+        print(studentx)
     # Exclude students already in the group
     student_qs = student_qs.exclude(groups=group)
    
@@ -413,7 +418,7 @@ def get_the_possible_students_for_a_group(request,group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def add_students_to_group(request,group_id):
-
+    time.sleep(3)
     student_ids = request.data.get('student_ids',[])
     teacher = request.user.teacher
     try:
@@ -460,7 +465,7 @@ def add_students_to_group(request,group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def remove_students_from_group(request, group_id):
-
+    time.sleep(3)
     """Remove students from a specific group"""
     teacher = request.user.teacher
 

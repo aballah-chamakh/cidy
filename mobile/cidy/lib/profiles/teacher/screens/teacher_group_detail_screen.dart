@@ -55,8 +55,6 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     'paid_amount_asc': 'Payé (croissant)',
     'unpaid_amount_desc': 'Non payé (décroissant)',
     'unpaid_amount_asc': 'Non payé (croissant)',
-    'name_asc': 'Nom (A à Z)',
-    'name_desc': 'Nom (Z à A)',
   };
 
   @override
@@ -263,6 +261,28 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     });
   }
 
+  bool _areAllStudentsSelected(List students) {
+    if (students.isEmpty) {
+      return false;
+    }
+    return students.every(
+      (student) => _selectedStudentIds.contains(student['id'] as int),
+    );
+  }
+
+  void _toggleSelectAllStudents(List students) {
+    final allSelected = _areAllStudentsSelected(students);
+    setState(() {
+      if (allSelected) {
+        _selectedStudentIds.clear();
+      } else {
+        _selectedStudentIds
+          ..clear()
+          ..addAll(students.map<int>((student) => student['id'] as int));
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return TeacherLayout(
@@ -438,7 +458,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         Expanded(
           child: _buildKpiCard(
             students.length.toString(),
-            'Élèves',
+            'Étudiants',
             Colors.blue.shade800,
           ),
         ),
@@ -463,10 +483,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-            ),
+            Text(label, style: TextStyle(fontSize: 14)),
           ],
         ),
       ),
@@ -487,7 +504,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${students.length} Élève(s)',
+                  '${students.length} Étudiant(s)',
                   style: TextStyle(
                     fontSize: mediumFontSize,
                     fontWeight: FontWeight.bold,
@@ -511,8 +528,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               ],
             ),
             const Divider(height: 20),
-            _buildStudentFilters(),
-            const SizedBox(height: 10),
+            _buildStudentFilters(students),
             if (students.isEmpty)
               _buildNoStudentsUI()
             else
@@ -523,7 +539,8 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     );
   }
 
-  Widget _buildStudentFilters() {
+  Widget _buildStudentFilters(List students) {
+    final bool allSelected = _areAllStudentsSelected(students);
     return Column(
       children: [
         TextField(
@@ -569,6 +586,29 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             _fetchGroupDetails(showLoading: false);
           },
         ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+
+          children: [
+            Transform.scale(
+              scale: 1.2,
+              child: Checkbox(
+                activeColor: primaryColor, // color when checked
+                checkColor: Colors.white,
+                value: allSelected,
+                onChanged: students.isEmpty
+                    ? null
+                    : (_) => _toggleSelectAllStudents(students),
+              ),
+            ),
+            Text(
+              allSelected
+                  ? 'Désélectionner tous les étudiants'
+                  : 'Sélectionner tous les étudiants',
+              style: const TextStyle(fontSize: mediumFontSize),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -579,8 +619,8 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       alignment: Alignment.center,
       child: Text(
         _searchController.text.isNotEmpty
-            ? "Aucun élève ne correspond à votre recherche."
-            : 'Aucun élève dans ce groupe.',
+            ? "Aucun étudiant ne correspond à votre recherche."
+            : 'Aucun étudiant dans ce groupe.',
         style: TextStyle(fontSize: mediumFontSize),
         textAlign: TextAlign.center,
       ),
@@ -729,7 +769,9 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         return AddStudentPopup(
           groupId: widget.groupId,
           onStudentsAdded:
-              ({String message = 'L’élève a été créé et ajouté avec succès.'}) {
+              ({
+                String message = 'L’étudiant a été créé et ajouté avec succès.',
+              }) {
                 if (mounted) {
                   _showSuccess(message);
                   Navigator.of(context).pop();
@@ -932,7 +974,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           onSuccess: () {
             if (!mounted) return;
             Navigator.of(context).pop();
-            _showSuccess('Élèves retirés avec succès');
+            _showSuccess('Étudiants retirés avec succès');
             clearFiltersAndSelectedStudents();
             _fetchGroupDetails(showLoading: false);
           },

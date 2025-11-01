@@ -123,51 +123,49 @@ class _RemoveStudentsPopupState extends State<RemoveStudentsPopup> {
                     size: headerIconSize,
                     color: primaryColor,
                   ),
-                  onPressed: () {
-                    Navigator.of(context).pop(false);
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          Navigator.of(context).pop(false);
+                        },
                 ),
               ],
             ),
             const Divider(height: 5),
             const SizedBox(height: 15.0),
-            if (_isLoading)
-              Padding(
-                padding: EdgeInsetsGeometry.all(40),
-                child: const Center(
-                  child: CircularProgressIndicator(color: primaryColor),
-                ),
-              )
-            else ...[
-              const Icon(Icons.person_remove, size: 100, color: primaryColor),
-              const SizedBox(height: 15.0),
-              Text(
-                widget.studentCount == 1
-                    ? 'Êtes-vous sûr de vouloir retirer l’élève sélectionné du groupe ?'
-                    : 'Êtes-vous sûr de vouloir retirer les ${widget.studentCount} élèves sélectionnés du groupe ?',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: mediumFontSize),
-              ),
-              const SizedBox(height: 20),
-              Column(
-                children: <Widget>[
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _removeStudentsFromGroup,
-                      style: primaryButtonStyle,
-                      child: const Text(
-                        'Retirer',
-                        style: TextStyle(
-                          fontSize: mediumFontSize,
-                          color: Colors.white,
+            const Icon(Icons.person_remove, size: 100, color: primaryColor),
+            const SizedBox(height: 15.0),
+            widget.studentCount == 1
+                ? Text(
+                    "Êtes-vous sûr de vouloir retirer l'étudiant sélectionné du groupe ?",
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: mediumFontSize),
+                  )
+                : Text.rich(
+                    TextSpan(
+                      style: const TextStyle(fontSize: mediumFontSize),
+                      children: [
+                        const TextSpan(
+                          text: 'Êtes-vous sûr de vouloir retirer les ',
                         ),
-                      ),
+                        TextSpan(
+                          text: '${widget.studentCount}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(
+                          text: ' étudiants sélectionnés du groupe ?',
+                        ),
+                      ],
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 5),
-                  SizedBox(
-                    width: double.infinity,
+            const SizedBox(height: 20),
+            const Divider(height: 30),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: AbsorbPointer(
+                    absorbing: _isLoading,
                     child: OutlinedButton(
                       onPressed: () {
                         Navigator.of(context).pop(false);
@@ -182,9 +180,43 @@ class _RemoveStudentsPopupState extends State<RemoveStudentsPopup> {
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: AbsorbPointer(
+                    absorbing: _isLoading,
+                    child: ElevatedButton(
+                      onPressed: _removeStudentsFromGroup,
+                      style: primaryButtonStyle,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Retirer',
+                            style: TextStyle(
+                              fontSize: mediumFontSize,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (_isLoading) ...[
+                            const SizedBox(width: 12),
+                            const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

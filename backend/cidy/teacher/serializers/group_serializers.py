@@ -262,3 +262,10 @@ class GroupCreateStudentSerializer(serializers.ModelSerializer):
     class Meta : 
         model = Student
         fields = ['id', 'image', 'fullname','phone_number','gender']
+
+    def validate_phone_number(self, value):
+        teacher = self.context['request'].user.teacher
+        # Ensure phone number is unique
+        if Student.objects.filter(teacherenrollment__teacher=teacher, phone_number=value).exists():
+            raise serializers.ValidationError("student with this phone number already exists.")
+        return value

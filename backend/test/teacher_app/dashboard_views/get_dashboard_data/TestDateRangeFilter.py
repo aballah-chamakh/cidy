@@ -110,18 +110,26 @@ class TestDateRangeFilter:
                 for i, student in enumerate(students):
                     # date range for this week  : 1 Oct 2025
                     if i < 2 : 
-                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_WEEK_DATES[0].date())
+                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student 
+                                                                        ,date=TestDateRangeFilter.THIS_WEEK_DATES[0].date(),
+                                                                         paid_amount=i*100,
+                                                                         unpaid_amount=i*100
+                                                                         )
                         # create classes for this enrollment in different statuses and date ranges 
                         #self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
 
 
                     # date range for this month : 1 Oct 2025
                     elif i < 4 :
-                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_MONTH_DATES[0].date())
+                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_MONTH_DATES[0].date(),
+                                                                         paid_amount=i*100,
+                                                                         unpaid_amount=i*100)
                         #self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
                     # date range for this year : 10 and 14 aug 2025
                     else:
-                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_YEAR_DATES[0].date())
+                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_YEAR_DATES[0].date(),
+                                                                         paid_amount=i*100,
+                                                                         unpaid_amount=i*100)
                         #self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
 
     def create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(self,group_enrollement):

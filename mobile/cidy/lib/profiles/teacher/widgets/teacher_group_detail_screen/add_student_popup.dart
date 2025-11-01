@@ -97,7 +97,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Ajouter des élèves',
+          'Ajouter des étudiants',
           style: TextStyle(
             fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
@@ -128,7 +128,7 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
         const SizedBox(height: 16.0),
         // Label
         Text(
-          'Choisissez entre ajouter des élèves existants ou créer un nouvel élève puis l\'ajouter',
+          'Choisissez entre ajouter des étudiants existants ou créer un nouvel étudiant puis l\'ajouter',
           style: TextStyle(fontSize: mediumFontSize),
           textAlign: TextAlign.center,
         ),
@@ -154,14 +154,14 @@ class _AddStudentPopupState extends State<AddStudentPopup> {
             DropdownMenuItem(
               value: 'existing',
               child: Text(
-                'ajouter des élèves existants',
+                'ajouter des étudiants existants',
                 style: TextStyle(fontSize: mediumFontSize),
               ),
             ),
             DropdownMenuItem(
               value: 'new',
               child: Text(
-                'créer un nouvel élève puis l\'ajouter',
+                'créer un nouvel étudiant puis l\'ajouter',
                 style: TextStyle(fontSize: mediumFontSize),
               ),
             ),

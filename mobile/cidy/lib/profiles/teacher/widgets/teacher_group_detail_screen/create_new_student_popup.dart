@@ -136,7 +136,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
     if (!_formKey.currentState!.validate()) {
       if (_selectedGender == null) {
         setState(() {
-          _errorMessage = 'Veuillez sélectionner le genre de l\'élève.';
+          _errorMessage = 'Veuillez sélectionner le genre de l\'étudiant.';
         });
       }
       return;
@@ -144,7 +144,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
 
     if (_selectedGender == null) {
       setState(() {
-        _errorMessage = 'Veuillez sélectionner le genre de l\'élève.';
+        _errorMessage = 'Veuillez sélectionner le genre de l\'étudiant.';
       });
       return;
     }
@@ -209,7 +209,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
                   'student with this phone number already exists.') {
             setState(() {
               _phoneErrorMessage =
-                  'Un élève avec ce numéro de téléphone existe déjà.';
+                  'Un étudiant avec ce numéro de téléphone existe déjà.';
             });
           } else {
             widget.onServerError();
@@ -273,7 +273,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
                         _buildProfileImageSection(),
                         const SizedBox(height: 30),
                         _buildFullNameField(),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         _buildPhoneField(),
                         if (_phoneErrorMessage != null)
                           Padding(
@@ -287,7 +287,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
                               ),
                             ),
                           ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         _buildGenderSection(),
                         if (_errorMessage != null)
                           Padding(
@@ -320,7 +320,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Créer un nouvel élève',
+          'Créer un nouvel étudiant',
           style: TextStyle(
             fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
@@ -334,9 +334,11 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
             color: primaryColor,
             size: headerIconSize,
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: _isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
       ],
     );
@@ -371,7 +373,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
               ),
               child: IconButton(
                 icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-                onPressed: _showImagePickerOptions,
+                onPressed: _isLoading ? null : _showImagePickerOptions,
               ),
             ),
           ),
@@ -383,7 +385,6 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
   Widget _buildGenderSection() {
     return SizedBox(
       width: double.infinity,
-
       child: SegmentedButton<String>(
         segments: <ButtonSegment<String>>[
           ButtonSegment<String>(
@@ -410,11 +411,15 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
           ),
         ],
         selected: _selectedGender != null ? {_selectedGender!} : <String>{},
-        onSelectionChanged: (Set<String> newSelection) {
-          setState(() {
-            _selectedGender = newSelection.isEmpty ? null : newSelection.first;
-          });
-        },
+        onSelectionChanged: _isLoading
+            ? null
+            : (Set<String> newSelection) {
+                setState(() {
+                  _selectedGender = newSelection.isEmpty
+                      ? null
+                      : newSelection.first;
+                });
+              },
         emptySelectionAllowed: true,
         style: SegmentedButton.styleFrom(
           backgroundColor: const Color.fromARGB(255, 255, 255, 255),
@@ -434,6 +439,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
   Widget _buildFullNameField() {
     return TextFormField(
       controller: _fullNameController,
+      enabled: !_isLoading,
       style: TextStyle(
         fontSize: mediumFontSize, // 👈 sets the input text size
       ),
@@ -451,7 +457,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
       ),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
-          return 'Veuillez entrer le nom complet de l\'élève';
+          return 'Veuillez entrer le nom complet de l\'étudiant';
         }
         return null;
       },
@@ -461,6 +467,7 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
   Widget _buildPhoneField() {
     return TextFormField(
       controller: _phoneController,
+      enabled: !_isLoading,
       cursorColor: primaryColor,
       style: const TextStyle(
         fontSize: mediumFontSize, // 👈 sets the input text size
@@ -497,42 +504,53 @@ class _CreateNewStudentPopupState extends State<CreateNewStudentPopup> {
     return Row(
       children: [
         Expanded(
-          child: TextButton(
-            style: secondaryButtonStyle,
-
-            onPressed: _isLoading
-                ? null
-                : () {
-                    if (widget.onBack != null) {
-                      widget.onBack!();
-                    } else {
-                      Navigator.of(context).pop();
-                    }
-                  },
-            child: const Text(
-              'Retour',
-              style: TextStyle(fontSize: mediumFontSize),
+          child: AbsorbPointer(
+            absorbing: _isLoading,
+            child: TextButton(
+              style: secondaryButtonStyle,
+              onPressed: () {
+                if (widget.onBack != null) {
+                  widget.onBack!();
+                } else {
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text(
+                'Retour',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
             ),
           ),
         ),
         const SizedBox(width: 5),
         Expanded(
-          child: ElevatedButton(
-            style: primaryButtonStyle,
-            onPressed: _isLoading ? null : _createAndAddStudent,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Text(
+          child: AbsorbPointer(
+            absorbing: _isLoading,
+            child: ElevatedButton(
+              style: primaryButtonStyle,
+              onPressed: _createAndAddStudent,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
                     'Ajouter',
                     style: TextStyle(fontSize: mediumFontSize),
                   ),
+                  if (_isLoading) ...[
+                    const SizedBox(width: 12),
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ],
