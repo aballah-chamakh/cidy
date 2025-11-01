@@ -298,12 +298,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
               _buildHeader(context),
               const Divider(height: 16),
               _buildSearchField(),
-              const SizedBox(height: 8),
-              if (_availableStudentsCount > 0) ...[
-                _buildSelectAllToggle(),
-                _buildStudentsHeader(),
-                const SizedBox(height: 8),
-              ],
+              if (_availableStudentsCount > 0) ...[_buildSelectAllToggle()],
               Flexible(
                 fit: FlexFit.loose,
                 child: AbsorbPointer(
@@ -317,7 +312,11 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
                   ),
                 ),
               ),
-              const Divider(height: 30),
+              const SizedBox(height: 8),
+              _buildStudentsCount(),
+              const SizedBox(height: 8),
+              const Divider(height: 0),
+              const SizedBox(height: 15),
               _buildActionButtons(),
             ],
           ),
@@ -355,7 +354,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
     );
   }
 
-  Widget _buildStudentsHeader() {
+  Widget _buildStudentsCount() {
     return Text(
       '$_availableStudentsCount Étudiants',
       textAlign: TextAlign.center,
@@ -371,7 +370,7 @@ class _AddExistingStudentPopupState extends State<AddExistingStudentPopup> {
     final allSelected = _areAllStudentsSelected();
     final hasStudents = _availableStudents.isNotEmpty;
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Transform.scale(
           scale: 1.1,

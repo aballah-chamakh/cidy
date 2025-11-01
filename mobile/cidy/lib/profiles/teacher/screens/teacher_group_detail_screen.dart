@@ -587,7 +587,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           },
         ),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
 
           children: [
             Transform.scale(

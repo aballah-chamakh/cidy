@@ -930,9 +930,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - Dynamics :
                             - clicking on the "Create a student"  : 
                               - sends a request to the server that checks if the teacher has the ability to create a new student throught ensuring that 
-                                the teacher has at least one of the following in his prices screen data : 
-                                    - a level that has no sections (according to the tunisian education system)
-                                    - a level that has sections (according to the tunisian education system) with at least one section
+                                the teacher has at least one teacher subject 
                                 - if the teacher doesn't have the ability to create a new student, opens up a popup that inform the teacher about that and about the minimum requirements to create a new student
                                 - if the teacher has the ability to create a new student, opens up a popup form which the same as the one open when clicking on the "Add" button in the students screen when the teacher has students (see below)
                     - if the teacher has students :
@@ -952,17 +950,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - col : the list of first 30 students of the teacher , the ones that belongs to the groups and the ones that don't, and each student must be in a clickable card wich contains : 
                                         - row 1 : 
                                             - col 1 : 
-                                                - a checkbox 
-                                            - col 2 : 
                                                 - the profile of the student rounded 
-                                            - col 3 : 
+                                            - col 2 : 
                                                 - row 1 : 
                                                     - the fullname of the student 
                                                 - row 2 :
                                                     - the level and the section of the student (include the section if the student has it)
-                                                - row 3 : 
-                                                    - the subjects of the groups that the student belongs to, each subject must in a badge 
-                                            - col 4 : 
+                                            - col 3 : 
                                                 - row 1 :
                                                     - the paid amount by this student in the green color and abbreviated, example : turn 1125 to 1.125k
                                                 - row 2 :
@@ -982,11 +976,11 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - col : 
                                                 - row 1 : 
                                                     - a select input to filter by a level  : 
-                                                        - the options : a blank option and the levels that the teachers teaches, the ones included in the prices screen
+                                                        - the options : a blank option and the levels that the teachers teaches, the ones included in the teacher subjects of the teacher
                                                         - the value can be blank 
                                                 - row 2 : 
                                                     - a select input to filter by a section : 
-                                                        - the option : a blank option and the sections of the selected level, the ones included in the prices screen
+                                                        - the option : a blank option and the sections of the selected level, the ones included in the teacher subjects of the teacher
                                                         - make this select disabled if one of the following is true: 
                                                             - if the user didn't select a level yet 
                                                             - if the selected level doesn't have sections according to the data of the prices screen 
@@ -997,7 +991,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - the options : 
                                                             - a blank option and : 
                                                                 - if the selected level has sections according to the tunisian education system : 
-                                                                    the subjects of the selected section of the selected level according to the data of the prices screen 
+                                                                    the subjects of the selected section of the selected level according to the teacher subjects of the teacher
                                                                 - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system : 
                                                                     the subjects of the selected level according to the data of prices screen
                                                         - disable this select in the following cases : 
@@ -1007,7 +1001,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                             - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system
                                                               and that level doesn't have subjects according to the data of the prices screen
                                                         validations : the value can be blank
-                                                - row 4 : 
+                                                - row 4 : here =======================
                                                     - a select input to sort the students by the following options :
                                                         - paid amount descendant 
                                                         - paid amount ascendant 
@@ -1017,9 +1011,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - row 3 : the footer of the popup 
                                             - row  : 
                                                 - col 1 : 
-                                                    - a button with the name : "Reset ({the number of selected options})"     
+                                                    - a button with the name : "Reset"     
                                                 - col 2 : 
-                                                    - a button with the name : "Filter"
+                                                    - a button with the name : "Filter ({the number of selected options})"
                                 - Dynamics : 
                                     - clicking on the close icon , discards the new selected values and returns to the previous values (the persisted values before opening the filter popup) then closes the popup
                                     - clicking on the "Reset" button of the footer of the popup : 
@@ -1090,18 +1084,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - clicking on the "No" button, closes the popup 
                                             - clicking on the "Yes" button : 
                                                 - for each selected student : 
-                                                    - if the student was created by the teacher 
-                                                        - deletes the student which leads to : 
-                                                            - deleting the association records linking the student to his groups, which leads to : 
-                                                                - deleting the paid and unpaid amounts kpis related to the deleted association records.
-                                                                - deleting the class batches that were related to the deleted association records with their associated classes.
-                                        
-                                                    - if the student was added by a student request
-                                                        - deletes the association record linking the student with the teacher without deleting the student itself, which leads to :
-                                                            - deleting the association records linking the student to his groups, which leads to :
-                                                                - deleting the paid and unpaid amounts kpis related to the deleted association records.
-                                                                - deleting the class batches that were related to the deleted association records with their associated classes.
+                                                    - if the student was created by the teacher and doesn't have a user attached to it, delete the student 
 
+                                                    - if the student was created by a student and has a user attached to it :
+                                                        - delete all of the group_enrollments and the teacher_enrollments of the student with the teacher and it's groups 
                                                     - sends a notification to the student if he was added by a student request informing him that the teacher ended the relationship between them 
                                                     - if the student has a parents :
                                                         for each parent :  
@@ -1115,7 +1101,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - then closes popup 
                                                     - finally it updates the student list by replacing it with the first 30 students that match the filters (name text input and all of the selects and the selectors of the filter popup form) 
 
-                            - clicking on any part of a student card aside from the checkbox routes to the student detail screen : 
+                            - clicking on the student card routes to the student detail screen : 
                                 - the title of the App Bar is : "Student"
                                 - the content of the screen : 
                                     - UI : 
