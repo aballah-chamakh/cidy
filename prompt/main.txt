@@ -929,9 +929,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - a button : "Create a student"
                         - Dynamics :
                             - clicking on the "Create a student"  : 
-                              - sends a request to the server that checks if the teacher has the ability to create a new student throught ensuring that 
-                                the teacher has at least one teacher subject 
-                                - if the teacher doesn't have the ability to create a new student, opens up a popup that inform the teacher about that and about the minimum requirements to create a new student
+                              - checks if the teacher has the ability to create a new student or not by checking if the the value of the key "teacher_levels_sections_subjects_hierarchy"
+                                from the response that fetches the student list is empty or not : 
+                                - if the teacher doesn't have the ability to create a new student, opens up a popup that inform the teacher about that and about the minimum requirements to create a new student which is ("Vous devez ajouter au moins un niveau pour pouvoir créer un groupe.")
                                 - if the teacher has the ability to create a new student, opens up a popup form which the same as the one open when clicking on the "Add" button in the students screen when the teacher has students (see below)
                     - if the teacher has students :
                         - UI :
@@ -940,27 +940,27 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - col 1 : this takes the majority of the width 
                                             - a text input to search by the fullname of the student 
                                     - col 2 : 
-                                        - a square button that contains the filter icon 
+                                        - a filter icon outlined
+                                    - col 3 : 
+                                        - a circular add icon outlined
                                 - row 2 : 
                                     - row 1 : 
-                                        - col 1 : 
                                             - the header of the student list with the title : "{number of students after filtering with the fullname text input and the maintained values of the filters of the filter popup form, and without pagination} Students"
-                                        - col 2 : 
-                                            - an "Add" button 
-                                    - col : the list of first 30 students of the teacher , the ones that belongs to the groups and the ones that don't, and each student must be in a clickable card wich contains : 
-                                        - row 1 : 
-                                            - col 1 : 
-                                                - the profile of the student rounded 
-                                            - col 2 : 
-                                                - row 1 : 
-                                                    - the fullname of the student 
-                                                - row 2 :
-                                                    - the level and the section of the student (include the section if the student has it)
-                                            - col 3 : 
-                                                - row 1 :
-                                                    - the paid amount by this student in the green color and abbreviated, example : turn 1125 to 1.125k
-                                                - row 2 :
-                                                    - the unpaid amount by this student in the red color and abbreviated
+                                    - row 2 : 
+                                        - col : the list of first 30 students of the teacher , the ones that belongs to the groups and the ones that don't, and each student must be in a clickable card wich contains : 
+                                            - row 1 : 
+                                                - col 1 : 
+                                                    - the profile of the student rounded 
+                                                - col 2 : 
+                                                    - row 1 : 
+                                                        - the fullname of the student 
+                                                    - row 2 :
+                                                        - the level and the section of the student (include the section if the student has it)
+                                                - col 3 : 
+                                                    - row 1 :
+                                                        - the paid amount by this student in the green color and abbreviated, example : turn 1125 to 1.125k
+                                                    - row 2 :
+                                                        - the unpaid amount by this student in the red color and abbreviated
                         - Dynamics : 
                             - when the teachers reaches the bottom of the screen scrolling,load the next 30 students that match the fullname text input and the maintained values of the filters of the filter popup form and append them to the end of the list of students
                             - changing the value of the student fullname text input updates the student list by replacing it with the first 30 students that matches the fullname text input value and the persisted values of the filters of the filter popup form 
@@ -980,26 +980,23 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - the value can be blank 
                                                 - row 2 : 
                                                     - a select input to filter by a section : 
-                                                        - the option : a blank option and the sections of the selected level, the ones included in the teacher subjects of the teacher
+                                                        - the options : a blank option and the sections of the selected level, the ones included in the teacher subjects of the teacher
                                                         - make this select disabled if one of the following is true: 
                                                             - if the user didn't select a level yet 
-                                                            - if the selected level doesn't have sections according to the data of the prices screen 
+                                                            - if the selected level doesn't have sections according to the data of the teacher subjects of the teacher 
                                                         - validations : the value can be blank 
                                 
                                                 - row 3 : 
                                                     - a select input to filter by a subject : 
                                                         - the options : 
                                                             - a blank option and : 
-                                                                - if the selected level has sections according to the tunisian education system : 
+                                                                - if the selected level has sections : 
                                                                     the subjects of the selected section of the selected level according to the teacher subjects of the teacher
-                                                                - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system : 
-                                                                    the subjects of the selected level according to the data of prices screen
+                                                                - if the selected level doesn't have sections and he has directly subjects: 
+                                                                    the subjects of the selected level according to the to the teacher subjects of the teacher
                                                         - disable this select in the following cases : 
                                                             - if the user didn't select a level yet 
-                                                            - if section select input isn't disabled and the user didn't select a section yet 
-                                                            - if the selected section doesn't have subjects according to the data of the prices screen 
-                                                            - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system
-                                                              and that level doesn't have subjects according to the data of the prices screen
+                                                            - if the user selected a level with sections but didn't select a section yet
                                                         validations : the value can be blank
                                                 - row 4 : here =======================
                                                     - a select input to sort the students by the following options :
@@ -1025,7 +1022,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - closes the popup form 
                                         - updates the students list by replacing it with the first 30 students that match the filters (fullname text input, all of the selects in the filter popup form)
 
-                            - clicking on the "Add" button opens up a popup form which contains :
+                            - clicking on the add circular icon opens up a popup form which contains :
                                 - UI : 
                                     - col : 
                                         - row 1 : the header of the popup form
@@ -1039,7 +1036,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                             - row 3 : 
                                                 - a text input for the phone number of the student (required, accepts only integer characters, min length = max length = 8)
                                             - row 4 : 
-                                                - two radio buttons : (required)
+                                                - two ButtonSegments : (required)
                                                     - "Male"
                                                     - "Female"
                                             - row 5 :
@@ -1048,9 +1045,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - a select input for the section of the student which contains as options all the sections of the selected level (required if it isn't disabled)
                                                     disable this select in the following cases :
                                                         - if the teacher didn't select a level
-                                                        - if the selected level doesn't have sections according to the data of the prices screen
+                                                        - if the selected level doesn't have sections according to the data of the teacher subjects of the teacher
 
                                             - row 7 : the footer of the popup form
+                                                - a cancel button 
                                                 - a button with the name : "Add Student"
                             - Dynamics : 
                                 - clicking on the close icon of the header, closes the popup form without creating a new student
@@ -1074,7 +1072,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - row 1 : 
                                                             - at the center of the row,a trash icon 
                                                         - row 2 : 
-                                                            - at the center of the row, the text format : "Are you sure you want to delete the selected {number of selected students} students ?"
+                                                            - at the center of the row, the text format : "Are you sure you want to delete the selected {number of selected students in bold} students ?"
                                                 - row 3 : the footer of the popup
                                                     - col 1 : 
                                                         - a button with the name "No"

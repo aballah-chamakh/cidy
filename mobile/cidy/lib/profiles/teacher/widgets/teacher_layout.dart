@@ -3,15 +3,16 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:cidy/authentication/login.dart';
-import '../../widgets/profile_appbar.dart';
-import '../../widgets/profile_sidebar.dart';
-import '../../models/sidebar_menu_item.dart';
+import 'package:cidy/profiles/widgets/profile_appbar.dart';
+import 'package:cidy/profiles/widgets/profile_sidebar.dart';
+import 'package:cidy/profiles/models/sidebar_menu_item.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:cidy/config.dart';
 import 'package:cidy/route_observer.dart';
-import '../screens/teacher_dashboard_screen.dart';
-import '../screens/teacher_groups_screen.dart';
-import '../screens/teacher_week_schedule_screen.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_dashboard_screen.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_groups_screen.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_week_schedule_screen.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_students_screen.dart';
 import 'package:cidy/app_state.dart';
 
 class TeacherLayout extends StatefulWidget {
@@ -216,6 +217,13 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
             label: "Étudiants",
             icon: Icons.school,
             onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  settings: RouteSettings(name: '/teacher_students'),
+                  builder: (context) => const TeacherStudentsScreen(),
+                ),
+              );
+
               // Navigate to the students screen
             },
           ),

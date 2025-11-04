@@ -87,7 +87,9 @@ class TestDateRangeFilter:
                         gender="M",
                         level=teacher_subject.level
                     )
-                    TeacherEnrollment.objects.create(teacher=teacher,student=student)
+                    TeacherEnrollment.objects.create(teacher=teacher,student=student,
+                                                     paid_amount= student_cnt* 2 * 100,
+                                                     unpaid_amount= student_cnt * 100)
                     student_cnt += 1
                     #if i < 6:  # only keep 6 students per level
                     students.append(student)
@@ -103,7 +105,7 @@ class TestDateRangeFilter:
                                     start_time="18:00" if group_name == "A" else "20:00",
                                     end_time="20:00" if group_name == "A" else "22:00",
                                     name=f"Groupe {group_name}",
-                                    total_paid= index * 100,
+                                    total_paid= index * 2 * 100,
                                     total_unpaid= index * 100 )
                 
                 # enroll the 6 students in this group in different date ranges
@@ -112,7 +114,7 @@ class TestDateRangeFilter:
                     if i < 2 : 
                         group_enrollement = GroupEnrollment.objects.create(group=group,student=student 
                                                                         ,date=TestDateRangeFilter.THIS_WEEK_DATES[0].date(),
-                                                                         paid_amount=i*100,
+                                                                         paid_amount=i*2*100,
                                                                          unpaid_amount=i*100
                                                                          )
                         # create classes for this enrollment in different statuses and date ranges 
@@ -122,13 +124,13 @@ class TestDateRangeFilter:
                     # date range for this month : 1 Oct 2025
                     elif i < 4 :
                         group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_MONTH_DATES[0].date(),
-                                                                         paid_amount=i*100,
+                                                                         paid_amount=i*2*100,
                                                                          unpaid_amount=i*100)
                         #self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
                     # date range for this year : 10 and 14 aug 2025
                     else:
                         group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_YEAR_DATES[0].date(),
-                                                                         paid_amount=i*100,
+                                                                         paid_amount=i*2*100,
                                                                          unpaid_amount=i*100)
                         #self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
 

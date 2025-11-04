@@ -1,13 +1,14 @@
+import 'package:cidy/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class GroupFilterForm extends StatefulWidget {
+class GroupsFilterPopup extends StatefulWidget {
   final void Function(Map<String, dynamic> filters) onApplyFilter;
   final VoidCallback onResetFilter;
   final Map<String, dynamic> currentFilters;
   final Map<String, dynamic> filterOptions;
 
-  const GroupFilterForm({
+  const GroupsFilterPopup({
     super.key,
     required this.onApplyFilter,
     required this.onResetFilter,
@@ -16,10 +17,10 @@ class GroupFilterForm extends StatefulWidget {
   });
 
   @override
-  State<GroupFilterForm> createState() => _GroupFilterFormState();
+  State<GroupsFilterPopup> createState() => _GroupsFilterPopupState();
 }
 
-class _GroupFilterFormState extends State<GroupFilterForm> {
+class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
   // Data for dropdowns
   Map<String, dynamic> _levels = {};
   Map<String, dynamic> _sections = {};
@@ -157,6 +158,7 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
   Widget _buildForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Header
         Row(
@@ -165,16 +167,15 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
             Text(
               'Filtre',
               style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+                fontSize: headerFontSize,
                 color: Theme.of(context).primaryColor,
               ),
             ),
             IconButton(
               icon: Icon(
                 Icons.close,
-                size: 30,
-                color: Theme.of(context).primaryColor,
+                size: headerFontSize,
+                color: primaryColor,
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
@@ -188,6 +189,7 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _buildLevelDropdown(),
                 const SizedBox(height: 16),
@@ -216,7 +218,7 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
             ),
             child: Text(
               'Filtrer (${_countActiveFilters()})',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: mediumFontSize),
             ),
           ),
         ),
@@ -235,7 +237,7 @@ class _GroupFilterFormState extends State<GroupFilterForm> {
             ),
             child: const Text(
               'Réinitialiser',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: mediumFontSize),
             ),
           ),
         ),

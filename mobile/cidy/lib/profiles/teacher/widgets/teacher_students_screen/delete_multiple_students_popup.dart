@@ -1,10 +1,10 @@
 import 'package:cidy/app_styles.dart';
 import 'package:flutter/material.dart';
 
-class DeleteMultipleGroupsPopup extends StatelessWidget {
-  final int groupCount;
+class DeleteMultipleStudentsPopup extends StatelessWidget {
+  final int studentCount;
 
-  const DeleteMultipleGroupsPopup({super.key, required this.groupCount});
+  const DeleteMultipleStudentsPopup({super.key, required this.studentCount});
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +56,9 @@ class DeleteMultipleGroupsPopup extends StatelessWidget {
             const SizedBox(height: 15.0),
             const Icon(Icons.delete, size: 100, color: primaryColor),
             const SizedBox(height: 15.0),
-            groupCount == 1
+            studentCount == 1
                 ? Text(
-                    "Êtes-vous sûr de vouloir supprimer le groupe sélectionné ? Cette action est irréversible.",
+                    "Êtes-vous sûr de vouloir supprimer l'étudiant sélectionné ? Cette action est irréversible.",
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: mediumFontSize),
                   )
@@ -70,12 +70,12 @@ class DeleteMultipleGroupsPopup extends StatelessWidget {
                           text: 'Êtes-vous sûr de vouloir supprimer les ',
                         ),
                         TextSpan(
-                          text: '$groupCount',
+                          text: '$studentCount',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const TextSpan(
                           text:
-                              ' groupes sélectionnés ? Cette action est irréversible.',
+                              ' étudiants sélectionnés ? Cette action est irréversible.',
                         ),
                       ],
                     ),

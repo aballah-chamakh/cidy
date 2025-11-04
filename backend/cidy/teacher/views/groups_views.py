@@ -383,9 +383,7 @@ def get_the_possible_students_for_a_group(request,group_id):
     teacher_subject = group.teacher_subject 
     
     student_qs = Student.objects.filter(teacherenrollment__teacher=teacher,level=teacher_subject.level)
-    print("possible students")
-    for studentx in student_qs : 
-        print(studentx)
+
     # Exclude students already in the group
     student_qs = student_qs.exclude(groups=group)
    

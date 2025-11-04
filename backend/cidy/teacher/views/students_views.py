@@ -1,5 +1,5 @@
 from datetime import datetime
-
+import time
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -49,9 +49,10 @@ def can_create_student(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_students(request):
+    time.sleep(5)
     """Get a filtered list of students for the teacher"""
     teacher = request.user.teacher
-    students = Student.objects.filter(teacherenrollment_set__teacher=teacher)
+    students = Student.objects.filter(teacherenrollment__teacher=teacher)
 
     # Apply fullname filter
     fullname = request.GET.get('fullname', '')
@@ -59,24 +60,19 @@ def get_students(request):
         students = students.filter(fullname__icontains=fullname)
 
     # Apply level filter
-    level_id = request.GET.get('level')
-    if level_id and level_id.isdigit():
-        students = students.filter(level__id=int(level_id))
+    level = request.GET.get('level')
+    if level :
+        students = students.filter(level__name=level)
 
     # Apply section filter
-    section_id = request.GET.get('section')
-    if section_id and section_id.isdigit():
-        students = students.filter(section__id=int(section_id))
-
-    # Apply subject filter
-    subject_id = request.GET.get('subject')
-    if subject_id and subject_id.isdigit():
-        students = students.filter(groupenrollement_set__group__subject__id=int(subject_id)).distinct()
+    section = request.GET.get('section')
+    if section:
+        students = students.filter(level__section=section)
 
     # add the paid and unpaid amounts fields 
     students = students.annotate(
-                paid_amount=Sum('teacherenrollment_set__paid_amount', filter=Q(teacherenrollment_set__teacher=teacher)),
-                unpaid_amount=Sum('teacherenrollment_set__unpaid_amount', filter=Q(teacherenrollment_set__teacher=teacher))
+                paid_amount=Sum('teacherenrollment__paid_amount'),
+                unpaid_amount=Sum('teacherenrollment__unpaid_amount')
             )
     # Apply sorting
     sort_by = request.GET.get('sort_by', '')
@@ -89,6 +85,8 @@ def get_students(request):
             students = students.order_by('-unpaid_amount')
         elif sort_by == 'unpaid_amount_asc':
             students = students.order_by('unpaid_amount')
+    else:
+        students = students.order_by('id')
     # Pagination
     page = request.GET.get('page', 1)
     page_size = request.GET.get('page_size', 30)
@@ -96,19 +94,20 @@ def get_students(request):
     try:
         paginated_students = paginator.page(page)
     except Exception:
-        # If page is out of range, deliver last page
-        paginated_students = paginator.page(paginator.num_pages)
+        page = 1
+        paginated_students = paginator.page(1)
 
     # Serialize the students
     serializer = TeacherStudentListSerializer(paginated_students, many=True, context={'request': request})
 
     # Get teacher levels, sections, and subjects hierarchy for filter options
-    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'section', 'subject')
-    teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects, many=True)
+    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'subject')
+    teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects)
 
     return Response({
-        'students_total_count': paginator.count,
+        'total_students': paginator.count,
         'students': serializer.data,
+        'page': int(page),
         'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy.data
     })
 
@@ -150,7 +149,7 @@ def delete_students(request):
             'message': 'No students selected for deletion.'
         }, status=400)
 
-    students = Student.objects.filter(id__in=student_ids, teacherenrollment_set__teacher=teacher)
+    students = Student.objects.filter(id__in=student_ids, teacherenrollment__teacher=teacher)
     if not students.exists():
         return Response({
             'success': False,

@@ -6,18 +6,13 @@ class TeacherStudentListSerializer(serializers.ModelSerializer):
     image = serializers.CharField(source='image.url')
     paid_amount = serializers.DecimalField(max_digits=10, decimal_places=2,read_only=True)
     unpaid_amount = serializers.DecimalField(max_digits=10, decimal_places=2,read_only=True)
-    subjects = serializers.SerializerMethodField()
+    level = serializers.CharField(source='level.name')
+    section = serializers.CharField(source='level.section')
     class Meta:
         model = Student
-        fields = ['id', 'fullname', 'image', 'level', 'section', 'subjects', 'paid_amount', 'unpaid_amount']
+        fields = ['id', 'fullname', 'image', 'level', 'section', 'paid_amount', 'unpaid_amount']
 
-    def get_subjects(self, student):
-        request = self.context['request']
-        teacher = request.user.teacher
-        subjects = []
-        for subject in student.groupenrollment_set.filter(group__teacher=teacher):
-            subjects.append(subject.name)
-        return subjects
+
     
 class TeacherStudentCreateSerializer(serializers.ModelSerializer):
     class Meta:
