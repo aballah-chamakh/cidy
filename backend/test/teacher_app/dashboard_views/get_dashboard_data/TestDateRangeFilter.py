@@ -81,7 +81,6 @@ class TestDateRangeFilter:
                 for i in range(12):
                     phone_number = f"000000{student_cnt}" if student_cnt >= 10 else f"0000000{student_cnt}"
                     student = Student.objects.create(
-                        user=User.objects.create_user(f"student{student_cnt}@gmail.com", phone_number, "password"),
                         fullname = f"student{student_cnt}",
                         phone_number=phone_number,
                         gender="M",
