@@ -220,11 +220,13 @@ def get_student_details(request, student_id):
     teacher = request.user.teacher
 
     try:
-        student = Student.objects.get(id=student_id, teacherenrollment_set__teacher=teacher)
+        student = Student.objects.get(id=student_id, teacherenrollment__teacher=teacher)
     except Student.DoesNotExist:
         return Response({'error': 'Student not found'}, status=404)
 
     serializer = TeacherStudentDetailSerializer(student, context={'request': request})
+    print(serializer.data)
+    print(serializer.data)
     return Response({
         'student_detail': serializer.data
     })

@@ -11,7 +11,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_student_detail_screen.dart';
-import 'package:cidy/profiles/teacher/screens/teacher_student_detail_screen.dart';
 import '../widgets/teacher_layout.dart';
 
 class TeacherStudentsScreen extends StatefulWidget {
@@ -624,7 +623,14 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          // TODO: Navigate to student detail screen
+          final id = student['id'];
+          if (id is int) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => TeacherStudentDetailScreen(studentId: id),
+              ),
+            );
+          }
         },
         onLongPress: () {
           setState(() {
