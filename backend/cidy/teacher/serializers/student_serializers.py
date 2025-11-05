@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from student.models import Student
-from teacher.models import TeacherEnrollment,GroupEnrollment,Class
+from teacher.models import Class,Level, TeacherEnrollment, Group, GroupEnrollment
 
 class TeacherStudentListSerializer(serializers.ModelSerializer):
     image = serializers.CharField(source='image.url')
@@ -15,9 +15,19 @@ class TeacherStudentListSerializer(serializers.ModelSerializer):
 
     
 class TeacherStudentCreateSerializer(serializers.ModelSerializer):
+    level = serializers.CharField( write_only=True)
+    section = serializers.CharField( write_only=True)
     class Meta:
         model = Student
         fields = ['image','fullname', 'phone_number', 'gender', 'level', 'section']
+    
+    def validate(self, attrs):
+        print(attrs)
+        level_name = attrs['level']
+        section_name = attrs['section']
+        del attrs['section']
+        attrs['level'] = Level.objects.get(name=level_name, section=section_name)
+        return attrs
 
 
 class TeacherClassListSerializer(serializers.ModelSerializer):
@@ -26,9 +36,12 @@ class TeacherClassListSerializer(serializers.ModelSerializer):
         fields = ['id', 'status', 'attendance_date', 'attendance_start_time','attendance_end_time','paid_at']   
 
 class TeacherStudentDetailSerializer(serializers.ModelSerializer):
-    student_level_finance = serializers.SerializerMethodField()
+    paid_amount = serializers.SerializerMethodField()
+    unpaid_amount = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
-
+    level = serializers.CharField(source='level.name')
+    section = serializers.CharField(source='level.section')
+    image = serializers.CharField(source='image.url')
     class Meta:
         model = Student
         fields = [
@@ -36,34 +49,39 @@ class TeacherStudentDetailSerializer(serializers.ModelSerializer):
             'paid_amount', 'unpaid_amount', 'groups'
         ]
 
-    def get_student_level_finance(self, student_obj):
+    def get_paid_amount(self, student_obj):
         teacher = self.context['request'].user.teacher
-        student_teacher_enrollment = student_obj.teacherenrollment_set.get(teacher=teacher)
-        return {
-            'paid_amount': student_teacher_enrollment.paid_amount,
-            'unpaid_amount': student_teacher_enrollment.unpaid_amount
-        }
+        enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student_obj).first()
+        return enrollment.paid_amount if enrollment else 0
 
+    def get_unpaid_amount(self, student_obj):
+        teacher = self.context['request'].user.teacher
+        enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student_obj).first()
+        return enrollment.unpaid_amount if enrollment else 0
 
     def get_groups(self, student_obj):
-        request = self.context['request']
-        teacher_obj = request.user.teacher
-        group_id = request.parser_context['kwargs'].get('group_id')
+        teacher = self.context['request'].user.teacher
         
-        groups = student_obj.groups.all(teacher=teacher_obj)
-        json_groups = []
+        # Get all groups the student is enrolled in with the current teacher
+        student_groups = Group.objects.filter(
+            teacher=teacher, 
+            students=student_obj
+        )
 
-        for group in groups:
-            json_group = {
+        group_data = []
+        for group in student_groups:
+            enrollment = GroupEnrollment.objects.get(group=group, student=student_obj)
+            group_info = {
                 'id': group.id,
+                'name': group.name,
                 'label': f"{group.teacher_subject.subject.name} - {group.name}",
+                'paid_amount': enrollment.paid_amount,
+                'unpaid_amount': enrollment.unpaid_amount,
+                'week_day': group.week_day,
+                'start_time': group.start_time.strftime('%H:%M'),
+                'end_time': group.end_time.strftime('%H:%M'),
+                'classes': TeacherClassListSerializer(enrollment.class_set.all(), many=True).data
             }
-            if group.id == group_id :
-                student_group_enrollment = group.groupenrollment_set.get(student=student_obj)
-                json_group['paid_amount'] = student_group_enrollment.paid_amount
-                json_group['unpaid_amount'] = student_group_enrollment.unpaid_amount
-                json_group['classes'] =  TeacherClassListSerializer(student_group_enrollment.class_set.all(), many=True).data
+            group_data.append(group_info)
             
-            json_groups.append(json_group)
-
-        return json_groups      
+        return group_data      

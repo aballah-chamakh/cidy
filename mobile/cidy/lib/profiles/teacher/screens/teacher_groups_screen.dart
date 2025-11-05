@@ -289,15 +289,11 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                        color: primaryColor,
                       ),
                     ),
                     IconButton(
-                      icon: Icon(
-                        Icons.close,
-                        size: 30,
-                        color: Theme.of(context).primaryColor,
-                      ),
+                      icon: Icon(Icons.close, size: 30, color: primaryColor),
                       padding: EdgeInsets.zero,
                       constraints: BoxConstraints(),
                       onPressed: () => Navigator.of(context).pop(),
@@ -306,11 +302,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 ),
                 const Divider(height: 10, thickness: 1),
                 const SizedBox(height: 20),
-                Icon(
-                  Icons.info_outline,
-                  size: 100,
-                  color: Theme.of(context).primaryColor,
-                ),
+                Icon(Icons.info_outline, size: 100, color: primaryColor),
                 const SizedBox(height: 20),
                 Text(
                   message,
@@ -444,7 +436,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
         if (_isLoading && _groups.isEmpty)
           Expanded(
             child: RefreshIndicator(
-              color: Theme.of(context).primaryColor,
+              color: primaryColor,
               onRefresh: () async {
                 await _fetchGroups(
                   name: _searchController.text,
@@ -524,9 +516,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 IconButton(
                   icon: Icon(
                     Icons.filter_list,
-                    color: _currentFilters.isNotEmpty
-                        ? Theme.of(context).primaryColor
-                        : null,
+                    color: _currentFilters.isNotEmpty ? primaryColor : null,
                   ),
                   onPressed: _showFilterModal,
                   tooltip: 'Filtrer les groupes',
@@ -540,7 +530,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
+                          color: primaryColor,
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -579,7 +569,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
 
   Widget _buildNoGroupsUI() {
     return RefreshIndicator(
-      color: Theme.of(context).primaryColor,
+      color: primaryColor,
       onRefresh: () async {
         await _fetchGroups(
           name: _searchController.text,
@@ -606,15 +596,12 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
                 SvgPicture.asset(
                   'assets/group.svg',
                   width: 100,
-                  color: Theme.of(context).primaryColor, // optional tint
+                  color: primaryColor, // optional tint
                 ),
                 const SizedBox(height: 10),
                 Text(
                   "Aucun groupe trouvé",
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  style: TextStyle(fontSize: 20, color: primaryColor),
                 ),
                 const SizedBox(height: 10),
                 if (_countActiveFilters() == 0 &&
@@ -676,7 +663,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
             ),
             Expanded(
               child: RefreshIndicator(
-                color: Theme.of(context).primaryColor,
+                color: primaryColor,
                 onRefresh: () async {
                   await _fetchGroups(
                     name: _searchController.text,
@@ -718,7 +705,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isSelected
-            ? BorderSide(color: Theme.of(context).primaryColor, width: 2)
+            ? BorderSide(color: primaryColor, width: 2)
             : BorderSide.none,
       ),
       child: InkWell(
@@ -773,11 +760,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  Icon(
-                    Icons.school,
-                    size: 16,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  Icon(Icons.school, size: 16, color: primaryColor),
                   const SizedBox(width: 4),
                   Text(
                     "${group['level']} ${group['section'] != null ? ' ${group['section']}' : ''}",
@@ -788,11 +771,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(
-                    Icons.book,
-                    size: 16,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  Icon(Icons.book, size: 16, color: primaryColor),
                   const SizedBox(width: 4),
                   Text(group['subject'], style: TextStyle(fontSize: 15)),
                 ],
@@ -800,11 +779,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  Icon(
-                    Icons.access_time,
-                    size: 16,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  Icon(Icons.access_time, size: 16, color: primaryColor),
                   const SizedBox(width: 4),
                   Text(
                     _convertWeekDayToFrench(group['week_day']) +
@@ -882,9 +857,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
 
                 return LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: total == 0
-                      ? Theme.of(context).primaryColor
-                      : Colors.red,
+                  backgroundColor: total == 0 ? primaryColor : Colors.red,
                   valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
                 );
               }(),
@@ -914,7 +887,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
             width: double.infinity,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: primaryColor,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),

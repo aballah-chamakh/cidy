@@ -602,9 +602,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               ),
             ),
             Text(
-              allSelected
-                  ? 'Désélectionner tous les étudiants'
-                  : 'Sélectionner tous les étudiants',
+              allSelected ? 'Désélectionner tous' : 'Sélectionner tous',
               style: const TextStyle(fontSize: mediumFontSize),
             ),
           ],

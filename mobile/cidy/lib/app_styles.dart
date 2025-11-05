@@ -31,3 +31,19 @@ EdgeInsets buttonSegmentPadding = EdgeInsets.symmetric(vertical: 10.0);
 
 double inputBorderRadius = 8.0;
 double buttonSegmentBorderRadius = 8.0;
+
+class AppStyles {
+  static const TextStyle title = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: primaryColor,
+  );
+
+  static const TextStyle body = TextStyle(fontSize: 16, color: Colors.black87);
+
+  static const TextStyle label = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: Colors.black54,
+  );
+}

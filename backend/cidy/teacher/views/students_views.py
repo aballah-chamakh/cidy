@@ -13,6 +13,8 @@ from ..serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
                            TeacherStudentCreateSerializer,
                            TeacherStudentDetailSerializer,)
 from rest_framework import serializers
+from django.http import HttpResponseServerError
+
 
 def increment_student_unread_notifications(student):
     """Helper function to increment student unread notifications count"""
@@ -120,7 +122,7 @@ def create_student(request):
     serializer = TeacherStudentCreateSerializer(data=request.data)
     if serializer.is_valid():
         teacher = request.user.teacher
-        student = serializer.save(teacher=teacher)
+        student = serializer.save()
         TeacherEnrollment.objects.create(
             student=student,
             teacher=teacher,
@@ -142,6 +144,7 @@ def delete_students(request):
     """Delete selected students"""
     teacher = request.user.teacher
     student_ids = request.data.get('student_ids', [])
+    print(student_ids)
 
     if not student_ids:
         return Response({
@@ -150,6 +153,7 @@ def delete_students(request):
         }, status=400)
 
     students = Student.objects.filter(id__in=student_ids, teacherenrollment__teacher=teacher)
+    
     if not students.exists():
         return Response({
             'success': False,
@@ -159,9 +163,12 @@ def delete_students(request):
     student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
     parent_teacher_pronoun = "Le professeur" if teacher.gender == "M" else "La professeure"
     
+    print(students)
     for student in students:
+        print(f"Processing student: {student.fullname}")
         # Check if the student has his independent account
         if student.user:
+            print(f"student has a user : {student.fullname}")
             # send a notification to the student
             student_message = f"{student_teacher_pronoun} {teacher.fullname} a mis fin à votre relation."
             StudentNotification.objects.create(
@@ -172,9 +179,13 @@ def delete_students(request):
             increment_student_unread_notifications(student)
 
         # send a notification to the parent of the sons attached to each student to delete
-        child_pronoun = "votre fils" if son.gender == "M" else "votre fille"
-        parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a mis fin à la relation avec {child_pronoun} {son.fullname}."
+       
+        
         for son in Son.objects.filter(student_teacher_enrollments__student=student).all() : 
+
+            child_pronoun = "votre fils" if son.gender == "M" else "votre fille"
+            parent_message = f"{parent_teacher_pronoun} {teacher.fullname} a mis fin à la relation avec {child_pronoun} {son.fullname}."
+            
             ParentNotification.objects.create(
                 parent=son.parent,
                 image=son.image,
@@ -185,18 +196,21 @@ def delete_students(request):
 
         # notes i made the deletes here to get the sons attached to the student before deleting him or his enrollments
         if student.user:
+            print(student.user)
+            print(f"student has a user : {student.fullname}")
             # delete the enrollment with this teacher and the enrollments in the groups of this teacher without deleting the student because he has his independent account
             TeacherEnrollment.objects.filter(student=student, teacher=teacher).delete()
             GroupEnrollment.objects.filter(student=student, group__teacher=teacher).delete()
         else :
+            print(f'Student {student.fullname} deleted.')
             # delete the student here, because he doesn't have an independent account, 
             # this will lead to deleting his teacher enrollment and his group enrollments
             student.delete()
 
-        return Response({
-            'success': True,
-            'message': f'{len(student_ids)} students were deleted.'
-        })
+    return Response({
+        'success': True,
+        'message': f'{len(student_ids)} students were deleted.'
+    })
 
 
 @api_view(['GET'])

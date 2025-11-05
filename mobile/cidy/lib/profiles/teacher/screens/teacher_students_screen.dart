@@ -3,11 +3,15 @@ import 'package:cidy/config.dart';
 import 'package:cidy/app_styles.dart';
 import 'package:cidy/app_tools.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_students_screen/students_filter_form_popup.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_students_screen/create_student_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_students_screen/delete_multiple_students_popup.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_students_screen/not_allowed_to_create_student_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_student_detail_screen.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_student_detail_screen.dart';
 import '../widgets/teacher_layout.dart';
 
 class TeacherStudentsScreen extends StatefulWidget {
@@ -52,11 +56,46 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
     super.dispose();
   }
 
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
+  }
+
   void _showError(String message) {
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
+  }
+
+  void clearFiltersAndSelectedStudents() {
+    setState(() {
+      _searchController.text = '';
+      _currentFilters = {};
+      _selectedStudentIds.clear();
+    });
+  }
+
+  bool _areAllStudentsSelected(List students) {
+    if (students.isEmpty) {
+      return false;
+    }
+    return students.every(
+      (student) => _selectedStudentIds.contains(student['id'] as int),
+    );
+  }
+
+  void _toggleSelectAllStudents(List students) {
+    final allSelected = _areAllStudentsSelected(students);
+    setState(() {
+      if (allSelected) {
+        _selectedStudentIds.clear();
+      } else {
+        _selectedStudentIds
+          ..clear()
+          ..addAll(students.map<int>((student) => student['id'] as int));
+      }
+    });
   }
 
   Future<void> _fetchStudents({
@@ -65,13 +104,8 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
     String? section,
     String? sortBy,
     int page = 1,
-    String source = "",
   }) async {
-    //if (_isLoading || _isLoadingMore) return;
     if (!mounted) return;
-    if (source == "filter") {
-      Navigator.of(context).pop();
-    }
     setState(() {
       if (page == 1) {
         _isLoading = true;
@@ -80,6 +114,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
       } else {
         _isLoadingMore = true;
       }
+      _selectedStudentIds.clear();
     });
 
     try {
@@ -154,77 +189,6 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
     }
   }
 
-  Future<void> _deleteStudents(List<int> studentIds) async {
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-        return;
-      }
-
-      final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/students/delete/',
-      );
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({'student_ids': studentIds}),
-      );
-
-      if (response.statusCode == 401) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-        return;
-      }
-
-      if (response.statusCode == 200) {
-        if (mounted) {
-          setState(() {
-            _selectedStudentIds.clear();
-          });
-          await _fetchStudents(
-            fullname: _searchController.text,
-            level: _currentFilters['level']?.toString(),
-            section: _currentFilters['section']?.toString(),
-            sortBy: _currentFilters['sort_by'],
-          ); // Refresh the list
-        }
-      } else {
-        _showError("Erreur du serveur (500)");
-      }
-    } catch (e, stackTrace) {
-      if (mounted) {
-        print("Error: $e");
-        print("StackTrace: $stackTrace");
-        _showError("Erreur du serveur (500)");
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   Future<void> _loadNextPage() async {
     if (_isLoading || _isLoadingMore) return;
 
@@ -256,107 +220,72 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
     }
   }
 
-  void _showInfoModal(String message) {
+  void _showNotAllowedToCreateStudentPopup() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(10.0),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16.0),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Information',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.close,
-                        size: 30,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: BoxConstraints(),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const Divider(height: 10, thickness: 1),
-                const SizedBox(height: 20),
-                Icon(
-                  Icons.info_outline,
-                  size: 100,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                    child: const Text(
-                      'OK',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        return NotAllowedToCreateStudentPopup();
       },
     );
   }
 
   Future<void> _showDeleteConfirmationDialog() async {
-    final bool? confirmed = await showDialog<bool>(
+    showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return DeleteMultipleStudentsPopup(
           studentCount: _selectedStudentIds.length,
+          studentIds: _selectedStudentIds,
+          onSuccess: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showSuccess('Étudiants supprimés avec succès');
+            _fetchStudents(
+              fullname: _searchController.text,
+              level: _currentFilters['level'],
+              section: _currentFilters['section'],
+              sortBy: _currentFilters['sort_by'],
+            );
+          },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            _fetchStudents(
+              fullname: _searchController.text,
+              level: _currentFilters['level'],
+              section: _currentFilters['section'],
+              sortBy: _currentFilters['sort_by'],
+            );
+          },
         );
       },
     );
-
-    if (confirmed == true) {
-      await _deleteStudents(_selectedStudentIds.toList());
-    }
   }
 
   void _showAddStudentDialog() {
-    // TODO: Implement AddStudentForm
-    print("Show add student dialog");
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CreateStudentPopup(
+          filterOptions: _filterOptions,
+          onStudentAdded: () {
+            Navigator.of(context).pop();
+            _showSuccess('Étudiant ajouté avec succès');
+            _fetchStudents(
+              fullname: _searchController.text,
+              level: _currentFilters['level'],
+              section: _currentFilters['section'],
+              sortBy: _currentFilters['sort_by'],
+            );
+          },
+          onServerError: () {
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+          },
+        );
+      },
+    );
   }
 
   void _showFilterModal() {
@@ -376,6 +305,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
               currentFilters: _currentFilters,
               filterOptions: _filterOptions,
               onApplyFilter: (filters) {
+                Navigator.of(context).pop();
                 setState(() {
                   _currentFilters = filters;
                 });
@@ -384,17 +314,14 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                   level: _currentFilters['level'],
                   section: _currentFilters['section'],
                   sortBy: _currentFilters['sort_by'],
-                  source: "filter",
                 );
               },
               onResetFilter: () {
+                Navigator.of(context).pop();
                 setState(() {
                   _currentFilters = {};
                 });
-                _fetchStudents(
-                  fullname: _searchController.text,
-                  source: "filter",
-                );
+                _fetchStudents(fullname: _searchController.text);
               },
             ),
           ),
@@ -415,7 +342,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
         if (_isLoading && _students.isEmpty)
           Expanded(
             child: RefreshIndicator(
-              color: Theme.of(context).primaryColor,
+              color: primaryColor,
               onRefresh: () async {
                 if (_isLoading) return;
                 await _fetchStudents(
@@ -499,7 +426,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).primaryColor,
+                          color: primaryColor,
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -521,9 +448,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
               icon: const Icon(Icons.add_circle_outline),
               onPressed: () {
                 if (_filterOptions.isEmpty) {
-                  _showInfoModal(
-                    'Vous devez ajouter au moins un niveau pour pouvoir créer un groupe.',
-                  );
+                  _showNotAllowedToCreateStudentPopup();
                 } else {
                   _showAddStudentDialog();
                 }
@@ -538,7 +463,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
 
   Widget _buildNoStudentsUI() {
     return RefreshIndicator(
-      color: Theme.of(context).primaryColor,
+      color: primaryColor,
       onRefresh: () async {
         if (_isLoading) return;
         await _fetchStudents(
@@ -556,29 +481,39 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.people_outline,
-                  size: 100,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(height: 20),
+                Icon(Icons.people_outline, size: 100, color: primaryColor),
+                const SizedBox(height: 10),
                 const Text(
-                  "you don't have any student yet",
-                  style: TextStyle(fontSize: 18),
+                  "Aucun étudiant trouvé",
+                  style: TextStyle(fontSize: 20, color: primaryColor),
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_filterOptions.isEmpty) {
-                      _showInfoModal(
-                        'Vous devez ajouter au moins un niveau pour pouvoir créer un groupe.',
-                      );
-                    } else {
-                      _showAddStudentDialog();
-                    }
-                  },
-                  child: const Text('Create a student'),
-                ),
+                if (_countActiveFilters() == 0 &&
+                    _searchController.text.isEmpty) ...[
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      if (_filterOptions.isEmpty) {
+                        _showNotAllowedToCreateStudentPopup();
+                      } else {
+                        _showAddStudentDialog();
+                      }
+                    },
+                    label: const Text(
+                      'Créez un étudiant',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    icon: const Icon(Icons.add),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(5.0),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -588,6 +523,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
   }
 
   Widget _buildStudentsListUI() {
+    final bool allSelected = _areAllStudentsSelected(_students);
     return Stack(
       children: [
         Column(
@@ -602,14 +538,32 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                 children: [
                   Text(
                     '$_studentsTotalCount étudiants',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: allSelected,
+                        activeColor: primaryColor, // color when checked
+                        checkColor: Colors.white,
+                        onChanged: (bool? value) {
+                          if (value != null) {
+                            _toggleSelectAllStudents(_students);
+                          }
+                        },
+                      ),
+                      const Text(
+                        'Sélectionner tout',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             Expanded(
               child: RefreshIndicator(
-                color: Theme.of(context).primaryColor,
+                color: primaryColor,
                 onRefresh: () async {
                   if (_isLoading) return;
                   await _fetchStudents(
@@ -627,8 +581,13 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: CircularProgressIndicator(
-                            color: Theme.of(context).primaryColor,
+                          child: SizedBox(
+                            height: 25,
+                            width: 25,
+                            child: CircularProgressIndicator(
+                              color: primaryColor,
+                              strokeWidth: 3,
+                            ),
                           ),
                         ),
                       );
@@ -659,7 +618,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isSelected
-            ? BorderSide(color: Theme.of(context).primaryColor, width: 2)
+            ? BorderSide(color: primaryColor, width: 2)
             : BorderSide.none,
       ),
       child: InkWell(
@@ -754,7 +713,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
             width: double.infinity,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).primaryColor,
+                backgroundColor: primaryColor,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),

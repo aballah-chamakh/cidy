@@ -1151,7 +1151,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                 - col : 
                                                     - row:
                                                         - a calendar component:
-                                                            - plots the student’s attended and paid classes in the selected group
+                                                            - plots the student’s attended,absent and paid classes in the selected group
                                                             - plots placeholders for future classes based on the group’s weekly schedule
                                                             - each class represented by a circle with the following color code:
                                                                 - red circle: attended but unpaid and payment is due

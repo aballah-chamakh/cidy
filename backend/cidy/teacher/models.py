@@ -6,7 +6,7 @@ from django.dispatch import receiver
 
 class Level(models.Model):
     name = models.CharField(max_length=100)
-    section = models.CharField(max_length=100, null=True, blank=True)
+    section = models.CharField(max_length=100, default='')
     subjects = models.ManyToManyField('Subject', related_name='levels', blank=True)
     order = models.PositiveIntegerField(default=0)
     def __str__(self):
