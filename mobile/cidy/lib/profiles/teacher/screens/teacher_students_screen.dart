@@ -331,7 +331,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return TeacherLayout(title: 'Students', body: _buildBody());
+    return TeacherLayout(title: 'Étudiant(s)', body: _buildBody());
   }
 
   Widget _buildBody() {
@@ -622,14 +622,23 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
+        onTap: () async {
           final id = student['id'];
           if (id is int) {
-            Navigator.of(context).push(
+            final result = await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => TeacherStudentDetailScreen(studentId: id),
               ),
             );
+            if (!mounted) return;
+            if (result == true) {
+              await _fetchStudents(
+                fullname: _searchController.text,
+                level: _currentFilters['level']?.toString(),
+                section: _currentFilters['section']?.toString(),
+                sortBy: _currentFilters['sort_by'],
+              );
+            }
           }
         },
         onLongPress: () {

@@ -8,6 +8,7 @@ import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/delete
 import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/edit_group_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_group_detail_screen/unmark_payment_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_layout.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_student_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -286,9 +287,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return TeacherLayout(
-      title: _groupDetail != null
-          ? 'Groupe : ${_groupDetail!['name']}'
-          : 'Détails du groupe',
+      title: _groupDetail != null ? 'Groupe : ${_groupDetail!['name']}' : '...',
       body: _buildBody(),
     );
   }
@@ -675,8 +674,19 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
             : BorderSide(color: Colors.grey.shade300),
       ),
       child: InkWell(
-        onTap: () {
-          // TODO: Navigate to student detail screen
+        onTap: () async {
+          final rawId = student['id'];
+          final studentId = rawId is int ? rawId : int.tryParse('$rawId');
+          if (studentId == null) return;
+          final result = await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => TeacherStudentDetailScreen(studentId: studentId),
+            ),
+          );
+          if (!mounted) return;
+          if (result == true) {
+            _fetchGroupDetails();
+          }
         },
         onLongPress: () {
           setState(() {

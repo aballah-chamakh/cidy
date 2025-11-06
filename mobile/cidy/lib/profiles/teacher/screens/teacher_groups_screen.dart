@@ -426,7 +426,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return TeacherLayout(title: 'Groupes', body: _buildBody());
+    return TeacherLayout(title: 'Groupe(s)', body: _buildBody());
   }
 
   Widget _buildBody() {

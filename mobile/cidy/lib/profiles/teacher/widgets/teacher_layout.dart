@@ -84,7 +84,6 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
         AppState.notificationCount = _notificationCount;
       });
     } else if (response.statusCode == 401) {
-      return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
         (route) => false,
@@ -144,6 +143,7 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: ProfileAppBar(
         title: widget.title,
         notificationCount: _notificationCount,

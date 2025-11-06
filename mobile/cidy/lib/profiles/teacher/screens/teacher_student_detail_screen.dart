@@ -8,6 +8,8 @@ import 'package:cidy/app_styles.dart';
 import 'package:cidy/authentication/login.dart';
 import 'package:cidy/config.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_layout.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_student_detail_screen/delete_student_popup.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_student_detail_screen/edit_student_popup.dart';
 
 class TeacherStudentDetailScreen extends StatefulWidget {
   final int studentId;
@@ -25,6 +27,8 @@ class _TeacherStudentDetailScreenState
   Map<String, dynamic>? _student;
 
   int? _selectedGroupId;
+  Map<String, dynamic> _levelSectionOptions = {};
+  bool _canEditLevelSection = false;
 
   final ScrollController _pageScrollController = ScrollController();
 
@@ -33,17 +37,17 @@ class _TeacherStudentDetailScreenState
 
   final List<String> _monthNames = const [
     'Janvier',
-    'Fevrier',
+    'Février',
     'Mars',
     'Avril',
     'Mai',
     'Juin',
     'Juillet',
-    'Aout',
+    'Août',
     'Septembre',
     'Octobre',
     'Novembre',
-    'Decembre',
+    'Décembre',
   ];
 
   @override
@@ -98,21 +102,27 @@ class _TeacherStudentDetailScreenState
       if (!mounted) return;
 
       if (response.statusCode == 200) {
-        final raw =
-            json.decode(utf8.decode(response.bodyBytes))
-                as Map<String, dynamic>;
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final studentDetail = Map<String, dynamic>.from(
+          data['student_detail'] as Map,
+        );
+        final teacherHierarchyRaw =
+            data['teacher_levels_sections_subjects_hierarchy'];
+        final Map<String, dynamic> hierarchy = _mapStringDynamic(
+          teacherHierarchyRaw,
+        );
+        final groupsRaw = studentDetail['groups'];
+        final groupsList = _extractGroups(groupsRaw);
+        studentDetail['groups'] = groupsList;
         setState(() {
-          final normalized = Map<String, dynamic>.from(raw);
-          final groups = _extractGroups(normalized['groups']);
-          normalized['groups'] = groups;
-
-          int? initialGroupId;
-          if (groups.isNotEmpty) {
-            initialGroupId = _resolveGroupId(groups.first['id']);
+          _student = studentDetail;
+          _levelSectionOptions = hierarchy;
+          _canEditLevelSection = groupsList.isEmpty;
+          if (groupsList.isNotEmpty) {
+            _selectedGroupId = _resolveGroupId(groupsList[0]['id']);
+          } else {
+            _selectedGroupId = null;
           }
-
-          _student = normalized;
-          _selectedGroupId = initialGroupId;
         });
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -122,13 +132,13 @@ class _TeacherStudentDetailScreenState
       } else {
         setState(() {
           _errorMessage =
-              'Failed to load student (code ${response.statusCode}).';
+              "Échec du chargement de l'élève (code ${response.statusCode}).";
         });
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'An error occurred: $e';
+        _errorMessage = 'Une erreur est survenue : $e';
       });
     } finally {
       if (!mounted) return;
@@ -136,6 +146,147 @@ class _TeacherStudentDetailScreenState
         _isLoading = false;
       });
     }
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
+  }
+
+  Widget _buildSquareButton(IconData icon, VoidCallback onPressed) {
+    return Material(
+      color: Colors.grey.shade200,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          child: Icon(icon, color: primaryColor),
+        ),
+      ),
+    );
+  }
+
+  void _showEditStudentDialog() {
+    if (_student == null) return;
+    final student = _student!;
+    final genderValue = _stringOrEmpty(student['gender']);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return EditStudentPopup(
+          studentId: student['id'] as int,
+          initialFullname: _stringOrEmpty(student['fullname']),
+          initialPhoneNumber: _stringOrEmpty(student['phone_number']),
+          initialGender: genderValue.isEmpty ? 'M' : genderValue,
+          initialLevel: _stringOrEmpty(student['level']),
+          initialSection: _stringOrNull(student['section']),
+          filterOptions: _levelSectionOptions,
+          canEditLevelSection: _canEditLevelSection,
+          onStudentUpdated: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showSuccess('Élève modifié avec succès');
+            _fetchStudentDetail();
+          },
+          onServerError: () {
+            if (!mounted) return;
+            _showError('Erreur du serveur (500).');
+          },
+        );
+      },
+    );
+  }
+
+  Future<bool> _deleteStudent() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'access_token');
+      if (!mounted) return false;
+
+      if (token == null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+        return false;
+      }
+
+      final url = Uri.parse(
+        '${Config.backendUrl}/api/teacher/students/delete/',
+      );
+
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({
+          'student_ids': [widget.studentId],
+        }),
+      );
+
+      if (!mounted) return false;
+
+      if (response.statusCode == 200) {
+        return true;
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      } else {
+        _showError('Erreur du serveur (500)');
+      }
+    } catch (e) {
+      if (!mounted) return false;
+      _showError('Erreur du serveur (500)');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+
+    return false;
+  }
+
+  Future<void> _showDeleteStudentConfirmationDialog() async {
+    if (_student == null) return;
+    final studentName = _stringOrEmpty(_student!['fullname']);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return DeleteStudentPopup(
+          studentName: studentName.isEmpty ? 'cet élève' : studentName,
+          onDelete: _deleteStudent,
+        );
+      },
+    );
+
+    if (!mounted || result != true) return;
+
+    _showSuccess('Élève supprimé avec succès');
+    Navigator.of(context).pop(true);
   }
 
   Map<String, dynamic>? _selectedGroup() {
@@ -153,7 +304,10 @@ class _TeacherStudentDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    return TeacherLayout(title: 'Student', body: _buildBody());
+    return TeacherLayout(
+      title: _student != null ? 'Élève : ${_student!['fullname']}' : '...',
+      body: _buildBody(),
+    );
   }
 
   Widget _buildBody() {
@@ -168,7 +322,7 @@ class _TeacherStudentDetailScreenState
     }
 
     if (_student == null) {
-      return const Center(child: Text('Eleve introuvable.'));
+      return const Center(child: Text('Élève introuvable.'));
     }
 
     return RefreshIndicator(
@@ -181,14 +335,9 @@ class _TeacherStudentDetailScreenState
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeaderCard(),
-            const SizedBox(height: 12),
             _buildGlobalKpisRow(),
             const SizedBox(height: 12),
             _buildGroupSelectorCard(),
-            const SizedBox(height: 12),
-            _buildGroupKpisRow(),
-            const SizedBox(height: 12),
-            _buildCalendarCard(),
             const SizedBox(height: 12),
           ],
         ),
@@ -212,45 +361,66 @@ class _TeacherStudentDetailScreenState
     if (section != null && section.isNotEmpty) levelParts.add(section);
     final levelSection = levelParts.join(' - ');
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 48,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage: fullImageUrl != null
-                  ? NetworkImage(fullImageUrl)
-                  : null,
-              child: fullImageUrl == null
-                  ? Icon(Icons.person, size: 48, color: Colors.grey.shade600)
-                  : null,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              fullname.isEmpty ? '--' : fullname,
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            if (levelSection.isNotEmpty)
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 48,
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage: fullImageUrl != null
+                    ? NetworkImage(fullImageUrl)
+                    : null,
+                child: fullImageUrl == null
+                    ? Icon(Icons.person, size: 48, color: Colors.grey.shade600)
+                    : null,
+              ),
+              const SizedBox(height: 16),
               Text(
-                levelSection,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                fullname.isEmpty ? '--' : fullname,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                ),
                 textAlign: TextAlign.center,
               ),
-            const SizedBox(height: 8),
-            Text(
-              phone.isEmpty ? '--' : phone,
-              style: const TextStyle(fontSize: 16, color: Colors.black54),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+              const SizedBox(height: 8),
+              if (levelSection.isNotEmpty)
+                Text(
+                  levelSection,
+                  style: const TextStyle(fontSize: mediumFontSize),
+                  textAlign: TextAlign.center,
+                ),
+              const SizedBox(height: 8),
+              Text(
+                phone.isEmpty ? '--' : phone,
+                style: const TextStyle(fontSize: mediumFontSize),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                children: [
+                  _buildSquareButton(Icons.edit, _showEditStudentDialog),
+                  _buildSquareButton(
+                    Icons.delete,
+                    _showDeleteStudentConfirmationDialog,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -261,9 +431,8 @@ class _TeacherStudentDetailScreenState
 
     return Row(
       children: [
-        Expanded(child: _buildKpiCard(paidAmount, 'paid', Colors.green)),
-        const SizedBox(width: 10),
-        Expanded(child: _buildKpiCard(unpaidAmount, 'unpaid', Colors.red)),
+        Expanded(child: _buildKpiCard(paidAmount, 'payé', Colors.green)),
+        Expanded(child: _buildKpiCard(unpaidAmount, 'impayé', Colors.red)),
       ],
     );
   }
@@ -288,13 +457,16 @@ class _TeacherStudentDetailScreenState
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.grey.shade200,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildSectionHeader('Groupes'),
+            const Divider(height: 24),
             const Text(
-              'Group',
+              'Groupe',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -303,7 +475,7 @@ class _TeacherStudentDetailScreenState
             ),
             const SizedBox(height: 12),
             if (dropdownItems.isEmpty)
-              const Text('No group assigned to this student.')
+              const Text('Aucun groupe attribué à cet élève.')
             else
               DropdownButtonFormField<int>(
                 value: _selectedGroupId,
@@ -323,6 +495,16 @@ class _TeacherStudentDetailScreenState
                   ),
                 ),
               ),
+            const SizedBox(height: 16),
+            _buildGroupKpisRow(),
+            const SizedBox(height: 24),
+            _buildSectionHeader('Calendrier'),
+            const Divider(height: 24),
+            _buildCalendarHeader(),
+            const SizedBox(height: 12),
+            _buildCalendarGrid(),
+            const SizedBox(height: 8),
+            _buildCalendarLegend(),
           ],
         ),
       ),
@@ -337,14 +519,14 @@ class _TeacherStudentDetailScreenState
     final unpaidAmount = _formatAmount(
       group != null ? group['unpaid_amount'] : null,
     );
-    final groupLabel = group != null ? _groupNameLabel(group) : 'Group';
+    final groupLabel = group != null ? _groupNameLabel(group) : 'Groupe';
 
     return Row(
       children: [
         Expanded(
           child: _buildKpiCard(
             '$paidAmount',
-            '$groupLabel - paid',
+            '$groupLabel - payé',
             Colors.green,
           ),
         ),
@@ -352,7 +534,7 @@ class _TeacherStudentDetailScreenState
         Expanded(
           child: _buildKpiCard(
             '$unpaidAmount',
-            '$groupLabel - unpaid',
+            '$groupLabel - impayé',
             Colors.red,
           ),
         ),
@@ -364,6 +546,7 @@ class _TeacherStudentDetailScreenState
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.grey.shade200,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 12.0),
         child: Column(
@@ -382,35 +565,9 @@ class _TeacherStudentDetailScreenState
             const SizedBox(height: 6),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.black54,
-              ),
+              style: const TextStyle(fontSize: 16),
               textAlign: TextAlign.center,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCalendarCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildSectionHeader('Calendar'),
-            const Divider(height: 24),
-            _buildCalendarHeader(),
-            const SizedBox(height: 12),
-            _buildCalendarGrid(),
-            const SizedBox(height: 8),
-            _buildCalendarLegend(),
           ],
         ),
       ),
@@ -459,10 +616,13 @@ class _TeacherStudentDetailScreenState
   }
 
   Widget _buildCalendarLegend() {
-    Widget dot(Color c) => Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+    Widget colorSquare(Color c) => Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        color: c,
+        borderRadius: BorderRadius.circular(4),
+      ),
     );
     return Wrap(
       spacing: 16,
@@ -470,30 +630,41 @@ class _TeacherStudentDetailScreenState
       children: [
         Row(
           children: [
-            dot(Colors.green),
+            colorSquare(_colorForStatus('attended_and_paid') ?? Colors.green),
             const SizedBox(width: 6),
-            const Text('Attended & paid'),
+            const Text('Présent et payé'),
           ],
         ),
         Row(
           children: [
-            dot(Colors.red),
+            colorSquare(
+              _colorForStatus('attended_and_payment_due') ?? Colors.red,
+            ),
             const SizedBox(width: 6),
-            const Text('Attended & unpaid (due)'),
+            const Text('Présent et paiement en retard'),
           ],
         ),
         Row(
           children: [
-            dot(Colors.orange),
+            colorSquare(
+              _colorForStatus('attended_and_payment_not_due') ?? Colors.orange,
+            ),
             const SizedBox(width: 6),
-            const Text('Attended & unpaid (not due)'),
+            const Text('Présent et paiement non exigible'),
           ],
         ),
         Row(
           children: [
-            dot(Colors.grey),
+            colorSquare(_colorForStatus('absent') ?? Colors.blueGrey),
             const SizedBox(width: 6),
-            const Text('Scheduled class'),
+            const Text('Absent'),
+          ],
+        ),
+        Row(
+          children: [
+            colorSquare(Colors.grey),
+            const SizedBox(width: 6),
+            const Text('Cours planifié'),
           ],
         ),
       ],
@@ -504,7 +675,7 @@ class _TeacherStudentDetailScreenState
     return Text(
       text,
       style: const TextStyle(
-        fontSize: 18,
+        fontSize: mediumFontSize,
         fontWeight: FontWeight.bold,
         color: primaryColor,
       ),
@@ -534,6 +705,16 @@ class _TeacherStudentDetailScreenState
       return groups;
     }
     return _extractGroups(groups);
+  }
+
+  Map<String, dynamic> _mapStringDynamic(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map((key, val) => MapEntry(key.toString(), val));
+    }
+    return {};
   }
 
   String? _stringOrNull(dynamic value) {
@@ -589,9 +770,9 @@ class _TeacherStudentDetailScreenState
 
     final id = group['id'];
     if (id is int) {
-      return 'Group $id';
+      return 'Groupe $id';
     }
-    return 'Group';
+    return 'Groupe';
   }
 
   String _groupNameLabel(Map<String, dynamic> group) {
@@ -601,9 +782,9 @@ class _TeacherStudentDetailScreenState
     }
     final id = _resolveGroupId(group['id']);
     if (id != null) {
-      return 'Group $id';
+      return 'Groupe $id';
     }
-    return 'Group';
+    return 'Groupe';
   }
 
   String _formatAmount(dynamic raw) {
@@ -623,6 +804,80 @@ class _TeacherStudentDetailScreenState
     }
 
     return value.toStringAsFixed(2);
+  }
+
+  String _normalizeStatusKey(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+    var normalized = trimmed
+        .replaceAll(' ', '_')
+        .replaceAll(RegExp(r'__+'), '_')
+        .toLowerCase();
+
+    if (normalized.startsWith('the_')) {
+      normalized = normalized.substring(4);
+    }
+    if (normalized.endsWith('_the')) {
+      normalized = normalized.substring(0, normalized.length - 4);
+    }
+    normalized = normalized.replaceAll('_the_', '_');
+    normalized = normalized.replaceAll(RegExp(r'__+'), '_');
+    normalized = normalized.replaceAll(RegExp(r'^_+|_+$'), '');
+    return normalized;
+  }
+
+  Color? _colorForStatus(String statusKey) {
+    switch (statusKey) {
+      case 'attended_and_paid':
+      case 'paid':
+        return Colors.green;
+      case 'attended_and_payment_due':
+        return Colors.red;
+      case 'attended_and_payment_not_due':
+        return Colors.orange;
+      case 'absent':
+        return Colors.blueGrey;
+      case 'present':
+      case 'attended':
+      case 'attendance':
+        return Colors.orange;
+    }
+    return null;
+  }
+
+  String _statusLabel(String statusKey) {
+    switch (statusKey) {
+      case 'attended_and_paid':
+      case 'paid':
+        return 'Payé';
+      case 'attended_and_payment_due':
+        return 'Présent - paiement dû';
+      case 'attended_and_payment_not_due':
+        return 'Présent - paiement non dû';
+      case 'absent':
+        return 'Absent';
+      case 'present':
+      case 'attended':
+      case 'attendance':
+        return 'Présent';
+      default:
+        if (statusKey.isEmpty) {
+          return 'Statut inconnu';
+        }
+        final words = statusKey.split('_').where((w) => w.isNotEmpty).toList();
+        if (words.isEmpty) {
+          return statusKey;
+        }
+        return words
+            .map(
+              (word) =>
+                  word[0].toUpperCase() +
+                  (word.length > 1 ? word.substring(1) : ''),
+            )
+            .join(' ');
+    }
   }
 
   // Build the grid for the month
@@ -652,47 +907,38 @@ class _TeacherStudentDetailScreenState
       final date = DateTime(_focusedMonth.year, _focusedMonth.month, day);
       final key = _ymdKey(date);
       final events = eventsByDay[key] ?? [];
-      final dot = _bestDotForEvents(events);
+      final statusColor = _statusColorForEvents(events);
       final tooltip = _tooltipForEvents(events, date);
+
+      final dayContent = Container(
+        margin: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: statusColor ?? Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: statusColor != null
+                ? Colors.transparent
+                : Colors.grey.shade300,
+          ),
+        ),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: Padding(
+            padding: const EdgeInsets.all(6.0),
+            child: Text(
+              '$day',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: statusColor != null ? Colors.white : Colors.black87,
+              ),
+            ),
+          ),
+        ),
+      );
 
       final dayCell = AspectRatio(
         aspectRatio: 1,
-        child: Container(
-          margin: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: Stack(
-            children: [
-              Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: Text(
-                    '$day',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ),
-              if (dot != null)
-                Center(
-                  child: Tooltip(
-                    message: tooltip,
-                    child: Container(
-                      width: 18,
-                      height: 18,
-                      decoration: BoxDecoration(
-                        color: dot,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
+        child: Tooltip(message: tooltip, child: dayContent),
       );
 
       cells.add(dayCell);
@@ -753,32 +999,43 @@ class _TeacherStudentDetailScreenState
     // Existing classes
     final classes = (group?['classes'] as List?) ?? [];
     for (final cls in classes) {
-      final dateStr = cls['attendance_date']?.toString();
+      final statusRaw = (cls['status'] ?? '').toString();
+      final statusKey = _normalizeStatusKey(statusRaw);
+
+      String? dateStr;
+      if (statusKey == 'absent') {
+        dateStr = cls['absence_date']?.toString();
+      }
+      dateStr ??= cls['attendance_date']?.toString();
+
       if (dateStr == null || dateStr.isEmpty) continue;
       final date = DateTime.tryParse(dateStr) ?? _parseYMD(dateStr);
       if (date == null) continue;
       if (date.year != _focusedMonth.year || date.month != _focusedMonth.month)
         continue;
 
-      final status = (cls['status'] ?? '').toString().toLowerCase();
       final paidAtStr = cls['paid_at']?.toString();
       DateTime? paidAt;
       if (paidAtStr != null && paidAtStr.isNotEmpty) {
         paidAt = DateTime.tryParse(paidAtStr);
       }
 
+      String? startTime;
+      String? endTime;
+      if (statusKey == 'absent') {
+        startTime = cls['absence_start_time']?.toString();
+        endTime = cls['absence_end_time']?.toString();
+      }
+      startTime ??= cls['attendance_start_time']?.toString();
+      endTime ??= cls['attendance_end_time']?.toString();
+
       final event = <String, dynamic>{
-        'type': paidAt != null
-            ? 'paid'
-            : (status == 'present' ||
-                  status == 'attended' ||
-                  status == 'attendance')
-            ? 'attended'
-            : (status == 'absent' ? 'absent' : 'attended'),
-        'status': status,
+        'type': statusKey.isEmpty ? 'attendance' : statusKey,
+        'status': statusKey,
+        'statusRaw': statusRaw,
         'date': date,
-        'start': cls['attendance_start_time']?.toString(),
-        'end': cls['attendance_end_time']?.toString(),
+        'start': startTime,
+        'end': endTime,
         'paidAt': paidAt,
       };
 
@@ -826,29 +1083,32 @@ class _TeacherStudentDetailScreenState
     return map;
   }
 
-  // Decide which color dot to show for a day
-  Color? _bestDotForEvents(List<Map<String, dynamic>> events) {
+  // Decide which color background to show for a day
+  Color? _statusColorForEvents(List<Map<String, dynamic>> events) {
     if (events.isEmpty) return null;
-    // Priority: paid (green) > attended due/unpaid (red/orange) > future (gray)
-    bool hasPaid = events.any((e) => e['type'] == 'paid');
-    if (hasPaid) return Colors.green;
 
-    // attended but unpaid: if date < today => red, if date == today => orange
-    final now = DateTime.now();
-    final attended = events
-        .where((e) => e['type'] == 'attended' || e['type'] == 'absent')
-        .toList();
-    if (attended.isNotEmpty) {
-      final date = (attended.first['date'] as DateTime);
-      final today = DateTime(now.year, now.month, now.day);
-      final dayOnly = DateTime(date.year, date.month, date.day);
-      if (dayOnly.isBefore(today)) return Colors.red;
-      if (dayOnly == today) return Colors.orange;
-      return Colors.red; // default to red if future attended appears
+    for (final event in events) {
+      final type = (event['type'] ?? '').toString();
+      if (type == 'future') {
+        continue;
+      }
+
+      final statusKey = _normalizeStatusKey(
+        (event['status'] ?? event['statusRaw'] ?? '').toString(),
+      );
+      if (statusKey.isEmpty) {
+        continue;
+      }
+
+      final color = _colorForStatus(statusKey);
+      if (color != null) {
+        return color;
+      }
     }
 
-    // future placeholder
-    if (events.any((e) => e['type'] == 'future')) return Colors.grey;
+    if (events.any((e) => (e['type'] ?? '') == 'future')) {
+      return Colors.grey;
+    }
 
     return null;
   }
@@ -856,37 +1116,38 @@ class _TeacherStudentDetailScreenState
   String _tooltipForEvents(List<Map<String, dynamic>> events, DateTime date) {
     if (events.isEmpty) return _formatScheduled(date, null, null);
 
-    // Prefer paid, then attended, then future
-    Map<String, dynamic>? paid = events.firstWhere(
-      (e) => e['type'] == 'paid',
-      orElse: () => {},
-    );
-    if (paid.isNotEmpty) {
-      final start = paid['start']?.toString();
-      final end = paid['end']?.toString();
-      final paidAt = paid['paidAt'] as DateTime?;
-      return 'Paye\n${_formatAttended(date, start, end)}\n${_formatPaid(paidAt)}';
-    }
+    final actualEvents = events
+        .where((e) => (e['type'] ?? '') != 'future')
+        .toList();
+    if (actualEvents.isNotEmpty) {
+      final event = actualEvents.first;
+      final statusKey = _normalizeStatusKey(
+        (event['status'] ?? event['statusRaw'] ?? '').toString(),
+      );
+      final start = event['start']?.toString();
+      final end = event['end']?.toString();
+      final paidAt = event['paidAt'] as DateTime?;
+      final sessionText = _formatAttended(date, start, end);
+      final statusLabel = _statusLabel(statusKey);
 
-    Map<String, dynamic>? attended = events.firstWhere(
-      (e) => e['type'] == 'attended' || e['type'] == 'absent',
-      orElse: () => {},
-    );
-    if (attended.isNotEmpty) {
-      final start = attended['start']?.toString();
-      final end = attended['end']?.toString();
-      final status = (attended['type'] == 'absent') ? 'Absent' : 'Present';
-      return '$status\n${_formatAttended(date, start, end)}';
+      var tooltip = '$statusLabel\n$sessionText';
+      if (statusKey == 'attended_and_paid' || statusKey == 'paid') {
+        final paidText = _formatPaid(paidAt);
+        if (paidText.isNotEmpty) {
+          tooltip = '$tooltip\n$paidText';
+        }
+      }
+      return tooltip;
     }
 
     final future = events.firstWhere(
-      (e) => e['type'] == 'future',
-      orElse: () => {},
+      (e) => (e['type'] ?? '') == 'future',
+      orElse: () => <String, dynamic>{},
     );
     if (future.isNotEmpty) {
       final start = future['start']?.toString();
       final end = future['end']?.toString();
-      return 'Planifie\n${_formatScheduled(date, start, end)}';
+      return 'Planifié\n${_formatScheduled(date, start, end)}';
     }
 
     return _formatScheduled(date, null, null);
@@ -971,19 +1232,19 @@ class _TeacherStudentDetailScreenState
   String _formatAttended(DateTime date, String? start, String? end) {
     final s = _formatTimeHM(start);
     final e = _formatTimeHM(end);
-    return 'Seance du ${_formatDateDMY(date)} de ${s.isEmpty ? '--:--' : s} a ${e.isEmpty ? '--:--' : e}';
+    return 'Séance du ${_formatDateDMY(date)} de ${s.isEmpty ? '--:--' : s} à ${e.isEmpty ? '--:--' : e}';
   }
 
   String _formatPaid(DateTime? paidAt) {
     if (paidAt == null) return '';
     final d = _formatDateDMY(paidAt);
     final h = _formatTimeHM('${paidAt.hour}:${paidAt.minute}');
-    return 'Paiement enregistre le $d a $h';
+    return 'Paiement enregistré le $d à $h';
   }
 
   String _formatScheduled(DateTime date, String? start, String? end) {
     final s = _formatTimeHM(start);
     final e = _formatTimeHM(end);
-    return 'Cours prevu le ${_formatDateDMY(date)} de ${s.isEmpty ? '--:--' : s} a ${e.isEmpty ? '--:--' : e}';
+    return 'Cours prévu le ${_formatDateDMY(date)} de ${s.isEmpty ? '--:--' : s} à ${e.isEmpty ? '--:--' : e}';
   }
 }
