@@ -440,7 +440,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       children: [
         Expanded(
           child: _buildKpiCard(
-            formatToK((group['total_paid'] ?? 0).toString()),
+            formatToK((group['total_paid'] ?? 0)),
             'Payé',
             Colors.green,
           ),
@@ -448,7 +448,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
         const SizedBox(width: 8),
         Expanded(
           child: _buildKpiCard(
-            formatToK((group['total_unpaid'] ?? 0).toString()),
+            formatToK((group['total_unpaid'] ?? 0)),
             'Non payé',
             Colors.red,
           ),

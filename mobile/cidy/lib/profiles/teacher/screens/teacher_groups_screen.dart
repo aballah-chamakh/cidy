@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/teacher_layout.dart';
+import 'package:cidy/route_observer.dart';
 
 class TeacherGroupsScreen extends StatefulWidget {
   const TeacherGroupsScreen({super.key});
@@ -19,13 +20,42 @@ class TeacherGroupsScreen extends StatefulWidget {
   State<TeacherGroupsScreen> createState() => _TeacherGroupsScreenState();
 }
 
-class _TeacherGroupsScreenState extends State<TeacherGroupsScreen> {
+class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
+    with RouteAware {
   final Set<int> _selectedGroupIds = {};
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
   List<dynamic> _groups = [];
   Map<String, dynamic> _currentFilters = {};
   Map<String, dynamic> _filterOptions = {};
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    // Called when coming back to this screen
+    _fetchGroups(
+      name: _searchController.text,
+      level: _currentFilters['level']?.toString(),
+      section: _currentFilters['section']?.toString(),
+      subject: _currentFilters['subject']?.toString(),
+      day: _currentFilters['day'],
+      startTime: _currentFilters['start_time'],
+      endTime: _currentFilters['end_time'],
+      sortBy: _currentFilters['sort_by'],
+    );
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    _searchController.dispose();
+    super.dispose();
+  }
 
   String _convertWeekDayToFrench(String englishDay) {
     const Map<String, String> dayTranslations = {

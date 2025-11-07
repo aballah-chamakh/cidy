@@ -1,14 +1,23 @@
+import 'dart:convert';
+import 'package:cidy/config.dart';
 import 'package:cidy/app_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:cidy/authentication/login.dart';
+import 'package:http/http.dart' as http;
 
 class DeleteStudentPopup extends StatefulWidget {
   final String studentName;
-  final Future<bool> Function() onDelete;
+  final int studentId;
+  final VoidCallback onStudentDeleted;
+  final VoidCallback onServerError;
 
   const DeleteStudentPopup({
     super.key,
+    required this.studentId,
     required this.studentName,
-    required this.onDelete,
+    required this.onStudentDeleted,
+    required this.onServerError,
   });
 
   @override
@@ -18,28 +27,64 @@ class DeleteStudentPopup extends StatefulWidget {
 class _DeleteStudentPopupState extends State<DeleteStudentPopup> {
   bool _isLoading = false;
 
-  Future<void> _handleDelete() async {
-    if (_isLoading) return;
+  Future<bool> _deleteStudent() async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final success = await widget.onDelete();
-      if (!mounted) return;
-      if (success) {
-        Navigator.of(context).pop(true);
+      const storage = FlutterSecureStorage();
+      final token = await storage.read(key: 'access_token');
+      if (!mounted) return false;
+
+      if (token == null) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+        return false;
+      }
+
+      final url = Uri.parse(
+        '${Config.backendUrl}/api/teacher/students/delete/',
+      );
+
+      final response = await http.delete(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode({
+          'student_ids': [widget.studentId],
+        }),
+      );
+
+      if (!mounted) return false;
+
+      if (response.statusCode == 200) {
+        widget.onStudentDeleted();
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
       } else {
+        widget.onServerError();
+      }
+    } catch (e) {
+      if (!mounted) return false;
+      widget.onServerError();
+    } finally {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
     }
+
+    return false;
   }
 
   void _handleCancel() {
@@ -117,7 +162,7 @@ class _DeleteStudentPopupState extends State<DeleteStudentPopup> {
                 Expanded(
                   child: ElevatedButton(
                     style: primaryButtonStyle,
-                    onPressed: _isLoading ? null : _handleDelete,
+                    onPressed: _isLoading ? null : _deleteStudent,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       mainAxisSize: MainAxisSize.min,

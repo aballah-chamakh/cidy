@@ -109,6 +109,9 @@ class TestDateRangeFilter:
                 
                 # enroll the 6 students in this group in different date ranges
                 for i, student in enumerate(students):
+                    if student.fullname == "student1" or student.fullname == "student49"  : 
+                        continue 
+
                     # date range for this week  : 1 Oct 2025
                     if i < 2 : 
                         group_enrollement = GroupEnrollment.objects.create(group=group,student=student 
@@ -144,7 +147,7 @@ class TestDateRangeFilter:
                 if j < 2 :
                     Class.objects.create(
                         group_enrollment=group_enrollement,
-                        status='attended_and_paid',
+                        status='attended_and_the_payment_due',
                         paid_at=TestDateRangeFilter.THIS_WEEK_DATES[0]  # within this week
                     )
                 else : 
@@ -164,7 +167,7 @@ class TestDateRangeFilter:
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
-                        status='attended_and_the_payment_due',
+                        status='attended_and_paid',
                         attendance_date=TestDateRangeFilter.THIS_MONTH_DATES[0]  # within this month
                     )
             else:
@@ -172,7 +175,7 @@ class TestDateRangeFilter:
                 if j < 10 :
                     Class.objects.create(
                         group_enrollment=group_enrollement,
-                        status='attended_and_paid',
+                        status='attended_and_the_payment_not_due',
                         paid_at=TestDateRangeFilter.THIS_YEAR_DATES[0]  # within this year
                     )
                 else : 

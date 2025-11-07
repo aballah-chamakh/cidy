@@ -11,7 +11,8 @@ from parent.models import ParentNotification, ParentUnreadNotification, Son
 from ..serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
                            TeacherStudentListSerializer,
                            TeacherStudentCreateSerializer,
-                           TeacherStudentDetailSerializer,)
+                           TeacherStudentDetailSerializer,
+                           TeacherStudentUpdateSerializer,)
 from rest_framework import serializers
 from django.http import HttpResponseServerError
 
@@ -105,7 +106,7 @@ def get_students(request):
     # Get teacher levels, sections, and subjects hierarchy for filter options
     teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'subject')
     teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects)
-
+    print("============ paid amount type :", type(students[0].paid_amount))
     return Response({
         'total_students': paginator.count,
         'students': serializer.data,
@@ -119,8 +120,8 @@ def get_students(request):
 def create_student(request):
     """Create a new student"""
 
-    serializer = TeacherStudentCreateSerializer(data=request.data)
-    if serializer.is_valid():
+    serializer = TeacherStudentCreateSerializer(data=request.data, context={'request': request})
+    if serializer.is_valid() :
         teacher = request.user.teacher
         student = serializer.save()
         TeacherEnrollment.objects.create(
@@ -131,16 +132,13 @@ def create_student(request):
             'success': True,
             'message': 'Student created successfully.',
         })
-    
-    return Response({
-        'success': False,
-        'message': 'Failed to create student.',
-        'errors': serializer.errors
-    }, status=400)
+    print(serializer.errors)
+    return Response(serializer.errors, status=400)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_students(request):
+    time.sleep(5)
     """Delete selected students"""
     teacher = request.user.teacher
     student_ids = request.data.get('student_ids', [])
@@ -216,6 +214,7 @@ def delete_students(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_student_details(request, student_id):
+    time.sleep(5)
     """Get details of a specific student"""
     teacher = request.user.teacher
 
@@ -225,11 +224,50 @@ def get_student_details(request, student_id):
         return Response({'error': 'Student not found'}, status=404)
 
     serializer = TeacherStudentDetailSerializer(student, context={'request': request})
-    print(serializer.data)
-    print(serializer.data)
+
+    student_details = serializer.data
+    teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'subject')
+    teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects)
+
     return Response({
-        'student_detail': serializer.data
+        'student_detail': student_details,
+        'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy.data
     })
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def edit_student(request, student_id):
+    time.sleep(5)
+    """Update a student's core information"""
+    teacher = request.user.teacher
+    print(request.data)
+
+    try:
+        student = Student.objects.get(id=student_id, teacherenrollment__teacher=teacher)
+    except Student.DoesNotExist:
+        return Response({
+            'success': False,
+            'message': 'Student not found.'
+        }, status=404)
+
+    serializer = TeacherStudentUpdateSerializer(
+        student,
+        data=request.data,
+        partial=True,
+        context={'request': request}
+    )
+
+    if serializer.is_valid():
+        serializer.save()
+        return Response({
+            'success': True,
+            'message': 'Student updated successfully.'
+        })
+    
+    print(serializer.errors)
+
+    return Response(serializer.errors, status=400)
 
 
 @api_view(['PUT'])

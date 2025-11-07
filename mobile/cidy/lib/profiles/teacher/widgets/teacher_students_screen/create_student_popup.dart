@@ -148,7 +148,7 @@ class _CreateStudentPopupState extends State<CreateStudentPopup> {
     if (!_formKey.currentState!.validate()) {
       if (_selectedGender == null) {
         setState(() {
-          _errorMessage = 'Veuillez sélectionner le genre de l\'étudiant.';
+          _errorMessage = 'Veuillez sélectionner le genre de l\'élève.';
         });
       }
       return;
@@ -156,7 +156,7 @@ class _CreateStudentPopupState extends State<CreateStudentPopup> {
 
     if (_selectedGender == null) {
       setState(() {
-        _errorMessage = 'Veuillez sélectionner le genre de l\'étudiant.';
+        _errorMessage = 'Veuillez sélectionner le genre de l\'élève.';
       });
       return;
     }
@@ -190,7 +190,7 @@ class _CreateStudentPopupState extends State<CreateStudentPopup> {
       request.fields['phone_number'] = _phoneController.text.trim();
       request.fields['gender'] = _selectedGender!;
       request.fields['level'] = _selectedLevelName!;
-      request.fields['section'] = _selectedSectionName!;
+      request.fields['section'] = _selectedSectionName ?? '';
 
       if (_selectedImage != null) {
         request.files.add(
@@ -219,18 +219,24 @@ class _CreateStudentPopupState extends State<CreateStudentPopup> {
                   'student with this phone number already exists.') {
             setState(() {
               _phoneErrorMessage =
-                  'Un étudiant avec ce numéro de téléphone existe déjà.';
+                  'Un élève avec ce numéro de téléphone existe déjà.';
             });
           } else {
             widget.onServerError();
           }
-        } catch (e) {
+        } catch (e, stackTrace) {
+          print("Exception during processing 400 response:");
+          print(e);
+          print(stackTrace);
           widget.onServerError();
         }
       } else {
         widget.onServerError();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print("Exception during student creation:");
+      print(e);
+      print(stackTrace);
       if (!mounted) return;
       widget.onServerError();
     } finally {
@@ -333,7 +339,7 @@ class _CreateStudentPopupState extends State<CreateStudentPopup> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Créer un nouvel étudiant',
+          'Créer un nouvel élève',
           style: TextStyle(
             fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
@@ -470,7 +476,7 @@ class _CreateStudentPopupState extends State<CreateStudentPopup> {
       ),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
-          return 'Veuillez entrer le nom complet de l\'étudiant';
+          return 'Veuillez entrer le nom complet de l\'élève';
         }
         return null;
       },

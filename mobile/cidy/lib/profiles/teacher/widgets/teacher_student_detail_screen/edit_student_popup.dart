@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:cidy/authentication/login.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class EditStudentPopup extends StatefulWidget {
   final int studentId;
@@ -14,6 +16,7 @@ class EditStudentPopup extends StatefulWidget {
   final String initialGender;
   final String initialLevel;
   final String? initialSection;
+  final String? initialImage;
   final Map<String, dynamic> filterOptions;
   final bool canEditLevelSection;
   final VoidCallback onStudentUpdated;
@@ -27,6 +30,7 @@ class EditStudentPopup extends StatefulWidget {
     required this.initialGender,
     required this.initialLevel,
     required this.initialSection,
+    required this.initialImage,
     required this.filterOptions,
     required this.canEditLevelSection,
     required this.onStudentUpdated,
@@ -50,6 +54,9 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
   Map<String, dynamic> _sections = {};
   String? _selectedLevelName;
   String? _selectedSectionName;
+  File? _selectedImage;
+  late final String _defaultStudentImageUrl;
+  String? _currentImageUrl;
 
   @override
   void initState() {
@@ -59,6 +66,8 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
     _selectedGender = widget.initialGender.isNotEmpty
         ? widget.initialGender
         : 'M';
+    _defaultStudentImageUrl = '${Config.backendUrl}/media/defaults/student.png';
+    _currentImageUrl = _resolveImageUrl(widget.initialImage);
     _initializeLevelSectionData();
   }
 
@@ -112,6 +121,99 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
     return {};
   }
 
+  String? _resolveImageUrl(String? raw) {
+    if (raw == null) {
+      return null;
+    }
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    if (trimmed.toLowerCase() == 'null') {
+      return null;
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+    if (trimmed.startsWith('/')) {
+      return '${Config.backendUrl}$trimmed';
+    }
+    return '${Config.backendUrl}/$trimmed';
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      if (!mounted) return;
+
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Erreur lors de la sélection de l\'image',
+            style: TextStyle(fontSize: mediumFontSize),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showImagePickerOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Galerie'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera),
+                title: const Text('Caméra'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImage(ImageSource.camera);
+                },
+              ),
+              if (_selectedImage != null)
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text(
+                    'Supprimer l\'image',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      _selectedImage = null;
+                    });
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _updateStudent() async {
     if (_isLoading) return;
 
@@ -145,11 +247,13 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
         '${Config.backendUrl}/api/teacher/students/${widget.studentId}/edit/',
       );
 
-      final Map<String, dynamic> payload = {
-        'fullname': _fullNameController.text.trim(),
-        'phone_number': _phoneController.text.trim(),
-        'gender': _selectedGender,
-      };
+      final request = http.MultipartRequest('PUT', url);
+      request.headers['Authorization'] = 'Bearer $token';
+      request.headers['Accept'] = 'application/json';
+
+      request.fields['fullname'] = _fullNameController.text.trim();
+      request.fields['phone_number'] = _phoneController.text.trim();
+      request.fields['gender'] = _selectedGender;
 
       if (widget.canEditLevelSection) {
         final levelToSend = (_selectedLevelName ?? widget.initialLevel).trim();
@@ -165,20 +269,19 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
         }
 
         if (levelToSend.isNotEmpty) {
-          payload['level'] = levelToSend;
-          payload['section'] = sectionToSend;
+          request.fields['level'] = levelToSend;
+          request.fields['section'] = sectionToSend;
         }
       }
 
-      final response = await http.put(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode(payload),
-      );
+      if (_selectedImage != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath('image', _selectedImage!.path),
+        );
+      }
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
 
       if (!mounted) return;
 
@@ -234,7 +337,7 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.6,
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         child: Container(
           padding: const EdgeInsets.all(popupPadding),
@@ -280,10 +383,13 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
                     child: Column(
                       children: [
                         const SizedBox(height: 12),
+                        _buildProfileImageSection(),
+                        const SizedBox(height: 24),
                         TextFormField(
                           controller: _fullNameController,
                           decoration: const InputDecoration(
                             labelText: 'Nom complet',
+                            errorMaxLines: 3,
                           ),
                           enabled: !_isLoading,
                           validator: (value) {
@@ -306,6 +412,7 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
                           decoration: InputDecoration(
                             labelText: 'Numéro de téléphone',
                             errorText: _phoneErrorMessage,
+                            errorMaxLines: 3,
                           ),
                           keyboardType: TextInputType.phone,
                           inputFormatters: [
@@ -325,28 +432,7 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
                           },
                         ),
                         const SizedBox(height: 12),
-                        DropdownButtonFormField<String>(
-                          value: _selectedGender,
-                          decoration: const InputDecoration(labelText: 'Genre'),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'M',
-                              child: Text('Masculin'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'F',
-                              child: Text('Féminin'),
-                            ),
-                          ],
-                          onChanged: _isLoading
-                              ? null
-                              : (value) {
-                                  if (value == null) return;
-                                  setState(() {
-                                    _selectedGender = value;
-                                  });
-                                },
-                        ),
+                        _buildGenderSegment(),
                         if (_genericErrorMessage != null) ...[
                           const SizedBox(height: 12),
                           Text(
@@ -438,6 +524,7 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
           borderSide: BorderSide(color: primaryColor),
           borderRadius: BorderRadius.circular(8.0),
         ),
+        errorMaxLines: 3,
       ),
       items: [
         const DropdownMenuItem<String>(
@@ -498,6 +585,7 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
         ),
         filled: !isEnabled,
         fillColor: isEnabled ? null : Colors.grey[200],
+        errorMaxLines: 3,
       ),
       items: [
         const DropdownMenuItem<String>(
@@ -530,6 +618,104 @@ class _EditStudentPopupState extends State<EditStudentPopup> {
         }
         return null;
       },
+    );
+  }
+
+  Widget _buildGenderSegment() {
+    final Set<String> selectedGender = _selectedGender.isNotEmpty
+        ? {_selectedGender}
+        : <String>{};
+
+    return SizedBox(
+      width: double.infinity,
+      child: SegmentedButton<String>(
+        segments: <ButtonSegment<String>>[
+          ButtonSegment<String>(
+            value: 'M',
+            label: Padding(
+              padding: buttonSegmentPadding,
+              child: Text(
+                'Masculin',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
+            ),
+            icon: const Icon(Icons.male),
+          ),
+          ButtonSegment<String>(
+            value: 'F',
+            label: Padding(
+              padding: buttonSegmentPadding,
+              child: Text(
+                'Féminin',
+                style: TextStyle(fontSize: mediumFontSize),
+              ),
+            ),
+            icon: const Icon(Icons.female),
+          ),
+        ],
+        selected: selectedGender,
+        onSelectionChanged: _isLoading
+            ? null
+            : (Set<String> newSelection) {
+                if (newSelection.isEmpty) {
+                  return;
+                }
+                setState(() {
+                  _selectedGender = newSelection.first;
+                });
+              },
+        emptySelectionAllowed: false,
+        style: SegmentedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: primaryColor,
+          selectedForegroundColor: Colors.white,
+          selectedBackgroundColor: primaryColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(buttonSegmentBorderRadius),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileImageSection() {
+    final String imageUrl = _selectedImage != null
+        ? ''
+        : (_currentImageUrl ?? _defaultStudentImageUrl);
+
+    final ImageProvider imageProvider = _selectedImage != null
+        ? FileImage(_selectedImage!)
+        : NetworkImage(imageUrl);
+
+    return Center(
+      child: Stack(
+        children: [
+          SizedBox(
+            width: 130,
+            height: 130,
+            child: CircleAvatar(
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: imageProvider,
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: primaryColor,
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+                onPressed: _isLoading ? null : _showImagePickerOptions,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

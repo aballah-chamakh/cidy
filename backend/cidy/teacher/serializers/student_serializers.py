@@ -15,8 +15,8 @@ class TeacherStudentListSerializer(serializers.ModelSerializer):
 
     
 class TeacherStudentCreateSerializer(serializers.ModelSerializer):
-    level = serializers.CharField( write_only=True)
-    section = serializers.CharField( write_only=True)
+    level = serializers.CharField(write_only=True)
+    section = serializers.CharField(write_only=True,allow_blank=True)
     class Meta:
         model = Student
         fields = ['image','fullname', 'phone_number', 'gender', 'level', 'section']
@@ -29,11 +29,49 @@ class TeacherStudentCreateSerializer(serializers.ModelSerializer):
         attrs['level'] = Level.objects.get(name=level_name, section=section_name)
         return attrs
 
+    def validate_phone_number(self, value):
+        teacher = self.context['request'].user.teacher
+        # Ensure phone number is unique
+        if Student.objects.filter(teacherenrollment__teacher=teacher, phone_number=value).exists():
+            raise serializers.ValidationError("student with this phone number already exists.")
+        return value
+
+
+class TeacherStudentUpdateSerializer(serializers.ModelSerializer):
+    level = serializers.CharField(write_only=True)
+    section = serializers.CharField(write_only=True,allow_blank=True)
+
+    class Meta:
+        model = Student
+        fields = ['image', 'fullname', 'phone_number', 'gender', 'level', 'section']
+
+    def validate(self, attrs):
+        print("validate called")
+        print(attrs)
+        level = attrs.get('level')
+        section = attrs.get('section')
+
+        if level or section :
+            level = Level.objects.get(name=level, section=section)
+            print(level)
+            attrs['level'] = level
+
+        if 'section' in attrs:
+            attrs.pop('section')
+
+        return attrs
+    
+    def validate_phone_number(self, value):
+        teacher = self.context['request'].user.teacher
+        # Ensure phone number is unique
+        if Student.objects.filter(teacherenrollment__teacher=teacher, phone_number=value).exclude(id=self.instance.id).exists():
+            raise serializers.ValidationError("student with this phone number already exists.")
+        return value
 
 class TeacherClassListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
-        fields = ['id', 'status', 'attendance_date', 'attendance_start_time','attendance_end_time','paid_at']   
+        fields = ['id', 'status', 'attendance_date', 'attendance_start_time','attendance_end_time','absence_date','absence_start_time','absence_end_time','paid_at']   
 
 class TeacherStudentDetailSerializer(serializers.ModelSerializer):
     paid_amount = serializers.SerializerMethodField()
@@ -46,18 +84,19 @@ class TeacherStudentDetailSerializer(serializers.ModelSerializer):
         model = Student
         fields = [
             'id', 'image', 'fullname', 'level', 'section', 'phone_number',
+            'gender',
             'paid_amount', 'unpaid_amount', 'groups'
         ]
 
     def get_paid_amount(self, student_obj):
         teacher = self.context['request'].user.teacher
-        enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student_obj).first()
-        return enrollment.paid_amount if enrollment else 0
+        enrollment = TeacherEnrollment.objects.get(teacher=teacher, student=student_obj)
+        return str(enrollment.paid_amount if enrollment else 0)
 
     def get_unpaid_amount(self, student_obj):
         teacher = self.context['request'].user.teacher
-        enrollment = TeacherEnrollment.objects.filter(teacher=teacher, student=student_obj).first()
-        return enrollment.unpaid_amount if enrollment else 0
+        enrollment = TeacherEnrollment.objects.get(teacher=teacher, student=student_obj)
+        return str(enrollment.unpaid_amount if enrollment else 0)
 
     def get_groups(self, student_obj):
         teacher = self.context['request'].user.teacher

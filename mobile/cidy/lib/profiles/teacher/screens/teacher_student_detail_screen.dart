@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:cidy/app_styles.dart';
 import 'package:cidy/authentication/login.dart';
 import 'package:cidy/config.dart';
+import 'package:cidy/app_tools.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_layout.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_student_detail_screen/delete_student_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_student_detail_screen/edit_student_popup.dart';
@@ -103,23 +104,16 @@ class _TeacherStudentDetailScreenState
 
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
-        final studentDetail = Map<String, dynamic>.from(
-          data['student_detail'] as Map,
-        );
-        final teacherHierarchyRaw =
-            data['teacher_levels_sections_subjects_hierarchy'];
-        final Map<String, dynamic> hierarchy = _mapStringDynamic(
-          teacherHierarchyRaw,
-        );
-        final groupsRaw = studentDetail['groups'];
-        final groupsList = _extractGroups(groupsRaw);
-        studentDetail['groups'] = groupsList;
+
         setState(() {
-          _student = studentDetail;
-          _levelSectionOptions = hierarchy;
-          _canEditLevelSection = groupsList.isEmpty;
-          if (groupsList.isNotEmpty) {
-            _selectedGroupId = _resolveGroupId(groupsList[0]['id']);
+          _student = data['student_detail'];
+          _levelSectionOptions =
+              data['teacher_levels_sections_subjects_hierarchy'];
+          _canEditLevelSection = data['student_detail']['groups'].isEmpty;
+          if (data['student_detail']['groups'].isNotEmpty) {
+            _selectedGroupId = _resolveGroupId(
+              data['student_detail']['groups'][0]['id'],
+            );
           } else {
             _selectedGroupId = null;
           }
@@ -131,14 +125,13 @@ class _TeacherStudentDetailScreenState
         );
       } else {
         setState(() {
-          _errorMessage =
-              "Échec du chargement de l'élève (code ${response.statusCode}).";
+          _errorMessage = "Échec du chargement de l'élève.";
         });
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Une erreur est survenue : $e';
+        _errorMessage = "Échec du chargement de l'élève.";
       });
     } finally {
       if (!mounted) return;
@@ -192,101 +185,49 @@ class _TeacherStudentDetailScreenState
           initialGender: genderValue.isEmpty ? 'M' : genderValue,
           initialLevel: _stringOrEmpty(student['level']),
           initialSection: _stringOrNull(student['section']),
+          initialImage: _stringOrNull(student['image']),
           filterOptions: _levelSectionOptions,
           canEditLevelSection: _canEditLevelSection,
           onStudentUpdated: () {
             if (!mounted) return;
             Navigator.of(context).pop();
             _showSuccess('Élève modifié avec succès');
-            _fetchStudentDetail();
+            _fetchStudentDetail(showLoading: true);
           },
           onServerError: () {
             if (!mounted) return;
+            Navigator.of(context).pop();
             _showError('Erreur du serveur (500).');
+            _fetchStudentDetail(showLoading: true);
           },
         );
       },
     );
-  }
-
-  Future<bool> _deleteStudent() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (!mounted) return false;
-
-      if (token == null) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-        return false;
-      }
-
-      final url = Uri.parse(
-        '${Config.backendUrl}/api/teacher/students/delete/',
-      );
-
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode({
-          'student_ids': [widget.studentId],
-        }),
-      );
-
-      if (!mounted) return false;
-
-      if (response.statusCode == 200) {
-        return true;
-      } else if (response.statusCode == 401) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      } else {
-        _showError('Erreur du serveur (500)');
-      }
-    } catch (e) {
-      if (!mounted) return false;
-      _showError('Erreur du serveur (500)');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-
-    return false;
   }
 
   Future<void> _showDeleteStudentConfirmationDialog() async {
     if (_student == null) return;
     final studentName = _stringOrEmpty(_student!['fullname']);
 
-    final result = await showDialog<bool>(
+    showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return DeleteStudentPopup(
+          studentId: widget.studentId,
           studentName: studentName.isEmpty ? 'cet élève' : studentName,
-          onDelete: _deleteStudent,
+          onStudentDeleted: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            Navigator.of(context).pop();
+          },
+          onServerError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500).');
+          },
         );
       },
     );
-
-    if (!mounted || result != true) return;
-
-    _showSuccess('Élève supprimé avec succès');
-    Navigator.of(context).pop(true);
   }
 
   Map<String, dynamic>? _selectedGroup() {
@@ -375,13 +316,13 @@ class _TeacherStudentDetailScreenState
             mainAxisSize: MainAxisSize.min,
             children: [
               CircleAvatar(
-                radius: 48,
+                radius: 70,
                 backgroundColor: Colors.grey.shade200,
                 backgroundImage: fullImageUrl != null
                     ? NetworkImage(fullImageUrl)
                     : null,
                 child: fullImageUrl == null
-                    ? Icon(Icons.person, size: 48, color: Colors.grey.shade600)
+                    ? Icon(Icons.person, size: 70, color: Colors.grey.shade600)
                     : null,
               ),
               const SizedBox(height: 16),
@@ -426,8 +367,8 @@ class _TeacherStudentDetailScreenState
   }
 
   Widget _buildGlobalKpisRow() {
-    final paidAmount = _formatAmount(_student!['paid_amount']);
-    final unpaidAmount = _formatAmount(_student!['unpaid_amount']);
+    final paidAmount = formatToK(_student!['paid_amount']);
+    final unpaidAmount = formatToK(_student!['unpaid_amount']);
 
     return Row(
       children: [
@@ -513,10 +454,8 @@ class _TeacherStudentDetailScreenState
 
   Widget _buildGroupKpisRow() {
     final group = _selectedGroup();
-    final paidAmount = _formatAmount(
-      group != null ? group['paid_amount'] : null,
-    );
-    final unpaidAmount = _formatAmount(
+    final paidAmount = formatToK(group != null ? group['paid_amount'] : null);
+    final unpaidAmount = formatToK(
       group != null ? group['unpaid_amount'] : null,
     );
     final groupLabel = group != null ? _groupNameLabel(group) : 'Groupe';
@@ -738,17 +677,6 @@ class _TeacherStudentDetailScreenState
     return null;
   }
 
-  String _normalizeNumericString(String input) {
-    final trimmed = input.trim();
-    final decimalMatch = RegExp(
-      r"Decimal\('([0-9.,+-]+)'\)",
-    ).firstMatch(trimmed);
-    if (decimalMatch != null) {
-      return decimalMatch.group(1)!.replaceAll(',', '.');
-    }
-    return trimmed.replaceAll(',', '.');
-  }
-
   String _groupOptionLabel(Map<String, dynamic> group) {
     dynamic subject =
         group['subject'] ?? group['subject_name'] ?? group['subject_label'];
@@ -785,25 +713,6 @@ class _TeacherStudentDetailScreenState
       return 'Groupe $id';
     }
     return 'Groupe';
-  }
-
-  String _formatAmount(dynamic raw) {
-    num? value;
-    if (raw is num) {
-      value = raw;
-    } else if (raw != null) {
-      value = num.tryParse(_normalizeNumericString(raw.toString()));
-    }
-
-    if (value == null) {
-      return '0';
-    }
-
-    if (value % 1 == 0) {
-      return value.toStringAsFixed(0);
-    }
-
-    return value.toStringAsFixed(2);
   }
 
   String _normalizeStatusKey(String raw) {

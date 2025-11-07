@@ -31,6 +31,7 @@ from .students_views import (
     create_student,
     delete_students,
     get_student_details,
+    edit_student,
     mark_attendance_of_a_student,
     unmark_attendance_of_a_student,
     mark_absence_of_a_student,

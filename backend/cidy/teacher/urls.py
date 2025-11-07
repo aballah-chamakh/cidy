@@ -49,6 +49,7 @@ urlpatterns = [
     path('students/create/', views.create_student, name='create_student'),
     path('students/delete/', views.delete_students, name='delete_students'),
     path('students/<int:student_id>/', views.get_student_details, name='get_student_details'),
+    path('students/<int:student_id>/edit/', views.edit_student, name='edit_student'),
     path('students/<int:student_id>/groups/<int:group_id>/mark_attendance/', views.mark_attendance_of_a_student, name='mark_attendance_of_a_student'),
     path('students/<int:student_id>/groups/<int:group_id>/unmark_attendance/', views.unmark_attendance_of_a_student, name='unmark_attendance_of_a_student'),
     path('students/<int:student_id>/groups/<int:group_id>/mark_absence/', views.mark_absence_of_a_student, name='mark_absence_of_a_student'),

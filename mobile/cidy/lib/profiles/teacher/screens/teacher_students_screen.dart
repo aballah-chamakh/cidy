@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_student_detail_screen.dart';
 import '../widgets/teacher_layout.dart';
+import 'package:cidy/route_observer.dart';
 
 class TeacherStudentsScreen extends StatefulWidget {
   const TeacherStudentsScreen({super.key});
@@ -20,7 +21,8 @@ class TeacherStudentsScreen extends StatefulWidget {
   State<TeacherStudentsScreen> createState() => _TeacherStudentsScreenState();
 }
 
-class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
+class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
+    with RouteAware {
   final Set<int> _selectedStudentIds = {};
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -31,6 +33,24 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
   int _page = 1;
   Map<String, dynamic> _currentFilters = {};
   Map<String, dynamic> _filterOptions = {};
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void didPopNext() {
+    // Called when coming back to this screen
+    _fetchStudents(
+      fullname: _searchController.text,
+      level: _currentFilters['level']?.toString(),
+      section: _currentFilters['section']?.toString(),
+      sortBy: _currentFilters['sort_by'],
+      page: _page,
+    );
+  }
 
   int _countActiveFilters() {
     int count = 0;
@@ -49,6 +69,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
 
   @override
   void dispose() {
+    routeObserver.unsubscribe(this);
     _searchController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
@@ -684,7 +705,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    "${formatToK(student['paid_amount'].toString())} DT",
+                    "${formatToK(student['paid_amount'])} DT",
                     style: const TextStyle(
                       color: Colors.green,
                       fontWeight: FontWeight.bold,
@@ -693,7 +714,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "${formatToK(student['unpaid_amount'].toString())} DT",
+                    "${formatToK(student['unpaid_amount'])} DT",
                     style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
