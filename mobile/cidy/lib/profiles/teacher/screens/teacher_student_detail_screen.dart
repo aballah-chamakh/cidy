@@ -267,6 +267,7 @@ class _TeacherStudentDetailScreenState
     }
 
     return RefreshIndicator(
+      color: primaryColor,
       onRefresh: () => _fetchStudentDetail(showLoading: false),
       child: SingleChildScrollView(
         controller: _pageScrollController,
@@ -415,27 +416,27 @@ class _TeacherStudentDetailScreenState
               ),
             ),
             const SizedBox(height: 12),
-            if (dropdownItems.isEmpty)
-              const Text('Aucun groupe attribué à cet élève.')
-            else
-              DropdownButtonFormField<int>(
-                value: _selectedGroupId,
-                items: dropdownItems,
-                onChanged: (val) {
-                  setState(() {
-                    _selectedGroupId = val;
-                  });
-                },
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+            DropdownButtonFormField<int>(
+              hint: dropdownItems.isEmpty
+                  ? const Text('Aucun groupe disponible')
+                  : null,
+              value: _selectedGroupId,
+              items: dropdownItems,
+              onChanged: (val) {
+                setState(() {
+                  _selectedGroupId = val;
+                });
+              },
+              decoration: InputDecoration(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
+            ),
             const SizedBox(height: 16),
             _buildGroupKpisRow(),
             const SizedBox(height: 24),
@@ -454,9 +455,9 @@ class _TeacherStudentDetailScreenState
 
   Widget _buildGroupKpisRow() {
     final group = _selectedGroup();
-    final paidAmount = formatToK(group != null ? group['paid_amount'] : null);
+    final paidAmount = formatToK(group != null ? group['paid_amount'] : "0");
     final unpaidAmount = formatToK(
-      group != null ? group['unpaid_amount'] : null,
+      group != null ? group['unpaid_amount'] : "0",
     );
     final groupLabel = group != null ? _groupNameLabel(group) : 'Groupe';
 
@@ -580,7 +581,7 @@ class _TeacherStudentDetailScreenState
               _colorForStatus('attended_and_payment_due') ?? Colors.red,
             ),
             const SizedBox(width: 6),
-            const Text('Présent et paiement en retard'),
+            const Text('Présent, paiement dû'),
           ],
         ),
         Row(
@@ -589,7 +590,7 @@ class _TeacherStudentDetailScreenState
               _colorForStatus('attended_and_payment_not_due') ?? Colors.orange,
             ),
             const SizedBox(width: 6),
-            const Text('Présent et paiement non exigible'),
+            const Text('Présent, paiement non dû'),
           ],
         ),
         Row(
@@ -597,6 +598,13 @@ class _TeacherStudentDetailScreenState
             colorSquare(_colorForStatus('absent') ?? Colors.blueGrey),
             const SizedBox(width: 6),
             const Text('Absent'),
+          ],
+        ),
+        Row(
+          children: [
+            colorSquare(Colors.grey.shade800),
+            const SizedBox(width: 6),
+            const Text('Cours planifié (temporaire)'),
           ],
         ),
         Row(
@@ -815,14 +823,16 @@ class _TeacherStudentDetailScreenState
     for (int day = 1; day <= days; day++) {
       final date = DateTime(_focusedMonth.year, _focusedMonth.month, day);
       final key = _ymdKey(date);
-      final events = eventsByDay[key] ?? [];
+      final events = List<Map<String, dynamic>>.from(
+        eventsByDay[key] ?? const <Map<String, dynamic>>[],
+      );
       final statusColor = _statusColorForEvents(events);
       final tooltip = _tooltipForEvents(events, date);
 
       final dayContent = Container(
         margin: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: statusColor ?? Colors.grey.shade50,
+          color: statusColor ?? Colors.blueGrey.shade50,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: statusColor != null
@@ -847,7 +857,19 @@ class _TeacherStudentDetailScreenState
 
       final dayCell = AspectRatio(
         aspectRatio: 1,
-        child: Tooltip(message: tooltip, child: dayContent),
+        child: Tooltip(
+          message: tooltip,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: events.isNotEmpty
+                  ? () => _showEventDetailsPopup(date, events)
+                  : null,
+              child: dayContent,
+            ),
+          ),
+        ),
       );
 
       cells.add(dayCell);
@@ -989,6 +1011,53 @@ class _TeacherStudentDetailScreenState
       }
     }
 
+    // Temporary schedule placeholders for the current week only
+    if (group != null) {
+      final tempRaw = group['temporary_shedule'] ?? group['temporary_schedule'];
+      if (tempRaw != null) {
+        final tempSchedule = _mapStringDynamic(tempRaw);
+        final tempWeekday = _weekdayFromRaw(tempSchedule['week_day']);
+        if (tempWeekday != null) {
+          final tempStart = tempSchedule['start_time']?.toString();
+          final tempEnd = tempSchedule['end_time']?.toString();
+          final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+          final todayDate = DateTime(now.year, now.month, now.day);
+
+          for (int i = 0; i < 7; i++) {
+            final date = startOfWeek.add(Duration(days: i));
+            if (date.weekday != tempWeekday) continue;
+            if (date.year != _focusedMonth.year ||
+                date.month != _focusedMonth.month) {
+              continue;
+            }
+            if (date.isBefore(todayDate)) {
+              continue;
+            }
+
+            final key = _ymdKey(date);
+            final events = map.putIfAbsent(key, () => []);
+            final hasActualEvent = events.any((event) {
+              final type = (event['type'] ?? '').toString();
+              return type != 'future' && type != 'temporary_future';
+            });
+            if (hasActualEvent) {
+              continue;
+            }
+
+            events.removeWhere((event) => (event['type'] ?? '') == 'future');
+            events.add(<String, dynamic>{
+              'type': 'temporary_future',
+              'status': 'temporary_scheduled',
+              'date': date,
+              'start': tempStart,
+              'end': tempEnd,
+              'paidAt': null,
+            });
+          }
+        }
+      }
+    }
+
     return map;
   }
 
@@ -998,7 +1067,7 @@ class _TeacherStudentDetailScreenState
 
     for (final event in events) {
       final type = (event['type'] ?? '').toString();
-      if (type == 'future') {
+      if (type == 'future' || type == 'temporary_future') {
         continue;
       }
 
@@ -1015,6 +1084,9 @@ class _TeacherStudentDetailScreenState
       }
     }
 
+    if (events.any((e) => (e['type'] ?? '') == 'temporary_future')) {
+      return Colors.grey.shade800;
+    }
     if (events.any((e) => (e['type'] ?? '') == 'future')) {
       return Colors.grey;
     }
@@ -1049,6 +1121,19 @@ class _TeacherStudentDetailScreenState
       return tooltip;
     }
 
+    Map<String, dynamic>? tempFuture;
+    for (final event in events) {
+      if ((event['type'] ?? '') == 'temporary_future') {
+        tempFuture = event;
+        break;
+      }
+    }
+    if (tempFuture != null) {
+      final start = tempFuture['start']?.toString();
+      final end = tempFuture['end']?.toString();
+      return 'Planifié (temporaire)\n${_formatScheduled(date, start, end)}';
+    }
+
     final future = events.firstWhere(
       (e) => (e['type'] ?? '') == 'future',
       orElse: () => <String, dynamic>{},
@@ -1060,6 +1145,228 @@ class _TeacherStudentDetailScreenState
     }
 
     return _formatScheduled(date, null, null);
+  }
+
+  void _showEventDetailsPopup(
+    DateTime date,
+    List<Map<String, dynamic>> rawEvents,
+  ) {
+    if (rawEvents.isEmpty || !mounted) return;
+
+    final actualEvents = rawEvents
+        .where((event) => !_isPlaceholderEvent(event))
+        .toList();
+    final displayEvents = List<Map<String, dynamic>>.from(
+      actualEvents.isNotEmpty ? actualEvents : rawEvents,
+    );
+
+    displayEvents.sort(
+      (a, b) => _eventStartMinutes(a).compareTo(_eventStartMinutes(b)),
+    );
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        final size = MediaQuery.of(dialogContext).size;
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: popupHorizontalMargin,
+            vertical: 0,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(popupBorderRadius),
+          ),
+          backgroundColor: Colors.transparent,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: size.height * 0.7),
+            child: Container(
+              padding: const EdgeInsets.all(popupPadding),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(popupBorderRadius),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Cours du ${_formatDateDMY(date)}',
+                        style: TextStyle(
+                          fontSize: headerFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.close,
+                          size: headerIconSize,
+                          color: primaryColor,
+                        ),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                      ),
+                    ],
+                  ),
+                  const Divider(height: 16),
+                  Flexible(
+                    fit: FlexFit.loose,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          for (int i = 0; i < displayEvents.length; i++) ...[
+                            _buildEventDetailSection(displayEvents[i], date),
+                            if (i != displayEvents.length - 1)
+                              const SizedBox(height: 12),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Divider(height: 24),
+                  ElevatedButton(
+                    style: primaryButtonStyle,
+                    onPressed: () => Navigator.of(dialogContext).pop(),
+                    child: const Text(
+                      'Fermer',
+                      style: TextStyle(fontSize: mediumFontSize),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEventDetailSection(Map<String, dynamic> event, DateTime date) {
+    final type = (event['type'] ?? '').toString();
+    final statusRaw = (event['status'] ?? event['statusRaw'] ?? '').toString();
+    final statusKey = _normalizeStatusKey(statusRaw);
+    final start = _stringOrNull(event['start']);
+    final end = _stringOrNull(event['end']);
+    final statusColor =
+        _colorForStatus(statusKey) ??
+        (type == 'temporary_future' ? Colors.grey.shade800 : Colors.grey);
+
+    DateTime? paidAt;
+    final paidValue = event['paidAt'];
+    if (paidValue is DateTime) {
+      paidAt = paidValue;
+    } else if (paidValue is String) {
+      paidAt = DateTime.tryParse(paidValue);
+    }
+
+    String header;
+    if (type == 'future') {
+      header = 'Cours planifié';
+    } else if (type == 'temporary_future') {
+      header = 'Cours planifié (temporaire)';
+    } else {
+      header = _statusLabel(statusKey);
+    }
+
+    final paymentText =
+        (statusKey == 'attended_and_paid' || statusKey == 'paid')
+        ? _formatPaid(paidAt)
+        : '';
+
+    final isFuture = type == 'future' || type == 'temporary_future';
+    final dateLabel = isFuture
+        ? 'Date prévue'
+        : statusKey == 'absent'
+        ? 'Date d\'absence'
+        : 'Date de présence';
+    final startLabel = isFuture ? 'Heure de début prévue' : 'Heure de début';
+    final endLabel = isFuture ? 'Heure de fin prévue' : 'Heure de fin';
+
+    String _timeOrPlaceholder(String? raw) {
+      final formatted = _formatTimeHM(raw);
+      return formatted.isEmpty ? '--:--' : formatted;
+    }
+
+    final sessionFields = <Widget>[
+      _buildReadOnlyField(dateLabel, _formatDateDMY(date)),
+      const SizedBox(height: 12),
+      _buildReadOnlyField(startLabel, _timeOrPlaceholder(start)),
+      const SizedBox(height: 12),
+      _buildReadOnlyField(endLabel, _timeOrPlaceholder(end)),
+    ];
+
+    if (paymentText.isNotEmpty && paidAt != null) {
+      final paymentTime = _formatTimeHM(
+        '${paidAt.hour.toString().padLeft(2, '0')}:${paidAt.minute.toString().padLeft(2, '0')}',
+      );
+      final paymentValue =
+          '${paymentTime.isEmpty ? '--:--' : paymentTime} le ${_formatDateDMY(paidAt)}';
+      sessionFields
+        ..add(const SizedBox(height: 12))
+        ..add(_buildReadOnlyField('Paiement effectué à', paymentValue));
+    }
+
+    if (header == 'Statut inconnu' && statusRaw.isNotEmpty) {
+      sessionFields
+        ..add(const SizedBox(height: 12))
+        ..add(_buildReadOnlyField('Statut original', statusRaw));
+    }
+
+    return Container(
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 5),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            decoration: BoxDecoration(
+              color: statusColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              header,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...sessionFields,
+          const SizedBox(height: 5),
+        ],
+      ),
+    );
+  }
+
+  bool _isPlaceholderEvent(Map<String, dynamic> event) {
+    final type = (event['type'] ?? '').toString();
+    return type == 'future' || type == 'temporary_future';
+  }
+
+  int _eventStartMinutes(Map<String, dynamic> event) {
+    final startText = _stringOrNull(event['start']);
+    if (startText == null) {
+      return 24 * 60;
+    }
+    final parts = startText.split(':');
+    if (parts.length < 2) {
+      return 24 * 60;
+    }
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts[1]) ?? 0;
+    return hour * 60 + minute;
   }
 
   // Helpers
@@ -1155,5 +1462,33 @@ class _TeacherStudentDetailScreenState
     final s = _formatTimeHM(start);
     final e = _formatTimeHM(end);
     return 'Cours prévu le ${_formatDateDMY(date)} de ${s.isEmpty ? '--:--' : s} à ${e.isEmpty ? '--:--' : e}';
+  }
+
+  Widget _buildReadOnlyField(String label, String value) {
+    final theme = Theme.of(context);
+    final displayValue = value.isEmpty ? '--' : value;
+    return TextFormField(
+      initialValue: displayValue,
+      readOnly: true,
+      enabled: false,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: primaryColor),
+        border: const OutlineInputBorder(),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 14,
+        ),
+      ),
+      style: theme.textTheme.bodyLarge?.copyWith(fontSize: 16),
+    );
   }
 }

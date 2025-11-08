@@ -228,7 +228,7 @@ def get_student_details(request, student_id):
     student_details = serializer.data
     teacher_subjects = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'subject')
     teacher_levels_sections_subjects_hierarchy = TeacherLevelsSectionsSubjectsHierarchySerializer(teacher_subjects)
-
+    print(student_details)
     return Response({
         'student_detail': student_details,
         'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy.data

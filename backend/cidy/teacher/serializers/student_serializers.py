@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from student.models import Student
 from teacher.models import Class,Level, TeacherEnrollment, Group, GroupEnrollment
+from django.utils import timezone
+
 
 class TeacherStudentListSerializer(serializers.ModelSerializer):
     image = serializers.CharField(source='image.url')
@@ -108,19 +110,30 @@ class TeacherStudentDetailSerializer(serializers.ModelSerializer):
         )
 
         group_data = []
+        today = timezone.localdate()
+
         for group in student_groups:
             enrollment = GroupEnrollment.objects.get(group=group, student=student_obj)
+            
             group_info = {
                 'id': group.id,
                 'name': group.name,
                 'label': f"{group.teacher_subject.subject.name} - {group.name}",
-                'paid_amount': enrollment.paid_amount,
-                'unpaid_amount': enrollment.unpaid_amount,
+                'paid_amount': str(enrollment.paid_amount),
+                'unpaid_amount': str(enrollment.unpaid_amount),
                 'week_day': group.week_day,
                 'start_time': group.start_time.strftime('%H:%M'),
                 'end_time': group.end_time.strftime('%H:%M'),
                 'classes': TeacherClassListSerializer(enrollment.class_set.all(), many=True).data
             }
+
+            if group.clear_temporary_schedule_at and today < group.clear_temporary_schedule_at:
+                group_info['temporary_shedule'] = {
+                    'week_day': group.temporary_week_day,
+                    'start_time': group.temporary_start_time.strftime('%H:%M'),
+                    'end_time': group.temporary_end_time.strftime('%H:%M'),
+                }
+
             group_data.append(group_info)
             
         return group_data      

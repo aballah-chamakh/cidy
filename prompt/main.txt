@@ -1464,12 +1464,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - col : 
                                             - row :
                                                 - col 1 :
-                                                    - a checkbox
-                                                - col 2 :
                                                     - the name of the level
-                                                - col 3 :
+                                                - col 2 :
                                                     - a trash icon in a rounded button
-                                                - col 4 :
+                                                - col 3 :
                                                     - an arrow down icon in a rounded button
                                             - row (hidden by default, toggled by the arrow down icon button) :
                                                 - col :
