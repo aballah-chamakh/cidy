@@ -1,4 +1,4 @@
-from .price_serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
+from .subject_serializers import (TeacherLevelsSectionsSubjectsHierarchySerializer,
                                 TeacherSubjectSerializer,
                                 StudentListToReplaceBySerializer,
                                 LevelSerializer,

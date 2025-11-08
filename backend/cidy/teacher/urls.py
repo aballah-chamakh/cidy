@@ -58,10 +58,10 @@ urlpatterns = [
     path('students/<int:student_id>/groups/<int:group_id>/unmark_payment/', views.unmark_payment_of_a_student, name='unmark_payment_of_a_student'),
 
     # Prices endpoints
-    path('prices/', views.prices_list, name='prices_list'),
-    path('prices/add/', views.add_teacher_subject, name='add_teacher_subject'),
-    path('prices/edit/<int:teacher_subject_id>/', views.edit_teacher_subject_price, name='edit_teacher_subject_price'),
-    path('prices/delete/<int:teacher_subject_id>/', views.delete_level_section_subject, name='delete_level_section_subject'),
+    path('levels_sections_subjects/', views.levels_sections_subjects, name='levels_sections_subjects'),
+    path('subject/add/', views.add_teacher_subject, name='add_teacher_subject'),
+    path('subject/edit/<int:teacher_subject_id>/', views.edit_teacher_subject_price, name='edit_teacher_subject_price'),
+    path('subject/delete/<int:teacher_subject_id>/', views.delete_level_section_subject, name='delete_level_section_subject'),
 
     # Account endpoints
     path('account/info/', views.get_account_info, name='get_account_info'),

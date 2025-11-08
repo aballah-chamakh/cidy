@@ -21,12 +21,12 @@ def increment_parent_unread_notifications(parent):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def prices_list(request):
+def levels_sections_subjects(request): 
     """Retrieve the list of levels, sections, and subjects for the teacher."""
     teacher = request.user.teacher
-    queryset = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'section', 'subject')
-    serializer = TeacherLevelsSectionsSubjectsHierarchySerializer(queryset, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    queryset = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'subject')
+    serializer = TeacherLevelsSectionsSubjectsHierarchySerializer(queryset,with_prices=True)
+    return Response({'teacher_levels_sections_subjects_hierarchy' : serializer.data}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -41,7 +41,7 @@ def add_teacher_subject(request):
         return Response({"message": "Subject added successfully."}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['PATCH'])
+@api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_teacher_subject_price(request, teacher_subject_id):
     """Edit the price of a subject."""
@@ -153,8 +153,6 @@ def delete_level_section_subject(request, teacher_subject_id):
             # I deleted the student if he doesn't have an independant account here to get the sons attached to it before
             if not student.user:
                 student.delete()
-
-        group.delete()
 
     teacher_subject.delete()
     return Response({"message": "Teacher subject deleted successfully."}, status=status.HTTP_200_OK)

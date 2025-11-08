@@ -48,22 +48,33 @@ class TeacherSubjectSerializer(serializers.ModelSerializer):
 
 class TeacherLevelsSectionsSubjectsHierarchySerializer:
 
-    def __init__(self, teacher_subjects_qs):
+    def __init__(self, teacher_subjects_qs, with_prices=False):
         levels = {}
-        print(teacher_subjects_qs)
-        for index, ts in enumerate(teacher_subjects_qs):
-            print(f"level : {ts.level.name}")
-            level = ts.level.name
-            section = ts.level.section  
-            levels[level] = levels.get(level, {})
-            if section : 
-                levels[level]['sections'] = levels[level].get('sections', {})
-                levels[level]['sections'][section] = levels[level]['sections'].get(section, {})
-                levels[level]['sections'][section]['subjects'] = levels[level]['sections'][section].get('subjects', [])
-                levels[level]['sections'][section]['subjects'].append(ts.subject.name)
-            else : 
-                levels[level]['subjects'] = levels[level].get('subjects', [])
-                levels[level]['subjects'].append(ts.subject.name)
+
+        for ts in teacher_subjects_qs:
+            level_name = ts.level.name
+            section_name = ts.level.section
+
+            level_entry = levels.setdefault(level_name, {})
+
+            if section_name:
+                sections = level_entry.setdefault('sections', {})
+                section_entry = sections.setdefault(section_name, {})
+                subjects_list = section_entry.setdefault('subjects', [])
+            else:
+                subjects_list = level_entry.setdefault('subjects', [])
+
+            if with_prices:
+                subject_payload = {
+                    'id': ts.id,
+                    'name': ts.subject.name,
+                    'price_per_class': ts.price_per_class,
+                }
+            else:
+                subject_payload = ts.subject.name
+
+            subjects_list.append(subject_payload)
+
         self.data = levels
 
 """

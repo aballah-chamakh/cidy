@@ -5,7 +5,7 @@ from django.db.models.functions import Coalesce
 
 from ..models import Group, TeacherSubject
 from student.models import Student
-from .price_serializers import LevelSerializer, SubjectSerializer
+from .subject_serializers import LevelSerializer, SubjectSerializer
 from django.core.paginator import Paginator
 
 

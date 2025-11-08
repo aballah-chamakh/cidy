@@ -148,19 +148,19 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - the total unpaid amount in dinars across the students of the level in the selected date range
                                 - the total number of active students of the level (the ones that belong to groups)
 
-                                if the level has sections (according to prices screen below)  : 
+                                if the level has sections (according to subjects screenbelow)  : 
                                     - for each section of the level : 
                                         - the total paid amount in dinars across the students of the section of the level in the selected date range
                                         - the total unpaid amount in dinars across the students of the section of the level in the selected date range
                                         - the total number of active students (the ones that belong to groups)  of the section of the level
 
-                                        - for each subject of the section of the level (according to prices screen below) : 
+                                        - for each subject of the section of the level (according to subjects screenbelow) : 
                                             - the total paid amount in dinars across the students of the subject of the section of the level in the selected date range
                                             - the total unpaid amount in dinars across the students of the subject of the section of the level in the selected date range
                                             - the total number of active students (the ones that belong to groups) of the subject of the section of the level
 
-                                else if the level doesn't have sections (according to prices screen below) :
-                                    - for each subject of the level (according to prices screen below) : 
+                                else if the level doesn't have sections (according to subjects screenbelow) :
+                                    - for each subject of the level (according to subjects screenbelow) : 
                                         - the total paid amount in dinars across the students of the subject of the level in the selected date range
                                         - the total unpaid amount in dinars across the students of the subject of the level in the selected date range
                                     - the total number of active students (the ones that belong to groups) of the subject of the level
@@ -228,7 +228,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                         - Dynamics :
                             - clicking on the "Create a group"  : 
                               - sends a request to the server that checks if the teacher has the ability to create a new group throught ensuring that 
-                                the teacher has at least one of the following in the prices screen (see below) : 
+                                the teacher has at least one of the following in the subjects screen(see below) : 
                                     - a level that doesn't have sections according to the tunisian education system and he has at least one subject.
                                     - a level with at least one section and that section with at least one subject.
 
@@ -289,7 +289,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - the option : a blank option and the sections of the selected level, the ones included in the prices screen
                                                         - make this select disabled if one of the following is true: 
                                                             - if the user didn't select a level yet 
-                                                            - if the selected level doesn't have sections according to the data of the prices screen 
+                                                            - if the selected level doesn't have sections according to the data of the subjects screen
                                                         - validations : the value can be blank 
                                 
                                                 - row 3 : 
@@ -297,13 +297,13 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - the options : 
                                                             - a blank option and : 
                                                                 - if the selected level has sections according to the tunisian education system : 
-                                                                    the subjects of the selected section of the selected level according to the data of the prices screen 
+                                                                    the subjects of the selected section of the selected level according to the data of the subjects screen
                                                                 - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system : 
                                                                     the subjects of the selected level according to the data of prices screen
                                                         - disable this select in the following cases : 
                                                             - if the user didn't select a level yet 
                                                             - if section select input isn't disabled and the user didn't select a section yet 
-                                                            - if the selected section doesn't have subjects according to the data of the prices screen 
+                                                            - if the selected section doesn't have subjects according to the data of the subjects screen
                                                             - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system
                                                               and that level doesn't have subjects according to the data of the prices screen
                                                         validations : the value can be blank
@@ -367,19 +367,19 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - options : the sections of the selected level, the ones included in the prices screen
                                                         - make this select disabled if one of the following is true: 
                                                             - if the user didn't select a level yet 
-                                                            - if the selected level doesn't have sections according to the prices screen 
+                                                            - if the selected level doesn't have sections according to the subjects screen
                                                         - validations : required if itsn't disabled
                                                 - row 3 : 
                                                     - a select input for the subject of the group :
                                                         - options : 
                                                             - if the selected level has sections according to the tunisian education system : 
-                                                                the subjects of the selected section of the selected level according to the data of the prices screen 
+                                                                the subjects of the selected section of the selected level according to the data of the subjects screen
                                                             - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system : 
                                                                 the subjects of the selected level according to the data of prices screen
                                                         - disable this select in the following cases : 
                                                             - if the user didn't select a level yet 
                                                             - if section select input isn't disabled and the user didn't select a section yet 
-                                                            - if the selected section doesn't have subjects according to the data of the prices screen 
+                                                            - if the selected section doesn't have subjects according to the data of the subjects screen
                                                             - if the selected level doesn't have sections and he has directly subjects according to the tunisian education system
                                                               and that level doesn't have subjects according to the data of the prices screen
                                                         validations : required if it's not disabled
@@ -1040,7 +1040,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - "Male"
                                                     - "Female"
                                             - row 5 :
-                                                - a select input for the level of the student which contains as options all the levels that the teacher teaches, the ones includes in the prices screen (required)
+                                                - a select input for the level of the student which contains as options all the levels that the teacher teaches, the ones includes in the subjects screen(required)
                                             - row 6 : 
                                                 - a select input for the section of the student which contains as options all the sections of the selected level (required if it isn't disabled)
                                                     disable this select in the following cases :
@@ -1371,7 +1371,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                             - the label : "Level" 
                                                                         - row 2 : 
                                                                             - a select input pre-filled with the current value, the option list of this select is the list of the levels that the teacher teaches, the ones included 
-                                                                              in the prices screen (required)
+                                                                              in the subjects screen(required)
 
                                                                 - row 3 : 
                                                                     - col :
@@ -1381,7 +1381,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                             - a select input pre-filled with the current value (required if the selected level has sections according to the prices screen)
                                                                                 - disable this select in the following cases : 
                                                                                     - if the teacher didn't select a level
-                                                                                    - if the teacher selected a level that doesn't have sections according to the prices screen           
+                                                                                    - if the teacher selected a level that doesn't have sections according to the subjects screen          
 
                                                         - row 3 : the footer of the popup
                                                             - col 1 : 
@@ -1450,8 +1450,8 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                         - then closes popup 
                                                         - finally it redirects to the students screen 
 
-            - the prices screen : this includes the levels and level sections that the teacher teaches and the prices of their subjects 
-                - the title of the App Bar is : "Prices"
+            - the subjects screen : this includes the levels and level sections that the teacher teaches and the prices of their subjects 
+                - the title of the App Bar is : "Subjects"
                 - the content of the screen :
                     - UI :
                         - col :
@@ -1471,7 +1471,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                     - an arrow down icon in a rounded button
                                             - row (hidden by default, toggled by the arrow down icon button) :
                                                 - col :
-                                                    - if the level has sections (according to the tunisian education system):
+                                                    - if the level has sections:
                                                         - row 1 : the header row for the sections list
                                                             - col 1 :
                                                                 - the text "Sections"
@@ -1481,12 +1481,10 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                     - col :  
                                                                         - row :
                                                                             - col 1 :
-                                                                                - a checkbox
-                                                                            - col 2 :
                                                                                 - the name of the section
-                                                                            - col 3 :
+                                                                            - col 2 :
                                                                                 - a trash icon in a rounded button
-                                                                            - col 4 :
+                                                                            - col 3 :
                                                                                 - an arrow down icon in a rounded button
                                                                         - row (hidden by default, toggled by the arrow down icon button) :
                                                                             - col :
@@ -1497,29 +1495,26 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                                                                     - col : the list of subjects, and each subject must be in a card which contains :
                                                                                         - row :
                                                                                             - col 1 :
-                                                                                                - a checkbox
-                                                                                            - col 2 :
                                                                                                 - the name of the subject
-                                                                                            - col 3 :
+                                                                                            - col 2 :
                                                                                                 - the price of the subject
-                                                                                            - col 4 :
+                                                                                            - col 3 :
                                                                                                 - a trash icon in a rounded button
                                                                                             - col 4 :
                                                                                                 - an edit icon in a rounded button
-                                                    - if the level does not have sections (according to the tunisian education system):
+                                                    - if the level does not have sections:
                                                         - row 1 : the header row for the subjects list
                                                             - col 1 :
                                                                 - the text "Subjects"
                                                         - row 2 : 
                                                             - col : the list of subjects, and each subject must be in a card which contains :
                                                                 - row :
+
                                                                     - col 1 :
-                                                                        - a checkbox
-                                                                    - col 2 :
                                                                         - the name of the subject
-                                                                    - col 3 :
+                                                                    - col 2 :
                                                                         - the price of the subject
-                                                                    - col 4 :
+                                                                    - col 3 :
                                                                         - a trash icon in a rounded button
                                                                     - col 4 :
                                                                         - an edit icon in a rounded button
@@ -1527,27 +1522,21 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                 - col :
                                     - a button with the name "Add a subject"
                     - Dynamics :
-                        - handle the empty list of levels, sections and subjects by showing a message in the center of where list suppose to be : 
+                        - handle the empty list of levels, by showing the following message at the center : 
                             - "There are no levels yet" for the levels list
-                            - "There are no sections yet" for the sections list
-                            - "There are no subjects yet" for the subjects list
-                        - clicking on the arrow down icon of a level card toggles the visibility of its sections block or subjects block if the level has no sections according to the tunisian education system and it's required.
+                        - clicking on the arrow down icon of a level card toggles the visibility of its sections block or subjects block if the level has no sections a.
                         - clicking on the arrow down icon of a section card toggles the visibility of its subjects block
                         - clicking on the edit rounded button of a subject, opens up a popup form which contains : 
                             - UI : 
                                 - col : 
                                     - row 1 : the header of the popup
                                         - col 1 : 
-                                            - at the most left, the title of the popup : "Edit the subject price per class"
+                                            - at the most left, the title of the popup : "Edit the {subject name}"
                                         - col 2 : 
                                             - at the most right, the close icon
                                     - row 2 : the content area of the group 
                                         - col : 
                                             - row 1 : 
-                                                - at the center of the row, the image of the subject
-                                            - row 1 : 
-                                                - at the center of the row, the name of the subject
-                                            - row 2 : 
                                                 - col :
                                                     - row 1 :  
                                                         - the label : "Price per class (DT)" 
@@ -1557,9 +1546,9 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                         - col 1 : 
                                             - a button with the name "Cancel"
                                         - col 2 : 
-                                            - a highlighted button with the name "Edit"
+                                            - a highlighted button with the name "Save"
                             - Dynamics :
-                                - clicking on the "Edit" button saves the changes and closes the popup and updates the subject price in the UI
+                                - clicking on the "Save" button saves the changes and closes the popup and updates the subject price in the UI
                                 - clicking on the "Cancel" button closes the popup without saving changes
                         - clicking on the trash rounded button of a level or section or subject opens a confirmation popup which contains : 
                             - UI : 
@@ -1594,7 +1583,7 @@ I want to build a mobile app with the name "Cidy" which allows the government te
                                     - then 
                                         - sends notifications to the students of the deleted groups informing them that the teacher deleted their {subject of the group} group.
                                             if the students have parents, sending notifications to the parents informing them that the teacher deleted the {subject of the group} group of their son.
-                                    - finally closes the popup and update the levels,sections and subjects of the prices screen 
+                                    - finally closes the popup and update the levels,sections and subjects of the subjects screen
                         - clicking on the "Add a subject" button opens up a popup form which contains:
                             - UI:
                                 - col:

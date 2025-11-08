@@ -13,6 +13,8 @@ import 'package:cidy/profiles/teacher/screens/teacher_dashboard_screen.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_groups_screen.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_week_schedule_screen.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_students_screen.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_subjects_screen.dart';
+
 import 'package:cidy/app_state.dart';
 
 class TeacherLayout extends StatefulWidget {
@@ -228,10 +230,16 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
             },
           ),
           SidebarMenuItem(
-            label: "Tarifs",
-            icon: Icons.attach_money,
+            label: "Matière",
+            icon: Icons.menu_book,
             onTap: () {
-              // Navigate to the prices screen
+              // Navigate to the subjects screen
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  settings: RouteSettings(name: '/teacher_subjects'),
+                  builder: (context) => const TeacherSubjectsScreen(),
+                ),
+              );
             },
           ),
           SidebarMenuItem(

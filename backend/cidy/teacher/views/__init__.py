@@ -40,8 +40,8 @@ from .students_views import (
     unmark_payment_of_a_student
 )
 
-from .prices_views import (
-    prices_list,
+from .subjects_views import (
+    levels_sections_subjects,
     add_teacher_subject,
     edit_teacher_subject_price,
     delete_level_section_subject
