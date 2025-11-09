@@ -20,8 +20,16 @@ import 'package:cidy/app_state.dart';
 class TeacherLayout extends StatefulWidget {
   final Widget body;
   final String title;
+  final Widget? floatingActionButton;
+  final Widget? bottomNavigationBar;
 
-  const TeacherLayout({super.key, required this.title, required this.body});
+  const TeacherLayout({
+    super.key,
+    required this.title,
+    required this.body,
+    this.floatingActionButton,
+    this.bottomNavigationBar,
+  });
 
   @override
   State<TeacherLayout> createState() => _TeacherLayoutState();
@@ -230,7 +238,7 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
             },
           ),
           SidebarMenuItem(
-            label: "Matière",
+            label: "Matières",
             icon: Icons.menu_book,
             onTap: () {
               // Navigate to the subjects screen
@@ -273,6 +281,8 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
         notificationCount: _notificationCount,
       ),
       body: widget.body,
+      floatingActionButton: widget.floatingActionButton,
+      bottomNavigationBar: widget.bottomNavigationBar,
     );
   }
 }

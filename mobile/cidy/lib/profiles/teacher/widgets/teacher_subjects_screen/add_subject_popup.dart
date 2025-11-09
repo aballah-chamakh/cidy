@@ -2,14 +2,22 @@ import 'dart:convert';
 import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:cidy/authentication/login.dart';
 
 class AddSubjectPopup extends StatefulWidget {
   final VoidCallback onSubjectAdded;
+  final VoidCallback onServerError;
+  final Map<String, dynamic> tesLevels;
 
-  const AddSubjectPopup({super.key, required this.onSubjectAdded});
+  const AddSubjectPopup({
+    super.key,
+    required this.onSubjectAdded,
+    required this.onServerError,
+    required this.tesLevels,
+  });
 
   @override
   State<AddSubjectPopup> createState() => _AddSubjectPopupState();
@@ -20,157 +28,15 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  Map<String, dynamic> _tunisianEducationSystem = {};
   String? _selectedLevel;
   String? _selectedSection;
   String? _selectedSubject;
+  final TextEditingController _priceController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _fetchTunisianEducationSystem();
-  }
-
-  Future<void> _fetchTunisianEducationSystem() async {
-    // In a real app, this would likely be fetched from a dedicated endpoint or a local asset.
-    // For now, we'll use a hardcoded map based on typical Tunisian education structure.
-    setState(() {
-      _tunisianEducationSystem = {
-        "1st Year Secondary": {
-          "subjects": [
-            "Math",
-            "Physics",
-            "Science",
-            "French",
-            "English",
-            "Arabic",
-            "History",
-            "Geography",
-            "Computer Science",
-          ],
-        },
-        "2nd Year Secondary": {
-          "sections": {
-            "Science": {
-              "subjects": [
-                "Math",
-                "Physics",
-                "Science",
-                "French",
-                "English",
-                "Arabic",
-              ],
-            },
-            "Letters": {
-              "subjects": [
-                "Philosophy",
-                "French",
-                "English",
-                "Arabic",
-                "History",
-                "Geography",
-              ],
-            },
-            "Economics": {
-              "subjects": [
-                "Economics",
-                "Management",
-                "Math",
-                "History",
-                "Geography",
-              ],
-            },
-            "Technical": {
-              "subjects": ["Technology", "Math", "Physics"],
-            },
-          },
-        },
-        "3rd Year Secondary": {
-          "sections": {
-            "Math": {
-              "subjects": [
-                "Math",
-                "Physics",
-                "Science",
-                "Philosophy",
-                "French",
-                "English",
-              ],
-            },
-            "Experimental Science": {
-              "subjects": ["Science", "Math", "Physics", "French", "English"],
-            },
-            "Computer Science": {
-              "subjects": ["Computer Science", "Math", "Physics", "Algorithms"],
-            },
-            "Economics and Management": {
-              "subjects": [
-                "Economics",
-                "Management",
-                "Math",
-                "History",
-                "Geography",
-              ],
-            },
-            "Technical Science": {
-              "subjects": ["Technology", "Math", "Physics"],
-            },
-            "Letters": {
-              "subjects": [
-                "Philosophy",
-                "French",
-                "English",
-                "Arabic",
-                "History",
-                "Geography",
-              ],
-            },
-          },
-        },
-        "Baccalaureate": {
-          "sections": {
-            "Math": {
-              "subjects": [
-                "Math",
-                "Physics",
-                "Science",
-                "Philosophy",
-                "French",
-                "English",
-              ],
-            },
-            "Experimental Science": {
-              "subjects": ["Science", "Math", "Physics", "French", "English"],
-            },
-            "Computer Science": {
-              "subjects": ["Computer Science", "Math", "Physics", "Algorithms"],
-            },
-            "Economics and Management": {
-              "subjects": [
-                "Economics",
-                "Management",
-                "Math",
-                "History",
-                "Geography",
-              ],
-            },
-            "Technical Science": {
-              "subjects": ["Technology", "Math", "Physics"],
-            },
-            "Letters": {
-              "subjects": [
-                "Philosophy",
-                "French",
-                "English",
-                "Arabic",
-                "History",
-                "Geography",
-              ],
-            },
-          },
-        },
-      };
-    });
+  void dispose() {
+    _priceController.dispose();
+    super.dispose();
   }
 
   Future<void> _addSubject() async {
@@ -185,8 +51,9 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
 
     try {
       const storage = FlutterSecureStorage();
-      final accessToken = await storage.read(key: 'accessToken');
-      if (accessToken == null) {
+      final token = await storage.read(key: 'access_token');
+      if (!mounted) return;
+      if (token == null) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
           (Route<dynamic> route) => false,
@@ -198,17 +65,23 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
         Uri.parse('${Config.backendUrl}/api/teacher/subject/add/'),
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $accessToken',
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
           'level': _selectedLevel,
           'section': _selectedSection,
           'subject': _selectedSubject,
+          'price_per_class':
+              double.tryParse(_priceController.text.replaceAll(',', '.')) ??
+              0.0,
         }),
       );
+      if (!mounted) return;
 
       if (response.statusCode == 201) {
         widget.onSubjectAdded();
+      } else if (response.statusCode >= 500) {
+        widget.onServerError();
         Navigator.of(context).pop();
       } else {
         final errorData = jsonDecode(utf8.decode(response.bodyBytes));
@@ -217,85 +90,171 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
         });
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'An error occurred. Please try again.';
-      });
+      if (!mounted) return;
+      widget.onServerError();
+      Navigator.of(context).pop();
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Add a subject', style: AppStyles.title),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              if (_errorMessage != null)
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red, fontSize: 14),
+      insetPadding: const EdgeInsets.symmetric(
+        horizontal: popupHorizontalMargin,
+        vertical: 0,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(popupBorderRadius),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.8,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(popupPadding),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            shape: BoxShape.rectangle,
+            borderRadius: BorderRadius.circular(popupBorderRadius),
+          ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(context),
+                const Divider(height: 16),
+                Flexible(
+                  fit: FlexFit.loose,
+                  child: SingleChildScrollView(child: _buildContent()),
                 ),
-              const SizedBox(height: 10),
-              _buildLevelDropdown(),
-              const SizedBox(height: 15),
-              _buildSectionDropdown(),
-              const SizedBox(height: 15),
-              _buildSubjectDropdown(),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: primaryButtonStyle,
-                  onPressed: _isLoading ? null : _addSubject,
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : const Text('Add'),
-                ),
-              ),
-            ],
+                const Divider(height: 30),
+                _buildFooter(),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Ajouter une matière',
+          style: TextStyle(
+            fontSize: headerFontSize,
+            fontWeight: FontWeight.bold,
+            color: primaryColor,
+          ),
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.close,
+            weight: 2.0,
+            color: primaryColor,
+            size: headerIconSize,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    return Column(
+      children: [
+        if (_errorMessage != null) ...[
+          Text(
+            _errorMessage!,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.error,
+              fontSize: 15,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16.0),
+        ],
+        _buildLevelDropdown(),
+        const SizedBox(height: 15),
+        _buildSectionDropdown(),
+        const SizedBox(height: 15),
+        _buildSubjectDropdown(),
+        const SizedBox(height: 15),
+        _buildPriceInput(),
+      ],
+    );
+  }
+
+  Widget _buildFooter() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextButton(
+            style: secondaryButtonStyle,
+            onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+            child: const Text(
+              'Annuler',
+              style: TextStyle(fontSize: mediumFontSize),
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: ElevatedButton(
+            style: primaryButtonStyle,
+            onPressed: _isLoading ? null : _addSubject,
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    'Ajouter',
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildLevelDropdown() {
     return DropdownButtonFormField<String>(
-      decoration: const InputDecoration(
-        labelText: 'Level',
-        border: OutlineInputBorder(),
+      decoration: InputDecoration(
+        labelText: 'Niveau',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        contentPadding: inputContentPadding,
       ),
       value: _selectedLevel,
-      items: _tunisianEducationSystem.keys.map((String level) {
-        return DropdownMenuItem<String>(value: level, child: Text(level));
+      items: widget.tesLevels.keys.map((String level) {
+        return DropdownMenuItem<String>(
+          value: level,
+          child: Text(level, style: const TextStyle(fontSize: mediumFontSize)),
+        );
       }).toList(),
       onChanged: (value) {
         setState(() {
@@ -304,13 +263,14 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
           _selectedSubject = null;
         });
       },
-      validator: (value) => value == null ? 'Please select a level' : null,
+      validator: (value) =>
+          value == null ? 'Veuillez sélectionner un niveau' : null,
     );
   }
 
   Widget _buildSectionDropdown() {
     final levelData = _selectedLevel != null
-        ? _tunisianEducationSystem[_selectedLevel]
+        ? widget.tesLevels[_selectedLevel]
         : null;
     final sections = levelData != null && levelData.containsKey('sections')
         ? levelData['sections'] as Map<String, dynamic>
@@ -320,7 +280,14 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
         labelText: 'Section',
-        border: const OutlineInputBorder(),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        contentPadding: inputContentPadding,
         filled: !isEnabled,
         fillColor: Colors.grey[200],
       ),
@@ -329,7 +296,10 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
           ? sections.keys.map((String section) {
               return DropdownMenuItem<String>(
                 value: section,
-                child: Text(section),
+                child: Text(
+                  section,
+                  style: const TextStyle(fontSize: mediumFontSize),
+                ),
               );
             }).toList()
           : [],
@@ -343,7 +313,7 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
           : null,
       validator: (value) {
         if (isEnabled && value == null) {
-          return 'Please select a section';
+          return 'Veuillez sélectionner une section';
         }
         return null;
       },
@@ -355,15 +325,15 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
     bool isEnabled = false;
 
     if (_selectedLevel != null) {
-      final levelData = _tunisianEducationSystem[_selectedLevel];
+      final levelData = widget.tesLevels[_selectedLevel];
       if (levelData.containsKey('subjects')) {
         subjects = List<String>.from(levelData['subjects']);
         isEnabled = true;
       } else if (levelData.containsKey('sections') &&
           _selectedSection != null) {
         final sectionData = levelData['sections'][_selectedSection];
-        if (sectionData != null && sectionData.containsKey('subjects')) {
-          subjects = List<String>.from(sectionData['subjects']);
+        if (sectionData != null) {
+          subjects = List<String>.from(sectionData);
           isEnabled = true;
         }
       }
@@ -371,14 +341,27 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
 
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
-        labelText: 'Subject',
-        border: const OutlineInputBorder(),
+        labelText: 'Matière',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        contentPadding: inputContentPadding,
         filled: !isEnabled,
         fillColor: Colors.grey[200],
       ),
       value: _selectedSubject,
       items: subjects.map((String subject) {
-        return DropdownMenuItem<String>(value: subject, child: Text(subject));
+        return DropdownMenuItem<String>(
+          value: subject,
+          child: Text(
+            subject,
+            style: const TextStyle(fontSize: mediumFontSize),
+          ),
+        );
       }).toList(),
       onChanged: isEnabled
           ? (value) {
@@ -387,8 +370,44 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
               });
             }
           : null,
-      validator: (value) =>
-          isEnabled && value == null ? 'Please select a subject' : null,
+      validator: (value) => isEnabled && value == null
+          ? 'Veuillez sélectionner une matière'
+          : null,
+    );
+  }
+
+  Widget _buildPriceInput() {
+    return TextFormField(
+      controller: _priceController,
+      decoration: InputDecoration(
+        labelText: 'Prix par séance (DT)',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        contentPadding: inputContentPadding,
+      ),
+      style: const TextStyle(fontSize: mediumFontSize),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(RegExp(r'^\d+[,.]?\d{0,2}')),
+      ],
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Veuillez entrer un prix';
+        }
+        final price = double.tryParse(value.replaceAll(',', '.'));
+        if (price == null) {
+          return 'Veuillez entrer un prix valide';
+        }
+        if (price <= 0) {
+          return 'Le prix doit être supérieur à zéro';
+        }
+        return null;
+      },
     );
   }
 }

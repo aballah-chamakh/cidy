@@ -77,6 +77,23 @@ class TeacherLevelsSectionsSubjectsHierarchySerializer:
 
         self.data = levels
 
+class TesLevelsSectionsSubjectsHierarchySerializer:
+
+    def __init__(self, levels_qs):
+        levels = {}
+
+        for level in levels_qs:
+
+            level_data = levels.setdefault(level.name, {})
+
+            if level.section :
+                sections_data = level_data.setdefault('sections', {})
+                sections_data[level.section] = [subject.name for subject in level.subjects.all()]
+            else:
+                level_data['subjects'] = [subject.name for subject in level.subjects.all()]
+
+        self.data = levels
+
 """
             level_id = ts.level.id
             section_id = ts.section.id if ts.section else None

@@ -19,9 +19,8 @@ class TeacherSubjectsScreen extends StatefulWidget {
 
 class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
   bool _isLoading = true;
-  Map<String, dynamic> _levels = {};
-  final Set<String> _expandedLevels = {};
-  final Set<String> _expandedSections = {};
+  Map<String, dynamic> _teacherLevels = {};
+  Map<String, dynamic> _tesLevels = {};
 
   @override
   void initState() {
@@ -39,6 +38,7 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
       const storage = FlutterSecureStorage();
       final token = await storage.read(key: 'access_token');
       if (token == null) {
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
@@ -46,28 +46,41 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
       }
 
       final response = await http.get(
-        Uri.parse('${Config.backendUrl}/api/teacher/levels_sections_subjects/'),
+        Uri.parse(
+          '${Config.backendUrl}/api/teacher/get_levels_sections_subjects/',
+        ).replace(
+          queryParameters: {
+            'has_tes': _tesLevels.isNotEmpty ? 'true' : 'false',
+          },
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
       );
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final hierarchy = data['teacher_levels_sections_subjects_hierarchy'];
+        final teacherHierarchy =
+            data['teacher_levels_sections_subjects_hierarchy'];
         setState(() {
-          _levels = _asMap(hierarchy);
+          _teacherLevels = _asMap(teacherHierarchy);
+          if (_tesLevels.isEmpty) {
+            final tesHierarchy = data['tes_levels_sections_subjects_hierarchy'];
+            _tesLevels = _asMap(tesHierarchy);
+          }
         });
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       } else {
-        _showError('Erreur du serveur');
+        _showError('Erreur du serveur (500)');
       }
     } catch (e) {
-      _showError('An error occurred. Please try again.');
+      if (!mounted) return;
+      _showError('Erreur du serveur (500)');
     } finally {
       if (mounted) {
         setState(() {
@@ -78,36 +91,17 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
   }
 
   void _showError(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   void _showSuccess(String message) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
-  }
-
-  void _toggleLevel(String levelName) {
-    setState(() {
-      if (_expandedLevels.contains(levelName)) {
-        _expandedLevels.remove(levelName);
-      } else {
-        _expandedLevels.add(levelName);
-      }
-    });
-  }
-
-  void _toggleSection(String levelName, String sectionName) {
-    setState(() {
-      final key = '$levelName-$sectionName';
-      if (_expandedSections.contains(key)) {
-        _expandedSections.remove(key);
-      } else {
-        _expandedSections.add(key);
-      }
-    });
   }
 
   Map<String, dynamic> _asMap(dynamic value) {
@@ -214,10 +208,13 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AddSubjectPopup(
+          tesLevels: _tesLevels,
           onSubjectAdded: () {
+            Navigator.of(context).pop();
+            _showSuccess('Matière ajoutée avec succès!');
             _fetchSubjects();
-            _showSuccess('Subject added successfully!');
           },
+          onServerError: () => _showError('Erreur du serveur (500)'),
         );
       },
     );
@@ -236,8 +233,9 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
           teacherSubjectId: teacherSubjectId,
           initialPrice: currentPrice,
           onSubjectUpdated: () {
+            Navigator.of(context).pop();
+            _showSuccess('Matière mise à jour avec succès!');
             _fetchSubjects();
-            _showSuccess('Subject updated successfully!');
           },
         );
       },
@@ -253,8 +251,9 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
           name: name,
           id: id,
           onDeleteConfirmed: () {
+            Navigator.of(context).pop();
+            _showSuccess('$type supprimé(e) avec succès!');
             _fetchSubjects();
-            _showSuccess('$type deleted successfully!');
           },
         );
       },
@@ -264,158 +263,212 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
   @override
   Widget build(BuildContext context) {
     return TeacherLayout(
-      title: 'Subjects',
+      title: 'Matières',
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
           : _buildBody(),
+      bottomNavigationBar: _isLoading || _teacherLevels.isEmpty
+          ? null
+          : Container(
+              padding: const EdgeInsets.all(10.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    spreadRadius: 2,
+                    blurRadius: 5,
+                    offset: const Offset(0, -3),
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: _showAddSubjectDialog,
+                label: const Text(
+                  'Ajouter une matière',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                icon: const Icon(Icons.add),
+                style: primaryButtonStyle,
+              ),
+            ),
     );
   }
 
   Widget _buildBody() {
-    return Column(
-      children: [
-        Expanded(
-          child: _levels.isEmpty ? _buildNoSubjectsUI() : _buildLevelsList(),
-        ),
-        _buildStickyFooter(),
-      ],
+    return RefreshIndicator(
+      color: primaryColor,
+      onRefresh: _fetchSubjects,
+      child: _teacherLevels.isEmpty ? _buildNoSubjectsUI() : _buildLevelsList(),
     );
   }
 
   Widget _buildNoSubjectsUI() {
-    return const Center(
-      child: Text(
-        'There are no levels yet',
-        style: TextStyle(fontSize: 18, color: Colors.grey),
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.subject, size: 100, color: primaryColor),
+              const SizedBox(height: 10),
+              const Text(
+                "Aucune matière trouvée",
+                style: TextStyle(fontSize: 20, color: primaryColor),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _showAddSubjectDialog,
+                label: const Text(
+                  'Créez une matière',
+                  style: TextStyle(fontSize: 16),
+                ),
+                icon: const Icon(Icons.add),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(5.0),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildLevelsList() {
-    return ListView(
-      padding: const EdgeInsets.all(8.0),
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Text('Levels', style: AppStyles.title),
-        ),
-        ..._levels.entries.map((levelEntry) {
-          final levelName = levelEntry.key;
-          final levelData = _asMap(levelEntry.value);
-          final levelId = _extractId(levelData);
-          final isExpanded = _expandedLevels.contains(levelName);
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-            child: Column(
-              children: [
-                ListTile(
-                  title: Text(levelName, style: AppStyles.title),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: levelId == null
-                            ? null
-                            : () => _showDeleteConfirmationDialog(
-                                'level',
-                                levelName,
-                                levelId,
-                              ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          isExpanded
-                              ? Icons.arrow_drop_up
-                              : Icons.arrow_drop_down,
-                        ),
-                        onPressed: () => _toggleLevel(levelName),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isExpanded)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16.0,
-                      right: 16.0,
-                      bottom: 8.0,
-                    ),
-                    child: _buildLevelContent(levelName, levelData),
-                  ),
-              ],
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 80.0),
+      itemCount: _teacherLevels.length + 1,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return const Padding(
+            padding: EdgeInsets.fromLTRB(8.0, 8.0, 8.0, 8.0),
+            child: Text(
+              "Les niveaux",
+              style: TextStyle(
+                fontSize: mediumFontSize + 2,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           );
-        }).toList(),
-      ],
+        }
+        final levelIndex = index - 1;
+        final levelName = _teacherLevels.keys.elementAt(levelIndex);
+        final levelData = _asMap(_teacherLevels[levelName]);
+        final levelId = _extractId(levelData);
+
+        return _buildLevelCard(
+          levelName: levelName,
+          levelId: levelId,
+          onDelete: () =>
+              _showDeleteConfirmationDialog('niveau', levelName, levelId!),
+          child: _buildLevelContent(levelName, levelData),
+        );
+      },
+    );
+  }
+
+  Widget _buildLevelCard({
+    required String levelName,
+    int? levelId,
+    required VoidCallback onDelete,
+    required Widget child,
+  }) {
+    return Card(
+      color: Colors.grey.shade100,
+      margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade300),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: PageStorageKey<String>(levelName),
+          title: Text(
+            levelName,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: mediumFontSize,
+            ),
+          ),
+          children: [
+            Container(
+              color: Colors.grey.shade50,
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: child,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildLevelContent(String levelName, Map<String, dynamic> levelData) {
     final sections = levelData['sections'];
-    if (sections is Map) {
+    if (sections is Map && sections.isNotEmpty) {
       return _buildSectionsList(levelName, sections.cast<String, dynamic>());
     }
 
     final subjects = levelData['subjects'];
-    if (subjects is List) {
-      return _buildSubjectsList(List<dynamic>.from(subjects));
+    if (subjects is List && subjects.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        child: _buildSubjectsList(List<dynamic>.from(subjects)),
+      );
     }
-    return const SizedBox.shrink();
+    return const Padding(
+      padding: EdgeInsets.all(16.0),
+      child: Text(
+        "Aucune section ou matière dans ce niveau.",
+        style: TextStyle(color: Colors.grey),
+      ),
+    );
   }
 
   Widget _buildSectionsList(String levelName, Map<String, dynamic> sections) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Sections', style: AppStyles.title),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16.0, 8.0, 0, 8.0),
+          child: Text(
+            "Les sections",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
         ...sections.entries.map((sectionEntry) {
           final sectionName = sectionEntry.key;
           final sectionData = _asMap(sectionEntry.value);
           final sectionId = _extractId(sectionData);
-          final isExpanded = _expandedSections.contains(
-            '$levelName-$sectionName',
-          );
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4.0),
-            child: Column(
-              children: [
-                ListTile(
-                  title: Text(sectionName, style: AppStyles.title),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: sectionId == null
-                            ? null
-                            : () => _showDeleteConfirmationDialog(
-                                'section',
-                                sectionName,
-                                sectionId,
-                              ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          isExpanded
-                              ? Icons.arrow_drop_up
-                              : Icons.arrow_drop_down,
-                        ),
-                        onPressed: () => _toggleSection(levelName, sectionName),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isExpanded)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 16.0,
-                      right: 16.0,
-                      bottom: 8.0,
-                    ),
-                    child: _buildSubjectsList(_asList(sectionData['subjects'])),
-                  ),
-              ],
+
+          return _buildSectionCard(
+            sectionName: sectionName,
+            sectionId: sectionId,
+            onDelete: () => _showDeleteConfirmationDialog(
+              'section',
+              sectionName,
+              sectionId!,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 4.0,
+              ),
+              child: _buildSubjectsList(_asList(sectionData['subjects'])),
             ),
           );
         }).toList(),
@@ -423,60 +476,78 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
     );
   }
 
+  Widget _buildSectionCard({
+    required String sectionName,
+    int? sectionId,
+    required VoidCallback onDelete,
+    required Widget child,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            key: PageStorageKey<String>(sectionName),
+            title: Text(
+              sectionName,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+            children: [
+              Container(
+                color: Colors.grey.shade50,
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: child,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSubjectsList(List<dynamic> subjects) {
     if (subjects.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Subjects', style: AppStyles.title),
-          SizedBox(height: 4.0),
-          Text('No subjects added yet.', style: TextStyle(color: Colors.grey)),
-        ],
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          "Aucune matière dans cette section.",
+          style: TextStyle(color: Colors.grey),
+        ),
       );
     }
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('Subjects', style: AppStyles.title),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(8.0, 0.0, 0.0, 8.0),
+          child: Text(
+            "Les matières",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
         ...subjects.map((subject) {
           final subjectName = _extractSubjectName(subject);
           final subjectId = _extractId(subject);
           final priceLabel = _priceLabel(subject);
           final editPrice = _extractPrice(subject) ?? 0;
 
-          final actionButtons = <Widget>[];
-          if (subjectId != null) {
-            actionButtons.add(
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _showDeleteConfirmationDialog(
-                  'subject',
-                  subjectName,
-                  subjectId,
-                ),
-              ),
-            );
-            actionButtons.add(
-              IconButton(
-                icon: const Icon(Icons.edit, color: primaryColor),
-                onPressed: () =>
-                    _showEditSubjectDialog(subjectName, subjectId, editPrice),
-              ),
-            );
-          }
-
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 4.0),
-            child: ListTile(
-              title: Text(subjectName),
-              subtitle: priceLabel != null ? Text(priceLabel) : null,
-              trailing: actionButtons.isEmpty
-                  ? null
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: actionButtons,
-                    ),
+          return _buildSubjectCard(
+            subjectName: subjectName,
+            priceLabel: priceLabel,
+            subjectId: subjectId,
+            onEdit: () =>
+                _showEditSubjectDialog(subjectName, subjectId!, editPrice),
+            onDelete: () => _showDeleteConfirmationDialog(
+              'matière',
+              subjectName,
+              subjectId!,
             ),
           );
         }).toList(),
@@ -484,16 +555,66 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
     );
   }
 
-  Widget _buildStickyFooter() {
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      color: Colors.white,
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: primaryButtonStyle,
-          onPressed: _showAddSubjectDialog,
-          child: const Text('Add a subject'),
+  Widget _buildSubjectCard({
+    required String subjectName,
+    String? priceLabel,
+    int? subjectId,
+    required VoidCallback onEdit,
+    required VoidCallback onDelete,
+  }) {
+    return Card(
+      color: Colors.grey.shade100,
+      margin: const EdgeInsets.symmetric(vertical: 4.0),
+      elevation: 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.grey.shade300),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    subjectName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (priceLabel != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      priceLabel,
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (subjectId != null)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined, color: primaryColor),
+                    onPressed: onEdit,
+                    tooltip: 'Modifier',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: primaryColor),
+                    onPressed: onDelete,
+                    tooltip: 'Supprimer',
+                  ),
+                ],
+              ),
+          ],
         ),
       ),
     );

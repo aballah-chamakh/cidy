@@ -41,7 +41,7 @@ from .students_views import (
 )
 
 from .subjects_views import (
-    levels_sections_subjects,
+    get_levels_sections_subjects,
     add_teacher_subject,
     edit_teacher_subject_price,
     delete_level_section_subject

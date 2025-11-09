@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from ..models import TeacherSubject, Level, Subject, Group, GroupEnrollment
-from ..serializers import TeacherLevelsSectionsSubjectsHierarchySerializer,TeacherSubjectSerializer
+from ..serializers import TeacherLevelsSectionsSubjectsHierarchySerializer,TeacherSubjectSerializer,TesLevelsSectionsSubjectsHierarchySerializer
 from student.models import StudentNotification, StudentUnreadNotification
 from parent.models import ParentNotification, ParentUnreadNotification,Son 
 
@@ -21,12 +21,25 @@ def increment_parent_unread_notifications(parent):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def levels_sections_subjects(request): 
+def get_levels_sections_subjects(request): 
+
     """Retrieve the list of levels, sections, and subjects for the teacher."""
+    
+    has_tes = request.query_params.get('has_tes', 'false').lower() == 'true'
+    
     teacher = request.user.teacher
     queryset = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'subject')
-    serializer = TeacherLevelsSectionsSubjectsHierarchySerializer(queryset,with_prices=True)
-    return Response({'teacher_levels_sections_subjects_hierarchy' : serializer.data}, status=status.HTTP_200_OK)
+    teacher_levels_sections_subjects_hierarchy_serializer = TeacherLevelsSectionsSubjectsHierarchySerializer(queryset,with_prices=True)
+    response = {
+        'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy_serializer.data
+    }
+
+    if not has_tes:
+        tes_levels_sections_subjects_hierarchy_serializer = TesLevelsSectionsSubjectsHierarchySerializer(Level.objects.all())
+        response['tes_levels_sections_subjects_hierarchy'] = tes_levels_sections_subjects_hierarchy_serializer.data
+    
+    print(response)
+    return Response(response, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
