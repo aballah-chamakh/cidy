@@ -15,8 +15,8 @@ class TeacherAccountInfoSerializer(serializers.ModelSerializer):
 
 class UpdateTeacherAccountInfoSerializer(serializers.ModelSerializer):
     """ModelSerializer for updating teacher account information."""
-    email = serializers.EmailField(source='user.email', required=True, write_only=True)
-    phone_number = serializers.CharField(source='user.phone_number', min_length=8, max_length=8, required=True, write_only=True)
+    email = serializers.EmailField( required=True, write_only=True)
+    phone_number = serializers.CharField(min_length=8, max_length=8, required=True, write_only=True)
     current_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:

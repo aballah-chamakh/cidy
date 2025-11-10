@@ -28,7 +28,7 @@ def update_account_info(request):
         serializer.save()
 
         return Response({"message": "Account info updated successfully"}, status=200)
-    return Response({"error": serializer.errors}, status=400)
+    return Response(serializer.errors, status=400)
 
 
 @api_view(['PUT'])
@@ -42,4 +42,5 @@ def change_password(request):
     if serializer.is_valid():
         serializer.save()
         return Response({"message": "Password changed successfully"}, status=200)
-    return Response({"error": serializer.errors}, status=400)
+    print(serializer.errors)
+    return Response(serializer.errors, status=400)

@@ -25,6 +25,7 @@ def increment_parent_unread_notifications(parent):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_levels_sections_subjects(request): 
+    time.sleep(5)
 
     """Retrieve the list of levels, sections, and subjects for the teacher."""
     
@@ -128,6 +129,9 @@ def edit_teacher_subject_price(request, teacher_subject_id):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_level_section_subject(request, teacher_subject_id):
+
+    time.sleep(5)
+    #return HttpResponseServerError("500 server error")
     """Delete a level, section, or subject."""
     teacher = request.user.teacher
 
@@ -135,7 +139,11 @@ def delete_level_section_subject(request, teacher_subject_id):
         teacher_subject = TeacherSubject.objects.get(id=teacher_subject_id, teacher=teacher)
     except TeacherSubject.DoesNotExist:
         return Response({"error": "Teacher subject not found."}, status=status.HTTP_404_NOT_FOUND)
+    
+    teacher_subject.delete()
+    return Response({"message": "Teacher subject deleted successfully."}, status=status.HTTP_200_OK)
 
+    """
     # Get related groups
     groups = Group.objects.filter(teacher_subject=teacher_subject)
 
@@ -175,6 +183,7 @@ def delete_level_section_subject(request, teacher_subject_id):
             if not student.user:
                 student.delete()
 
-    teacher_subject.delete()
+    
     return Response({"message": "Teacher subject deleted successfully."}, status=status.HTTP_200_OK)
 
+    """
