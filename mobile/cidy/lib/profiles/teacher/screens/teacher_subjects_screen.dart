@@ -93,14 +93,20 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message, style: TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 
   void _showSuccess(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
+      SnackBar(
+        content: Text(message, style: TextStyle(fontSize: 16)),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 
@@ -255,13 +261,16 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
       context: context,
       builder: (BuildContext context) {
         return DeleteSubjectPopup(
-          type: type,
           name: name,
           id: id,
           onDeleteConfirmed: () {
             Navigator.of(context).pop();
-            _showSuccess('$type supprimé(e) avec succès!');
+            _showSuccess('Matière supprimée avec succès!');
             _fetchSubjects();
+          },
+          onServerError: () {
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
           },
         );
       },
@@ -316,41 +325,33 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
   }
 
   Widget _buildNoSubjectsUI() {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.7,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.subject, size: 100, color: primaryColor),
-              const SizedBox(height: 10),
-              const Text(
-                "Aucune matière trouvée",
-                style: TextStyle(fontSize: 20, color: primaryColor),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: _showAddSubjectDialog,
-                label: const Text(
-                  'Créez une matière',
-                  style: TextStyle(fontSize: 16),
-                ),
-                icon: const Icon(Icons.add),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(5.0),
-                  ),
-                ),
-              ),
-            ],
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(Icons.menu_book, size: 100, color: primaryColor),
+          const SizedBox(height: 10),
+          const Text(
+            "Aucune matière trouvée",
+            style: TextStyle(fontSize: 20, color: primaryColor),
           ),
-        ),
+          const SizedBox(height: 20),
+          ElevatedButton.icon(
+            onPressed: _showAddSubjectDialog,
+            label: const Text(
+              'Créez une matière',
+              style: TextStyle(fontSize: 16),
+            ),
+            icon: const Icon(Icons.add),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -14,6 +14,7 @@ import 'package:cidy/profiles/teacher/screens/teacher_groups_screen.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_week_schedule_screen.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_students_screen.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_subjects_screen.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_account_screen.dart';
 
 import 'package:cidy/app_state.dart';
 
@@ -258,10 +259,16 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
             },
           ),
           SidebarMenuItem(
-            label: "Paramètres",
-            icon: Icons.settings,
+            label: "Compte",
+            icon: Icons.person,
             onTap: () {
               // Navigate to the settings screen
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  settings: RouteSettings(name: '/teacher_subjects'),
+                  builder: (context) => const TeacherAccountScreen(),
+                ),
+              );
             },
           ),
         ],

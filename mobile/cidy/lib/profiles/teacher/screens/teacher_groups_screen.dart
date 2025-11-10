@@ -91,7 +91,10 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message, style: TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 

@@ -8,17 +8,17 @@ import 'package:cidy/authentication/login.dart';
 import 'package:http/http.dart' as http;
 
 class DeleteSubjectPopup extends StatefulWidget {
-  final String type;
   final String name;
   final int id;
   final VoidCallback onDeleteConfirmed;
+  final VoidCallback onServerError;
 
   const DeleteSubjectPopup({
     super.key,
-    required this.type,
     required this.name,
     required this.id,
     required this.onDeleteConfirmed,
+    required this.onServerError,
   });
 
   @override
@@ -27,25 +27,10 @@ class DeleteSubjectPopup extends StatefulWidget {
 
 class _DeleteSubjectPopupState extends State<DeleteSubjectPopup> {
   bool _isLoading = false;
-  String? _errorMessage;
-
-  String _buildConfirmationMessage() {
-    switch (widget.type) {
-      case 'level':
-        return 'Êtes-vous sûr de vouloir supprimer le niveau ${widget.name} ? Cela supprimera toutes les sections, matières et groupes associés.';
-      case 'section':
-        return 'Êtes-vous sûr de vouloir supprimer la section ${widget.name} ? Cela supprimera toutes les matières et groupes associés.';
-      case 'subject':
-        return 'Êtes-vous sûr de vouloir supprimer la matière ${widget.name} ? Cela supprimera tous les groupes associés.';
-      default:
-        return 'Êtes-vous sûr de vouloir supprimer ${widget.name} ?';
-    }
-  }
 
   Future<void> _deleteItem() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     try {
@@ -76,7 +61,7 @@ class _DeleteSubjectPopupState extends State<DeleteSubjectPopup> {
 
       if (!mounted) return;
 
-      if (response.statusCode == 204) {
+      if (response.statusCode == 200) {
         widget.onDeleteConfirmed();
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -84,27 +69,11 @@ class _DeleteSubjectPopupState extends State<DeleteSubjectPopup> {
           (route) => false,
         );
       } else {
-        String? serverMessage;
-        if (response.bodyBytes.isNotEmpty) {
-          final decodedBody = jsonDecode(utf8.decode(response.bodyBytes));
-          if (decodedBody is Map<String, dynamic>) {
-            final detail = decodedBody['detail'];
-            if (detail is String) {
-              serverMessage = detail;
-            }
-          }
-        }
-
-        setState(() {
-          _errorMessage =
-              serverMessage ?? 'Suppression impossible. Veuillez réessayer.';
-        });
+        widget.onServerError();
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Une erreur est survenue. Veuillez réessayer.';
-      });
+      widget.onServerError();
     } finally {
       if (!mounted) return;
       setState(() {
@@ -167,18 +136,10 @@ class _DeleteSubjectPopupState extends State<DeleteSubjectPopup> {
             Icon(Icons.delete, color: primaryColor, size: 100),
             const SizedBox(height: 15.0),
             Text(
-              _buildConfirmationMessage(),
+              'Êtes-vous sûr de vouloir supprimer la matière ${widget.name} ? Cela supprimera tous les groupes associés.',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: mediumFontSize),
             ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Colors.red),
-              ),
-            ],
             const Divider(height: 30),
             Row(
               children: [

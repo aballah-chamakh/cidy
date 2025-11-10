@@ -143,13 +143,19 @@ class _TeacherStudentDetailScreenState
 
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
+      SnackBar(
+        content: Text(message, style: TextStyle(fontSize: 16)),
+        backgroundColor: Colors.green,
+      ),
     );
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(message, style: TextStyle(fontSize: 16)),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 
