@@ -1,11 +1,14 @@
 from rest_framework.decorators import api_view, permission_classes
+from django.http import HttpResponseServerError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from ..models import TeacherSubject, Level, Subject, Group, GroupEnrollment
-from ..serializers import TeacherLevelsSectionsSubjectsHierarchySerializer,TeacherSubjectSerializer,TesLevelsSectionsSubjectsHierarchySerializer
+from ..serializers import TeacherLevelsSectionsSubjectsHierarchySerializer,TeacherSubjectSerializer,TesLevelsSectionsSubjectsHierarchySerializer,EditTeacherSubjectPriceSerializer
 from student.models import StudentNotification, StudentUnreadNotification
 from parent.models import ParentNotification, ParentUnreadNotification,Son 
+import time
+
 
 def increment_student_unread_notifications(student):
     """Helper function to increment student unread notifications count"""
@@ -28,14 +31,14 @@ def get_levels_sections_subjects(request):
     has_tes = request.query_params.get('has_tes', 'false').lower() == 'true'
     
     teacher = request.user.teacher
-    queryset = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'subject')
+    queryset = TeacherSubject.objects.filter(teacher=teacher).select_related('level', 'subject').order_by('level__order')
     teacher_levels_sections_subjects_hierarchy_serializer = TeacherLevelsSectionsSubjectsHierarchySerializer(queryset,with_prices=True)
     response = {
         'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy_serializer.data
     }
 
     if not has_tes:
-        tes_levels_sections_subjects_hierarchy_serializer = TesLevelsSectionsSubjectsHierarchySerializer(Level.objects.all())
+        tes_levels_sections_subjects_hierarchy_serializer = TesLevelsSectionsSubjectsHierarchySerializer(Level.objects.all().order_by('order'))
         response['tes_levels_sections_subjects_hierarchy'] = tes_levels_sections_subjects_hierarchy_serializer.data
     
     print(response)
@@ -45,18 +48,22 @@ def get_levels_sections_subjects(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def add_teacher_subject(request):
+    
+    time.sleep(5)
     """Add a new subject for the teacher."""
 
     serializer = TeacherSubjectSerializer(data=request.data, context={'request': request})
     if serializer.is_valid():
         teacher = request.user.teacher
         serializer.save(teacher=teacher)
-        return Response({"message": "Subject added successfully."}, status=status.HTTP_201_CREATED)
+        return Response({"message": "Subject added successfully."}, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_teacher_subject_price(request, teacher_subject_id):
+    #return HttpResponseServerError("500 server error")
+    time.sleep(5)
     """Edit the price of a subject."""
     teacher = request.user.teacher
     try:
@@ -65,10 +72,10 @@ def edit_teacher_subject_price(request, teacher_subject_id):
     except TeacherSubject.DoesNotExist:
         return Response({"error": "Subject not found."}, status=status.HTTP_404_NOT_FOUND)
     
-    serializer = TeacherSubjectSerializer(teacher_subject, data=request.data, partial=True, context={'request': request})
+    serializer = EditTeacherSubjectPriceSerializer(teacher_subject, data=request.data, partial=True, context={'request': request})
     if serializer.is_valid():
         teacher_subject = serializer.save()
-
+        """
         # Get the old price before saving
 
         new_price = teacher_subject.price_per_class
@@ -111,8 +118,9 @@ def edit_teacher_subject_price(request, teacher_subject_id):
                             meta_data={"son_id": son.id, "group_id": group.id}
                         )
                         increment_parent_unread_notifications(son.parent)
-
-            return Response({"message": "Subject price updated successfully."}, status=status.HTTP_200_OK)
+            """
+        
+        return Response({"message": "Subject price updated successfully."}, status=status.HTTP_200_OK)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

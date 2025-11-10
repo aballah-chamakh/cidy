@@ -3,7 +3,7 @@ import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_layout.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_subjects_screen/add_subject_popup.dart';
-import 'package:cidy/profiles/teacher/widgets/teacher_subjects_screen/confirm_delete_popup.dart';
+import 'package:cidy/profiles/teacher/widgets/teacher_subjects_screen/delete_subject_popup.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_subjects_screen/edit_subject_popup.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -208,13 +208,17 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AddSubjectPopup(
+          teacherLevels: _teacherLevels,
           tesLevels: _tesLevels,
           onSubjectAdded: () {
             Navigator.of(context).pop();
             _showSuccess('Matière ajoutée avec succès!');
             _fetchSubjects();
           },
-          onServerError: () => _showError('Erreur du serveur (500)'),
+          onServerError: () {
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+          },
         );
       },
     );
@@ -237,6 +241,10 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
             _showSuccess('Matière mise à jour avec succès!');
             _fetchSubjects();
           },
+          onServerError: () {
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+          },
         );
       },
     );
@@ -246,7 +254,7 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return ConfirmDeletePopup(
+        return DeleteSubjectPopup(
           type: type,
           name: name,
           id: id,

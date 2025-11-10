@@ -11,12 +11,14 @@ class AddSubjectPopup extends StatefulWidget {
   final VoidCallback onSubjectAdded;
   final VoidCallback onServerError;
   final Map<String, dynamic> tesLevels;
+  final Map<String, dynamic> teacherLevels;
 
   const AddSubjectPopup({
     super.key,
     required this.onSubjectAdded,
     required this.onServerError,
     required this.tesLevels,
+    required this.teacherLevels,
   });
 
   @override
@@ -31,6 +33,7 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
   String? _selectedLevel;
   String? _selectedSection;
   String? _selectedSubject;
+  String? _subjectExistsError;
   final TextEditingController _priceController = TextEditingController();
 
   @override
@@ -39,8 +42,45 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
     super.dispose();
   }
 
+  bool _subjectExists() {
+    if (_selectedLevel == null || _selectedSubject == null) {
+      return false;
+    }
+
+    if (widget.teacherLevels.containsKey(_selectedLevel)) {
+      final levelData = widget.teacherLevels[_selectedLevel];
+      if (_selectedSection != null) {
+        if (levelData.containsKey('sections') &&
+            levelData['sections'].containsKey(_selectedSection)) {
+          final sectionData = levelData['sections'][_selectedSection];
+          if (sectionData.containsKey('subjects')) {
+            final subjects = sectionData['subjects'] as List;
+            return subjects.any((s) => s['name'] == _selectedSubject);
+          }
+        }
+      } else {
+        if (levelData.containsKey('subjects')) {
+          final subjects = levelData['subjects'] as List;
+          return subjects.any((s) => s['name'] == _selectedSubject);
+        }
+      }
+    }
+    return false;
+  }
+
   Future<void> _addSubject() async {
+    setState(() {
+      _subjectExistsError = null;
+    });
+
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    if (_subjectExists()) {
+      setState(() {
+        _subjectExistsError = 'Cette matière existe déjà.';
+      });
       return;
     }
 
@@ -69,7 +109,7 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
         },
         body: jsonEncode({
           'level': _selectedLevel,
-          'section': _selectedSection,
+          'section': _selectedSection ?? '',
           'subject': _selectedSubject,
           'price_per_class':
               double.tryParse(_priceController.text.replaceAll(',', '.')) ??
@@ -78,21 +118,19 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
       );
       if (!mounted) return;
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         widget.onSubjectAdded();
-      } else if (response.statusCode >= 500) {
-        widget.onServerError();
-        Navigator.of(context).pop();
+      } else if (response.statusCode == 401) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (Route<dynamic> route) => false,
+        );
       } else {
-        final errorData = jsonDecode(utf8.decode(response.bodyBytes));
-        setState(() {
-          _errorMessage = errorData['detail'] ?? 'Failed to add subject.';
-        });
+        widget.onServerError();
       }
     } catch (e) {
       if (!mounted) return;
       widget.onServerError();
-      Navigator.of(context).pop();
     } finally {
       if (mounted) {
         setState(() {
@@ -116,7 +154,7 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.8,
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
         child: Container(
           padding: const EdgeInsets.all(popupPadding),
@@ -133,6 +171,7 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
               children: [
                 _buildHeader(context),
                 const Divider(height: 16),
+                SizedBox(height: 8),
                 Flexible(
                   fit: FlexFit.loose,
                   child: SingleChildScrollView(child: _buildContent()),
@@ -166,9 +205,11 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
             color: primaryColor,
             size: headerIconSize,
           ),
-          onPressed: () {
-            Navigator.of(context).pop();
-          },
+          onPressed: _isLoading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
         ),
       ],
     );
@@ -177,23 +218,12 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
   Widget _buildContent() {
     return Column(
       children: [
-        if (_errorMessage != null) ...[
-          Text(
-            _errorMessage!,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.error,
-              fontSize: 15,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16.0),
-        ],
         _buildLevelDropdown(),
-        const SizedBox(height: 15),
+        const SizedBox(height: 10),
         _buildSectionDropdown(),
-        const SizedBox(height: 15),
+        const SizedBox(height: 10),
         _buildSubjectDropdown(),
-        const SizedBox(height: 15),
+        const SizedBox(height: 10),
         _buildPriceInput(),
       ],
     );
@@ -218,17 +248,31 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
             style: primaryButtonStyle,
             onPressed: _isLoading ? null : _addSubject,
             child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
+                ? const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Ajouter',
+                        style: TextStyle(fontSize: mediumFontSize),
+                      ),
+                      SizedBox(width: 10),
+                      SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   )
-                : const Text(
-                    'Ajouter',
-                    style: TextStyle(fontSize: mediumFontSize),
+                : const FittedBox(
+                    child: Text(
+                      'Ajouter',
+                      style: TextStyle(fontSize: mediumFontSize),
+                    ),
                   ),
           ),
         ),
@@ -256,13 +300,15 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
           child: Text(level, style: const TextStyle(fontSize: mediumFontSize)),
         );
       }).toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedLevel = value;
-          _selectedSection = null;
-          _selectedSubject = null;
-        });
-      },
+      onChanged: _isLoading
+          ? null
+          : (value) {
+              setState(() {
+                _selectedLevel = value;
+                _selectedSection = null;
+                _selectedSubject = null;
+              });
+            },
       validator: (value) =>
           value == null ? 'Veuillez sélectionner un niveau' : null,
     );
@@ -303,7 +349,7 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
               );
             }).toList()
           : [],
-      onChanged: isEnabled
+      onChanged: isEnabled && !_isLoading
           ? (value) {
               setState(() {
                 _selectedSection = value;
@@ -352,6 +398,7 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
         contentPadding: inputContentPadding,
         filled: !isEnabled,
         fillColor: Colors.grey[200],
+        errorText: _subjectExistsError,
       ),
       value: _selectedSubject,
       items: subjects.map((String subject) {
@@ -363,10 +410,11 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
           ),
         );
       }).toList(),
-      onChanged: isEnabled
+      onChanged: isEnabled && !_isLoading
           ? (value) {
               setState(() {
                 _selectedSubject = value;
+                _subjectExistsError = null;
               });
             }
           : null,
@@ -379,6 +427,7 @@ class _AddSubjectPopupState extends State<AddSubjectPopup> {
   Widget _buildPriceInput() {
     return TextFormField(
       controller: _priceController,
+      enabled: !_isLoading,
       decoration: InputDecoration(
         labelText: 'Prix par séance (DT)',
         border: OutlineInputBorder(

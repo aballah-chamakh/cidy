@@ -3,7 +3,8 @@ from .subject_serializers import (TeacherLevelsSectionsSubjectsHierarchySerializ
                                 StudentListToReplaceBySerializer,
                                 LevelSerializer,
                                 SubjectSerializer,
-                                TesLevelsSectionsSubjectsHierarchySerializer)
+                                TesLevelsSectionsSubjectsHierarchySerializer,
+                                EditTeacherSubjectPriceSerializer)
 from .group_serializers import (GroupListSerializer,GroupCreateUpdateSerializer,
                                 GroupDetailsSerializer,GroupStudentListSerializer,StudentsWithOverlappingClasses,
                                 GroupCreateStudentSerializer,GroupPossibleStudentListSerializer)

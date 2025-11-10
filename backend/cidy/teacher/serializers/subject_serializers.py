@@ -13,38 +13,29 @@ class SubjectSerializer(serializers.ModelSerializer):
         fields = ['id', 'name']
 
 class TeacherSubjectSerializer(serializers.ModelSerializer):
+    level = serializers.CharField(write_only=True)
+    section = serializers.CharField(write_only=True, allow_blank=True)
+    subject = serializers.CharField(write_only=True)
+
     class Meta:
         model = TeacherSubject
-        fields = ['id', 'level', 'section', 'subject', 'price_per_class']
+        fields = ['id', 'level','section', 'subject', 'price_per_class']
 
-    def validate(self, attrs):
+    def create(self, validated_data):
+        level = Level.objects.get(name=validated_data.pop('level'), section=validated_data.pop('section') )
+        subject = Subject.objects.get(name=validated_data.pop('subject'))
+        teacher = self.context['request'].user.teacher
+        validated_data['level'] = level
+        validated_data['subject'] = subject
+        validated_data['teacher'] = teacher
 
-        # validate the level,section and subject fields only for creation
-        if not self.instance : 
-            level = attrs.get('level')
-            section = attrs.get('section')
-            subject = attrs.get('subject')
+        return super().create(validated_data)
 
-            # in the case of the section not None 
-            if subject.section is not None :
-                # check if the section belong to the level 
-                if section.level != level:
-                    raise serializers.ValidationError("Section does not belong to the selected Level.")
-                # check if the subject belongs to the section
-                if subject.section != section:
-                    raise serializers.ValidationError("Subject does not belong to the selected Section.")
-            else : # in the case of the section is None 
-                # check if the subject belongs to the level
-                if subject.level != level:
-                    raise serializers.ValidationError("Subject does not belong to the selected Level.")
 
-            request = self.context.get("request")
-            teacher = request.user.teacher
-            if TeacherSubject.objects.filter(teacher=teacher, level=level, section=section, subject=subject).exists() :
-                raise serializers.ValidationError("This subject already exists for the selected level and section.")
-
-        return attrs
-
+class EditTeacherSubjectPriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TeacherSubject
+        fields = ['price_per_class']
 
 class TeacherLevelsSectionsSubjectsHierarchySerializer:
 
