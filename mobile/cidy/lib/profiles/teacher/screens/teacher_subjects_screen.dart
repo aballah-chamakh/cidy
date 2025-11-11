@@ -284,43 +284,52 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
       body: _isLoading
           ? Center(child: CircularProgressIndicator(color: primaryColor))
           : _buildBody(),
-      bottomNavigationBar: _isLoading || _teacherLevels.isEmpty
-          ? null
-          : Container(
-              padding: const EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.3),
-                    spreadRadius: 2,
-                    blurRadius: 5,
-                    offset: const Offset(0, -3),
-                  ),
-                ],
-              ),
-              child: ElevatedButton.icon(
-                onPressed: _showAddSubjectDialog,
-                label: const Text(
-                  'Ajouter une matière',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
-                icon: const Icon(Icons.add),
-                style: primaryButtonStyle,
-              ),
-            ),
     );
   }
 
   Widget _buildBody() {
-    return RefreshIndicator(
+    final content = RefreshIndicator(
       color: primaryColor,
       onRefresh: _fetchSubjects,
       child: _teacherLevels.isEmpty ? _buildNoSubjectsUI() : _buildLevelsList(),
+    );
+
+    if (_teacherLevels.isEmpty) {
+      return content;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: content),
+        Container(
+          padding: const EdgeInsets.all(10.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.3),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: const Offset(0, -3),
+              ),
+            ],
+          ),
+          child: ElevatedButton.icon(
+            onPressed: _showAddSubjectDialog,
+            label: const Text(
+              'Ajouter une matière',
+              style: TextStyle(color: Colors.white, fontSize: 18),
+            ),
+            icon: const Icon(Icons.add),
+            style: primaryButtonStyle,
+          ),
+        ),
+      ],
     );
   }
 

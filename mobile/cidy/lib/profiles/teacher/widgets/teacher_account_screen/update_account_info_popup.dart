@@ -15,6 +15,7 @@ class UpdateAccountInfoPopup extends StatefulWidget {
   final File? imageFile;
   final VoidCallback onSuccess;
   final VoidCallback onServerError;
+  final void Function(Map<String, String> fieldErrors) onValidationError;
 
   const UpdateAccountInfoPopup({
     super.key,
@@ -25,6 +26,7 @@ class UpdateAccountInfoPopup extends StatefulWidget {
     this.imageFile,
     required this.onSuccess,
     required this.onServerError,
+    required this.onValidationError,
   });
 
   @override
@@ -100,14 +102,41 @@ class _UpdateAccountInfoPopupState extends State<UpdateAccountInfoPopup> {
         );
       } else if (response.statusCode == 400) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        if (responseData.containsKey('current_password') &&
-            responseData['current_password'][0] ==
-                'Incorrect current password.') {
+
+        final dynamic passwordErrors = responseData['current_password'];
+        if (passwordErrors is List &&
+            passwordErrors.isNotEmpty &&
+            passwordErrors.first == 'Incorrect current password.') {
           setState(() {
             _errorMessage = 'Le mot de passe actuel est incorrect.';
           });
-        } else {
-          widget.onServerError();
+          return;
+        }
+
+        final Map<String, String> fieldErrors = {};
+        final dynamic emailErrors = responseData['email'];
+        if (emailErrors is List && emailErrors.isNotEmpty) {
+          final dynamic firstError = emailErrors.first;
+          if (firstError == 'This email is already in use.') {
+            fieldErrors['email'] = 'Cet e-mail est déjà utilisé.';
+          }
+        }
+
+        final dynamic phoneErrors = responseData['phone_number'];
+        if (phoneErrors is List && phoneErrors.isNotEmpty) {
+          final dynamic firstError = phoneErrors.first;
+          if (firstError == 'This phone number is already in use.') {
+            fieldErrors['phone_number'] =
+                'Ce numéro de téléphone est déjà utilisé.';
+          }
+        }
+
+        if (fieldErrors.isNotEmpty) {
+          widget.onValidationError(fieldErrors);
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+          return;
         }
       } else {
         widget.onServerError();

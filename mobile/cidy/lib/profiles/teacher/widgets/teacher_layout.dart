@@ -18,19 +18,23 @@ import 'package:cidy/profiles/teacher/screens/teacher_account_screen.dart';
 
 import 'package:cidy/app_state.dart';
 
+typedef TeacherBodyBuilder =
+    Widget Function({Future<void> Function()? reloadTeacherInfo});
+
 class TeacherLayout extends StatefulWidget {
-  final Widget body;
+  final Widget? body;
+  final TeacherBodyBuilder? bodyBuilder;
   final String title;
-  final Widget? floatingActionButton;
-  final Widget? bottomNavigationBar;
 
   const TeacherLayout({
     super.key,
     required this.title,
-    required this.body,
-    this.floatingActionButton,
-    this.bottomNavigationBar,
-  });
+    this.body,
+    this.bodyBuilder,
+  }) : assert(
+         body != null || bodyBuilder != null,
+         'Provide either body or bodyBuilder',
+       );
 
   @override
   State<TeacherLayout> createState() => _TeacherLayoutState();
@@ -287,9 +291,9 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
         },
         notificationCount: _notificationCount,
       ),
-      body: widget.body,
-      floatingActionButton: widget.floatingActionButton,
-      bottomNavigationBar: widget.bottomNavigationBar,
+      body: widget.bodyBuilder != null
+          ? widget.bodyBuilder!(reloadTeacherInfo: _loadTeacherInfo)
+          : widget.body!,
     );
   }
 }

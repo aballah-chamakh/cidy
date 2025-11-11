@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/profiles/parent/parent_entry.dart';
 import 'package:cidy/profiles/student/student_entry.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_dashboard_screen.dart';
@@ -129,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -146,54 +147,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     'assets/login_teacher_illustration.png',
                     height: 200.0,
                   ),
+
                   const SizedBox(height: 24.0),
-                  Text(
-                    'Profile Type',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 8.0),
-                  SegmentedButton<String>(
-                    segments: const <ButtonSegment<String>>[
-                      ButtonSegment<String>(
-                        value: 'teacher',
-                        label: Text(
-                          'Professeur',
-                          style: TextStyle(fontSize: 16.0),
-                        ),
-                      ),
-                      ButtonSegment<String>(
-                        value: 'student',
-                        label: Text(
-                          'Etudiant',
-                          style: TextStyle(fontSize: 16.0),
-                        ),
-                      ),
-                      ButtonSegment<String>(
-                        value: 'parent',
-                        label: Text('Parent', style: TextStyle(fontSize: 16.0)),
-                      ),
-                    ],
-                    selected: _selectedProfileType != null
-                        ? {_selectedProfileType!}
-                        : <String>{},
-                    onSelectionChanged: (Set<String> newSelection) {
-                      setState(() {
-                        _selectedProfileType = newSelection.isEmpty
-                            ? null
-                            : newSelection.first;
-                      });
-                    },
-                    emptySelectionAllowed: true,
-                    style: SegmentedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                      foregroundColor: Theme.of(context).primaryColor,
-                      selectedForegroundColor: Colors.white,
-                      selectedBackgroundColor: Theme.of(context).primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 16.0),
                   TextFormField(
-                    style: const TextStyle(fontSize: 16.0),
+                    style: const TextStyle(fontSize: mediumFontSize),
                     controller: _nameController,
                     decoration: InputDecoration(
                       labelText: 'Nom complet',

@@ -32,11 +32,13 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
 
   bool _isLoading = true;
   String? _errorMessage;
+  String? _emailErrorMessage;
+  String? _phoneErrorMessage;
   Map<String, dynamic>? _teacher;
   String? _selectedGender;
   File? _selectedImage;
   String? _currentImageUrl;
-  late final String _defaultTeacherImageUrl;
+  Future<void> Function()? _reloadSidebarInfo;
 
   bool _isNewPasswordObscured = true;
   bool _isConfirmPasswordObscured = true;
@@ -44,7 +46,6 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
   @override
   void initState() {
     super.initState();
-    _defaultTeacherImageUrl = '${Config.backendUrl}/media/defaults/teacher.png';
     _fetchTeacherData();
   }
 
@@ -100,6 +101,8 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
           _phoneController.text = _teacher?['phone_number'] ?? '';
           _selectedGender = _teacher?['gender'] ?? 'M';
           _currentImageUrl = _resolveImageUrl(_teacher?['image']);
+          _emailErrorMessage = null;
+          _phoneErrorMessage = null;
         });
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -109,13 +112,14 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
       } else {
         setState(() {
           _errorMessage =
-              'Impossible de charger les informations de l\'enseignant.';
+              'Une erreur est survenue lors du chargement des informations de votre compte.';
         });
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Une erreur est survenue : $e';
+        _errorMessage =
+            'Une erreur est survenue lors du chargement des informations de votre compte.';
       });
     } finally {
       if (mounted) {
@@ -221,16 +225,32 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
           phoneNumber: _phoneController.text.trim(),
           gender: _selectedGender ?? 'M',
           imageFile: _selectedImage,
-          onSuccess: () {
+          onSuccess: () async {
+            if (!mounted) return;
             Navigator.of(context).pop();
             _showSuccess(
               "Les informations de votre compte ont été mises à jour avec succès",
             );
-            _fetchTeacherData(showLoading: true);
+            await _fetchTeacherData(showLoading: true);
+            const storage = FlutterSecureStorage();
+            await storage.write(key: 'email', value: _teacher?['email']);
+            await storage.write(key: 'fullname', value: _teacher?['fullname']);
+            await storage.write(key: 'image_url', value: _teacher?['image']);
+            _reloadSidebarInfo?.call();
           },
           onServerError: () {
+            if (!mounted) return;
             Navigator.of(context).pop();
             _showError("Erreur du serveur 500");
+          },
+          onValidationError: (errors) {
+            if (!mounted) {
+              return;
+            }
+            setState(() {
+              _emailErrorMessage = errors['email'];
+              _phoneErrorMessage = errors['phone_number'];
+            });
           },
         );
       },
@@ -280,52 +300,85 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
   Widget build(BuildContext context) {
     return TeacherLayout(
       title: 'Compte',
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-          ? Center(child: Text(_errorMessage!))
-          : RefreshIndicator(
-              onRefresh: () => _fetchTeacherData(showLoading: false),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildAccountInfoSection(),
-                    const SizedBox(height: 12),
-                    _buildChangePasswordSection(),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade700,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 15),
-                        ),
-                        onPressed: _logout,
-                        icon: const Icon(Icons.logout),
-                        label: const Text(
-                          'Se déconnecter',
-                          style: TextStyle(fontSize: mediumFontSize),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      bodyBuilder: ({reloadTeacherInfo}) {
+        _reloadSidebarInfo = reloadTeacherInfo;
+        return _buildBodyContent();
+      },
     );
   }
 
-  InputDecoration _buildInputDecoration(String label, {Widget? suffixIcon}) {
+  Widget _buildBodyContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: primaryColor),
+      );
+    }
+    return RefreshIndicator(
+      color: primaryColor,
+      onRefresh: () => _fetchTeacherData(showLoading: false),
+      child: LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: _errorMessage != null
+                  ? Center(
+                      child: Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: mediumFontSize,
+                          color: Colors.red,
+                        ),
+                      ),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildAccountInfoSection(),
+                        const SizedBox(height: 12),
+                        _buildChangePasswordSection(),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade700,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                            ),
+                            onPressed: _logout,
+                            icon: const Icon(Icons.logout),
+                            label: const Text(
+                              'Se déconnecter',
+                              style: TextStyle(fontSize: mediumFontSize),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration(
+    String label, {
+    Widget? suffixIcon,
+    String? errorText,
+  }) {
     return InputDecoration(
       labelText: label,
       suffixIcon: suffixIcon,
       errorMaxLines: 3,
+      errorText: errorText,
       fillColor: Colors.white,
       filled: true,
       focusColor: Colors.white,
@@ -342,7 +395,8 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
         borderSide: const BorderSide(color: primaryColor, width: 2),
       ),
       contentPadding: inputContentPadding,
-      labelStyle: const TextStyle(color: Colors.black54),
+      labelStyle: TextStyle(color: primaryColor),
+      floatingLabelStyle: TextStyle(color: primaryColor),
     );
   }
 
@@ -370,8 +424,18 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _emailController,
-                decoration: _buildInputDecoration('E-mail'),
+                decoration: _buildInputDecoration(
+                  'E-mail',
+                  errorText: _emailErrorMessage,
+                ),
                 keyboardType: TextInputType.emailAddress,
+                onChanged: (_) {
+                  if (_emailErrorMessage != null) {
+                    setState(() {
+                      _emailErrorMessage = null;
+                    });
+                  }
+                },
                 validator: (value) {
                   if (value!.isEmpty) return 'L\'e-mail est requis';
                   if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
@@ -383,9 +447,22 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
               const SizedBox(height: 10),
               TextFormField(
                 controller: _phoneController,
-                decoration: _buildInputDecoration('Numéro de téléphone'),
+                decoration: _buildInputDecoration(
+                  'Numéro de téléphone',
+                  errorText: _phoneErrorMessage,
+                ),
                 keyboardType: TextInputType.phone,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(8),
+                ],
+                onChanged: (_) {
+                  if (_phoneErrorMessage != null) {
+                    setState(() {
+                      _phoneErrorMessage = null;
+                    });
+                  }
+                },
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Le numéro de téléphone est requis';
@@ -512,10 +589,10 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
   }
 
   Widget _buildProfileImageSection() {
-    final imageUrl = _currentImageUrl ?? _defaultTeacherImageUrl;
+    final imageUrl = _currentImageUrl;
     final ImageProvider<Object> imageProvider = _selectedImage != null
         ? FileImage(_selectedImage!) as ImageProvider<Object>
-        : NetworkImage(imageUrl) as ImageProvider<Object>;
+        : NetworkImage(imageUrl!) as ImageProvider<Object>;
 
     return Center(
       child: Stack(
@@ -524,12 +601,12 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
             radius: 60,
             backgroundImage: imageProvider,
             onBackgroundImageError:
-                (_selectedImage == null && imageUrl.isNotEmpty)
+                (_selectedImage == null && imageUrl!.isNotEmpty)
                 ? (exception, stackTrace) {
                     // Handle network image error if needed
                   }
                 : null,
-            child: _selectedImage == null && imageUrl.isEmpty
+            child: _selectedImage == null && imageUrl!.isEmpty
                 ? const Icon(Icons.person, size: 60)
                 : null,
           ),

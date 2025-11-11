@@ -4,7 +4,7 @@ from teacher.models import Teacher
 
 class TeacherAccountInfoSerializer(serializers.ModelSerializer):
     """Serializer for retrieving teacher account information."""
-    image = serializers.ImageField(source='image.url', read_only=True)
+    image = serializers.CharField(source='image.url', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
     phone_number = serializers.CharField(source='user.phone_number', read_only=True)
 
@@ -27,6 +27,18 @@ class UpdateTeacherAccountInfoSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         if not user.check_password(value):
             raise serializers.ValidationError("Incorrect current password.")
+        return value
+    
+    def validate_email(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(email=value).exists():
+            raise serializers.ValidationError("This email is already in use.")
+        return value
+
+    def validate_phone_number(self, value):
+        user = self.context['request'].user
+        if User.objects.exclude(pk=user.pk).filter(phone_number=value).exists():
+            raise serializers.ValidationError("This phone number is already in use.")
         return value
 
     def update(self, teacher, validated_data):
