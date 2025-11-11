@@ -4,6 +4,7 @@ import 'package:cidy/profiles/parent/parent_entry.dart';
 import 'package:cidy/profiles/student/student_entry.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_dashboard_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'login.dart';
@@ -117,10 +118,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } else {
       if (!mounted) return;
-      final error = jsonDecode(response.body);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Erreur : ${error['message']}')));
+      ).showSnackBar(SnackBar(content: Text('Erreur du server 500')));
     }
   }
 
@@ -136,27 +136,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  const SizedBox(height: 24.0),
+                  const SizedBox(height: 30.0),
                   Text(
-                    'Register',
+                    'S\'inscrire',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineLarge,
+                    style: TextStyle(
+                      fontSize: 60,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
                   ),
-                  const SizedBox(height: 12.0),
+                  const SizedBox(height: 10.0),
                   Image.asset(
                     'assets/login_teacher_illustration.png',
                     height: 200.0,
                   ),
 
-                  const SizedBox(height: 24.0),
+                  const SizedBox(height: 30.0),
                   TextFormField(
                     style: const TextStyle(fontSize: mediumFontSize),
                     controller: _nameController,
                     decoration: InputDecoration(
                       labelText: 'Nom complet',
+                      labelStyle: TextStyle(color: primaryColor),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(inputBorderRadius),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(inputBorderRadius),
+                        borderSide: BorderSide(color: primaryColor, width: 2),
+                      ),
+                      errorMaxLines: 3,
+                      contentPadding: inputContentPadding,
                     ),
                     validator: (value) {
                       print("validate the fullname field : $value");
@@ -169,14 +180,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
-                    style: const TextStyle(fontSize: 16.0),
+                    style: const TextStyle(fontSize: mediumFontSize),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email',
+                      labelStyle: TextStyle(color: primaryColor),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(inputBorderRadius),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(inputBorderRadius),
+                        borderSide: BorderSide(color: primaryColor, width: 2),
+                      ),
+                      errorMaxLines: 3,
+                      contentPadding: inputContentPadding,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -190,38 +208,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
-                    style: const TextStyle(fontSize: 16.0),
+                    style: const TextStyle(fontSize: mediumFontSize),
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(8),
+                    ],
                     decoration: InputDecoration(
                       labelText: 'Numéro de téléphone',
+                      labelStyle: TextStyle(color: primaryColor),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(inputBorderRadius),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(inputBorderRadius),
+                        borderSide: BorderSide(color: primaryColor, width: 2),
+                      ),
+                      errorMaxLines: 3,
+                      contentPadding: inputContentPadding,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Veuillez entrer votre numéro de téléphone';
                       }
-                      if (value.length != 8) {
+                      if (!RegExp(r'^\d{8}$').hasMatch(value)) {
                         return 'Le numéro de téléphone doit contenir 8 chiffres';
                       }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16.0),
-                  const Text('Genre', style: TextStyle(fontSize: 16.0)),
-                  const SizedBox(height: 8.0),
+                  const SizedBox(height: 10.0),
+                  const Text(
+                    'Genre',
+                    style: TextStyle(
+                      fontSize: mediumFontSize,
+                      color: primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 5.0),
                   SegmentedButton<String>(
-                    segments: const <ButtonSegment<String>>[
+                    segments: <ButtonSegment<String>>[
                       ButtonSegment<String>(
                         value: 'M',
-                        label: Text('Homme', style: TextStyle(fontSize: 16.0)),
+                        label: Padding(
+                          padding: buttonSegmentPadding, // vertical padding
+                          child: Text(
+                            'Masculin',
+                            style: TextStyle(fontSize: mediumFontSize),
+                          ),
+                        ),
                         icon: Icon(Icons.male),
                       ),
                       ButtonSegment<String>(
                         value: 'F',
-                        label: Text('Femme', style: TextStyle(fontSize: 16.0)),
+                        label: Padding(
+                          padding: buttonSegmentPadding, // vertical padding
+                          child: Text(
+                            'Féminin',
+                            style: TextStyle(fontSize: mediumFontSize),
+                          ),
+                        ),
                         icon: Icon(Icons.female),
                       ),
                     ],
@@ -237,10 +284,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                     emptySelectionAllowed: true,
                     style: SegmentedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                      foregroundColor: Theme.of(context).primaryColor,
+                      backgroundColor: Colors.white,
+                      foregroundColor: primaryColor,
                       selectedForegroundColor: Colors.white,
-                      selectedBackgroundColor: Theme.of(context).primaryColor,
+                      selectedBackgroundColor: primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          buttonSegmentBorderRadius,
+                        ),
+                      ),
                     ),
                   ),
                   if (_selectedProfileType == 'student') ...[
@@ -249,9 +301,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       initialValue: _selectedLevel,
                       decoration: InputDecoration(
                         labelText: 'Niveau',
+                        labelStyle: TextStyle(color: primaryColor),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
+                        errorMaxLines: 3,
                       ),
                       items: Config.levelsSectionsSubjects.keys
                           .map(
@@ -292,9 +346,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         initialValue: _selectedSection,
                         decoration: InputDecoration(
                           labelText: 'Section',
+                          labelStyle: TextStyle(color: primaryColor),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
+                          errorMaxLines: 3,
                         ),
                         items: _sections
                             .map(
@@ -320,19 +376,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                   const SizedBox(height: 16.0),
                   TextFormField(
-                    style: const TextStyle(fontSize: 16.0),
+                    style: const TextStyle(fontSize: mediumFontSize),
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       labelText: 'Mot de passe',
+                      labelStyle: TextStyle(color: primaryColor),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
+                        borderRadius: BorderRadius.circular(inputBorderRadius),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(inputBorderRadius),
+                        borderSide: BorderSide(color: primaryColor, width: 2),
+                      ),
+                      errorMaxLines: 3,
+                      contentPadding: inputContentPadding,
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                         ),
                         onPressed: () {
                           setState(() {
@@ -354,15 +417,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: _registerUser,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
+                    style: primaryButtonStyle,
                     child: const Text(
                       'S\'inscrire',
-                      style: TextStyle(fontSize: 18.0),
+                      style: TextStyle(fontSize: mediumFontSize),
                     ),
                   ),
                   Row(
@@ -370,7 +428,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: <Widget>[
                       const Text(
                         "Vous avez déjà un compte ?",
-                        style: TextStyle(fontSize: 16.0),
+                        style: TextStyle(fontSize: mediumFontSize - 2),
                       ),
                       TextButton(
                         onPressed: () {
@@ -383,7 +441,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                         child: const Text(
                           'Se connecter',
-                          style: TextStyle(fontSize: 16.0),
+                          style: TextStyle(
+                            fontSize: mediumFontSize - 2,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],

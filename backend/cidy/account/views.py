@@ -56,10 +56,7 @@ def register_user(request):
     
     # Return validation errors
     print(serializer.errors)
-    return Response({
-        'message': 'Registration failed',
-        'errors': serializer.errors
-    }, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])
