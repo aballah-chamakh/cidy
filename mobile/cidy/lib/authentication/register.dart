@@ -29,6 +29,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _selectedLevel;
   String? _selectedSection;
   List<String> _sections = [];
+  String? _emailErrorMessage;
+  String? _phoneErrorMessage;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -40,6 +43,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _registerUser() async {
+    setState(() {
+      _emailErrorMessage = null;
+      _phoneErrorMessage = null;
+    });
+
     bool isFormValid = _formKey.currentState!.validate();
 
     if (!isFormValid ||
@@ -51,6 +59,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             _selectedSection == null)) {
       return;
     }
+
+    setState(() {
+      _isSubmitting = true;
+    });
 
     Map<String, dynamic> requestBody = {
       'fullname': _nameController.text,
@@ -68,59 +80,113 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
     }
 
-    final url = Uri.parse('${Config.backendUrl}/api/auth/register/');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(requestBody),
-    );
-
-    if (!mounted) return;
-    if (response.statusCode == 200) {
-      if (!mounted) return;
-      final data = jsonDecode(response.body);
-      const storage = FlutterSecureStorage();
-      await storage.write(key: 'access_token', value: data['token']);
-      await storage.write(key: 'email', value: data['user']['email']);
-      await storage.write(key: 'fullname', value: data['user']['fullname']);
-      await storage.write(key: 'image_url', value: data['user']['image_url']);
-      await storage.write(
-        key: 'profile_type',
-        value: data['user']['profile_type'],
+    try {
+      final url = Uri.parse('${Config.backendUrl}/api/auth/register/');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
       );
 
-      Widget profileScreen;
-      String profileRouteName;
-      switch (data['user']['profile_type']) {
-        case 'student':
-          profileScreen = const StudentEntry();
-          profileRouteName = '/student';
-          break;
-        case 'teacher':
-          profileScreen = const TeacherDashboardScreen();
-          profileRouteName = '/teacher_dashboard';
-          break;
-        case 'parent':
-          profileScreen = const ParentEntry();
-          profileRouteName = '/parent';
-          break;
-        default:
-          profileScreen = const LoginScreen();
-          profileRouteName = '/login';
+      if (!mounted) return;
+      if (response.statusCode == 200) {
+        if (!mounted) return;
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        const storage = FlutterSecureStorage();
+        await storage.write(key: 'access_token', value: data['token']);
+        await storage.write(key: 'email', value: data['user']['email']);
+        await storage.write(key: 'fullname', value: data['user']['fullname']);
+        await storage.write(key: 'image_url', value: data['user']['image_url']);
+        await storage.write(
+          key: 'profile_type',
+          value: data['user']['profile_type'],
+        );
+
+        Widget profileScreen;
+        String profileRouteName;
+        switch (data['user']['profile_type']) {
+          case 'student':
+            profileScreen = const StudentEntry();
+            profileRouteName = '/student';
+            break;
+          case 'teacher':
+            profileScreen = const TeacherDashboardScreen();
+            profileRouteName = '/teacher_dashboard';
+            break;
+          case 'parent':
+            profileScreen = const ParentEntry();
+            profileRouteName = '/parent';
+            break;
+          default:
+            profileScreen = const LoginScreen();
+            profileRouteName = '/login';
+        }
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            settings: RouteSettings(name: profileRouteName),
+            builder: (context) => profileScreen,
+          ),
+          (route) => false,
+        );
+      } else if (response.statusCode == 400) {
+        final Map<String, dynamic> responseData =
+            jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+
+        String? emailError;
+        String? phoneError;
+
+        final dynamic emailErrors = responseData['email'];
+        if (emailErrors is List && emailErrors.isNotEmpty) {
+          final dynamic firstError = emailErrors.first;
+          if (firstError == 'A user with this email already exists.') {
+            emailError = 'Cet e-mail est déjà utilisé.';
+          }
+        }
+
+        final dynamic phoneErrors = responseData['phone_number'];
+        if (phoneErrors is List && phoneErrors.isNotEmpty) {
+          final dynamic firstError = phoneErrors.first;
+          if (firstError == 'A user with this phone number already exists.') {
+            phoneError = 'Ce numéro de téléphone est déjà utilisé.';
+          }
+        }
+
+        if (emailError != null || phoneError != null) {
+          setState(() {
+            _emailErrorMessage = emailError;
+            _phoneErrorMessage = phoneError;
+          });
+          return;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Impossible de finaliser l\'inscription. Veuillez vérifier les informations saisies.',
+              style: TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erreur du serveur 500',
+              style: TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-      if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          settings: RouteSettings(name: profileRouteName),
-          builder: (context) => profileScreen,
-        ),
-        (route) => false,
-      );
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erreur du server 500')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -156,6 +222,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   TextFormField(
                     style: const TextStyle(fontSize: mediumFontSize),
                     controller: _nameController,
+                    enabled: !_isSubmitting,
                     decoration: InputDecoration(
                       labelText: 'Nom complet',
                       labelStyle: TextStyle(color: primaryColor),
@@ -183,6 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: const TextStyle(fontSize: mediumFontSize),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    enabled: !_isSubmitting,
                     decoration: InputDecoration(
                       labelText: 'Email',
                       labelStyle: TextStyle(color: primaryColor),
@@ -195,7 +263,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       errorMaxLines: 3,
                       contentPadding: inputContentPadding,
+                      errorText: _emailErrorMessage,
                     ),
+                    onChanged: _isSubmitting
+                        ? null
+                        : (_) {
+                            if (_emailErrorMessage != null) {
+                              setState(() {
+                                _emailErrorMessage = null;
+                              });
+                            }
+                          },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Veuillez entrer votre email';
@@ -215,6 +293,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       FilteringTextInputFormatter.digitsOnly,
                       LengthLimitingTextInputFormatter(8),
                     ],
+                    enabled: !_isSubmitting,
                     decoration: InputDecoration(
                       labelText: 'Numéro de téléphone',
                       labelStyle: TextStyle(color: primaryColor),
@@ -227,7 +306,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       errorMaxLines: 3,
                       contentPadding: inputContentPadding,
+                      errorText: _phoneErrorMessage,
                     ),
+                    onChanged: _isSubmitting
+                        ? null
+                        : (_) {
+                            if (_phoneErrorMessage != null) {
+                              setState(() {
+                                _phoneErrorMessage = null;
+                              });
+                            }
+                          },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Veuillez entrer votre numéro de téléphone';
@@ -275,13 +364,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     selected: _selectedGender != null
                         ? {_selectedGender!}
                         : <String>{},
-                    onSelectionChanged: (Set<String> newSelection) {
-                      setState(() {
-                        _selectedGender = newSelection.isEmpty
-                            ? null
-                            : newSelection.first;
-                      });
-                    },
+                    onSelectionChanged: _isSubmitting
+                        ? null
+                        : (Set<String> newSelection) {
+                            setState(() {
+                              _selectedGender = newSelection.isEmpty
+                                  ? null
+                                  : newSelection.first;
+                            });
+                          },
                     emptySelectionAllowed: true,
                     style: SegmentedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -315,24 +406,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           )
                           .toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedLevel = value;
-                          _selectedSection = null;
-                          if (value != null &&
-                              Config.levelsSectionsSubjects[value]!.containsKey(
-                                'sections',
-                              )) {
-                            _sections =
-                                (Config.levelsSectionsSubjects[value]!['sections']
-                                        as Map<String, dynamic>)
-                                    .keys
-                                    .toList();
-                          } else {
-                            _sections = [];
-                          }
-                        });
-                      },
+                      onChanged: _isSubmitting
+                          ? null
+                          : (value) {
+                              setState(() {
+                                _selectedLevel = value;
+                                _selectedSection = null;
+                                if (value != null &&
+                                    Config.levelsSectionsSubjects[value]!
+                                        .containsKey('sections')) {
+                                  _sections =
+                                      (Config.levelsSectionsSubjects[value]!['sections']
+                                              as Map<String, dynamic>)
+                                          .keys
+                                          .toList();
+                                } else {
+                                  _sections = [];
+                                }
+                              });
+                            },
                       validator: (value) {
                         if (value == null) {
                           return 'Veuillez sélectionner un niveau';
@@ -360,11 +452,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             )
                             .toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedSection = value;
-                          });
-                        },
+                        onChanged: _isSubmitting
+                            ? null
+                            : (value) {
+                                setState(() {
+                                  _selectedSection = value;
+                                });
+                              },
                         validator: (value) {
                           if (value == null) {
                             return 'Veuillez sélectionner une section';
@@ -379,6 +473,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     style: const TextStyle(fontSize: mediumFontSize),
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    enabled: !_isSubmitting,
                     decoration: InputDecoration(
                       labelText: 'Mot de passe',
                       labelStyle: TextStyle(color: primaryColor),
@@ -397,11 +492,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ? Icons.visibility_off
                               : Icons.visibility,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        onPressed: _isSubmitting
+                            ? null
+                            : () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
                       ),
                     ),
                     validator: (value) {
@@ -416,11 +513,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   const SizedBox(height: 16.0),
                   ElevatedButton(
-                    onPressed: _registerUser,
+                    onPressed: _isSubmitting ? null : _registerUser,
                     style: primaryButtonStyle,
-                    child: const Text(
-                      'S\'inscrire',
-                      style: TextStyle(fontSize: mediumFontSize),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'S\'inscrire',
+                          style: TextStyle(fontSize: mediumFontSize),
+                        ),
+                        if (_isSubmitting) ...[
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   Row(
@@ -431,14 +547,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         style: TextStyle(fontSize: mediumFontSize - 2),
                       ),
                       TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                            (route) => false,
-                          );
-                        },
+                        onPressed: _isSubmitting
+                            ? null
+                            : () {
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              },
                         child: const Text(
                           'Se connecter',
                           style: TextStyle(

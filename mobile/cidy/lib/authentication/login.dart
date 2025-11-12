@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/authentication/register.dart';
 import 'package:cidy/profiles/parent/parent_entry.dart';
 import 'package:cidy/profiles/student/student_entry.dart';
@@ -20,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscureText = true;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -33,70 +35,96 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    setState(() {
+      _isSubmitting = true;
+    });
+
     Map<String, dynamic> requestBody = {
       'email': _emailController.text,
       'password': _passwordController.text,
     };
 
-    final url = Uri.parse('${Config.backendUrl}/api/auth/token/');
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(requestBody),
-    );
-
-    if (!context.mounted) return;
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      const storage = FlutterSecureStorage();
-      await storage.write(key: 'access_token', value: data['access']);
-      await storage.write(key: 'email', value: data['user']['email']);
-      await storage.write(key: 'fullname', value: data['user']['fullname']);
-      await storage.write(key: 'image_url', value: data['user']['image_url']);
-
-      await storage.write(
-        key: 'profile_type',
-        value: data['user']['profile_type'],
+    try {
+      final url = Uri.parse('${Config.backendUrl}/api/auth/token/');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
       );
 
-      Widget profileScreen;
-      String profileRouteName;
-      switch (data['user']['profile_type']) {
-        case 'student':
-          profileScreen = const StudentEntry();
-          profileRouteName = '/student';
-          break;
-        case 'teacher':
-          profileScreen = const TeacherDashboardScreen();
-          profileRouteName = '/teacher_dashboard';
-          break;
-        case 'parent':
-          profileScreen = const ParentEntry();
-          profileRouteName = '/parent';
-          break;
-        default:
-          profileScreen = const LoginScreen();
-          profileRouteName = '/login';
-      }
+      if (!context.mounted) return;
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        const storage = FlutterSecureStorage();
+        await storage.write(key: 'access_token', value: data['access']);
+        await storage.write(key: 'email', value: data['user']['email']);
+        await storage.write(key: 'fullname', value: data['user']['fullname']);
+        await storage.write(key: 'image_url', value: data['user']['image_url']);
 
-      if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          settings: RouteSettings(name: profileRouteName),
-          builder: (context) => profileScreen,
-        ),
-        (route) => false,
-      );
-    } else {
-      if (!mounted) return;
-      //final error = jsonDecode(response.body);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Erreur de connexion. Veuillez vérifier vos identifiants.',
+        await storage.write(
+          key: 'profile_type',
+          value: data['user']['profile_type'],
+        );
+
+        if (!mounted) return;
+        Widget profileScreen;
+        String profileRouteName;
+        switch (data['user']['profile_type']) {
+          case 'student':
+            profileScreen = const StudentEntry();
+            profileRouteName = '/student';
+            break;
+          case 'teacher':
+            profileScreen = const TeacherDashboardScreen();
+            profileRouteName = '/teacher_dashboard';
+            break;
+          case 'parent':
+            profileScreen = const ParentEntry();
+            profileRouteName = '/parent';
+            break;
+          default:
+            profileScreen = const LoginScreen();
+            profileRouteName = '/login';
+        }
+
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            settings: RouteSettings(name: profileRouteName),
+            builder: (context) => profileScreen,
           ),
-        ),
-      );
+          (route) => false,
+        );
+      } else if (response.statusCode == 401) {
+        //final error = jsonDecode(response.body);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erreur de connexion. Veuillez vérifier vos identifiants.',
+              style: TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      } else {
+        //final error = jsonDecode(response.body);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Erreur du serveur 500',
+              style: TextStyle(fontSize: 16),
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -113,31 +141,52 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             child: IntrinsicHeight(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      const SizedBox(height: 48.0),
+                      const SizedBox(height: 30.0),
                       Text(
                         'Login',
                         textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineLarge,
+                        style: TextStyle(
+                          fontSize: 60,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
                       ),
-                      const SizedBox(height: 24.0),
+                      const SizedBox(height: 10.0),
                       Image.asset(
                         'assets/login_teacher_illustration.png',
                         height: 250.0,
                       ),
-                      const SizedBox(height: 48.0),
+                      const SizedBox(height: 30.0),
                       TextFormField(
-                        style: Theme.of(context).textTheme.bodyLarge,
+                        style: const TextStyle(fontSize: mediumFontSize),
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        enabled: !_isSubmitting,
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          border: Theme.of(context).inputDecorationTheme.border,
+                          labelStyle: TextStyle(color: primaryColor),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              inputBorderRadius,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              inputBorderRadius,
+                            ),
+                            borderSide: BorderSide(
+                              color: primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                          errorMaxLines: 3,
+                          contentPadding: inputContentPadding,
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -151,25 +200,42 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16.0),
                       TextFormField(
-                        style: Theme.of(context).textTheme.bodyLarge,
+                        style: const TextStyle(fontSize: mediumFontSize),
                         controller: _passwordController,
                         obscureText: _obscureText,
+                        enabled: !_isSubmitting,
                         decoration: InputDecoration(
                           labelText: 'Mot de passe',
+                          labelStyle: TextStyle(color: primaryColor),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
+                            borderRadius: BorderRadius.circular(
+                              inputBorderRadius,
+                            ),
                           ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              inputBorderRadius,
+                            ),
+                            borderSide: BorderSide(
+                              color: primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                          errorMaxLines: 3,
+                          contentPadding: inputContentPadding,
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureText
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
                             ),
-                            onPressed: () {
-                              setState(() {
-                                _obscureText = !_obscureText;
-                              });
-                            },
+                            onPressed: _isSubmitting
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _obscureText = !_obscureText;
+                                    });
+                                  },
                           ),
                         ),
                         validator: (value) {
@@ -181,16 +247,30 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24.0),
                       ElevatedButton(
-                        onPressed: _loginUser,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                        ),
-                        child: const Text(
-                          'Se connecter',
-                          style: TextStyle(fontSize: 18.0),
+                        onPressed: _isSubmitting ? null : _loginUser,
+                        style: primaryButtonStyle,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Se connecter',
+                              style: TextStyle(fontSize: mediumFontSize),
+                            ),
+                            if (_isSubmitting) ...[
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                height: 18,
+                                width: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                       FittedBox(
@@ -203,18 +283,24 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(fontSize: 16.0),
                             ),
                             TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const RegisterScreen(),
-                                  ),
-                                  (route) => false,
-                                );
-                              },
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () {
+                                      Navigator.of(context).pushAndRemoveUntil(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const RegisterScreen(),
+                                        ),
+                                        (route) => false,
+                                      );
+                                    },
                               child: const Text(
                                 'S\'inscrire',
-                                style: TextStyle(fontSize: 16.0),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],

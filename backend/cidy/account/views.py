@@ -6,7 +6,7 @@ from .serializers import UserRegistrationSerializer
 from rest_framework_simplejwt.tokens import AccessToken
 from teacher.models import Level
 from .serializers import LevelsSerializer, MyAccessTokenSerializer
-
+import time
 
 @api_view(['POST'])
 def register_user(request):

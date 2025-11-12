@@ -68,26 +68,32 @@ def get_dashboard_data(request):
         'levels' : {}
     }
 
-    teacher_group_enrollements = GroupEnrollment.objects.filter(group__teacher=teacher)
-    if end_date : 
-        teacher_group_enrollements = teacher_group_enrollements.filter(date__lte=end_date)
-    students_cnt = teacher_group_enrollements.distinct('student').count()
+    # get the enrollments of the students in the groups of the teacher in the date range
+    teacher_group_enrollments = GroupEnrollment.objects.filter(group__teacher=teacher)
+    if start_date and end_date:
+        teacher_group_enrollments = teacher_group_enrollments.filter(date__gte=start_date, date__lte=end_date)
+    
+    # add distinct to avoid counting same student multiple times if enrolled in multiple groups
+    students_cnt = teacher_group_enrollments.distinct('student').count()
     dashboard['total_active_students'] = students_cnt
 
-
+    # for each teacher subject of the teacher, calculate its kpis :
+    # number of active students, paid amount, unpaid amount
     for teacher_subject in teacher_subjects:
         # Get all group enrollments of the groups of this teacher subject
-        teacher_subject_group_enrollments = GroupEnrollment.objects.filter(
+        teacher_subject_group_enrollments = teacher_group_enrollments.filter(
             group__teacher_subject=teacher_subject,
         )
 
         # if the date range is specified, filter the group enrollments only by the end date 
         # because i want the active students till that date not the new new students in that date range
+        """
         if end_date : 
-            print("Filtering group enrollments by end date:", end_date)
+            print("Filtering group enrollments by end date : ", end_date)
             teacher_subject_group_enrollments = teacher_subject_group_enrollments.filter(
                 date__lte=end_date
             )
+        """
         
         # note: i distinct here to avoid counting same student multiple times if enrolled in multiple groups of same subject
         active_students_count = teacher_subject_group_enrollments.distinct('student').count()
