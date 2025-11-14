@@ -10,16 +10,16 @@ class TestDateRangeFilter:
     # 1 teacher
     # 9 teacher subjects
     # for each teacher subject : 2 groups 
-    # for each teacher subject with a unique combination of level and section : 6 students created
-    # for each group : 6 group enrollments (students), each 2 in a different time range 
+    # for each teacher subject  : 12 students created
+    # for each group : 6 group enrollments (students), each 3 in a different time range 
     # for each group enrollment : 12 classes, 2 paid and 2 unpaid in each time range
     # time ranges : 
     #    - this week (1 Oct 2025)
     #    - this month (1 Oct 2025)
     #    - this year (10 and 14 Aug 2025)
 
-    THIS_WEEK_DATES = [datetime.datetime(2025, 10, 1), datetime.datetime(2025, 10, 1)]
-    THIS_MONTH_DATES = [datetime.datetime(2025, 10, 1), datetime.datetime(2025, 10, 1)]
+    THIS_WEEK_DATES = [datetime.datetime(2025, 11, 12), datetime.datetime(2025, 11, 13)]
+    THIS_MONTH_DATES = [datetime.datetime(2025, 11, 5), datetime.datetime(2025, 11, 6)]
     THIS_YEAR_DATES = [datetime.datetime(2025, 8, 10), datetime.datetime(2025, 8, 14)]
 
     def set_up(self):
@@ -31,7 +31,7 @@ class TestDateRangeFilter:
         user  = User.objects.create_user("teacher10@gmail.com", "44558866", "iloveuu")
         teacher = Teacher.objects.create(user=user,fullname="teacher10",gender="M")
 
-        # Add the levels, sections and subjects
+        # create levels 
         bac_tech = Level.objects.get(name="Quatrième année secondaire",section="Technique")
         bac_info = Level.objects.get(name="Quatrième année secondaire",section="Informatique")
 
@@ -41,6 +41,7 @@ class TestDateRangeFilter:
         primary_1st = Level.objects.get(name="Première année primaire")
         primary_6th = Level.objects.get(name="Sixième année primaire")
 
+        # create subjects 
         math_subject = Subject.objects.get(name="Mathématiques")
         physics_subject = Subject.objects.get(name="Physique")
         science_subject = Subject.objects.get(name="Éveil scientifique")
@@ -74,7 +75,7 @@ class TestDateRangeFilter:
             # create 6 student for each level  
             ## if they don't exit
 
-            students = Student.objects.filter(level=teacher_subject.level)#[:6]
+            students = Student.objects.filter(level=teacher_subject.level).order_by('id') #[:6]
             
             if not students.exists():
                 students = []
@@ -87,7 +88,7 @@ class TestDateRangeFilter:
                         level=teacher_subject.level
                     )
                     TeacherEnrollment.objects.create(teacher=teacher,student=student,
-                                                     paid_amount= student_cnt* 2 * 100,
+                                                     paid_amount= student_cnt * 2 * 100,
                                                      unpaid_amount= student_cnt * 100)
                     student_cnt += 1
                     #if i < 6:  # only keep 6 students per level
@@ -109,32 +110,52 @@ class TestDateRangeFilter:
                 
                 # enroll the 6 students in this group in different date ranges
                 for i, student in enumerate(students):
-                    if student.fullname == "student1" or student.fullname == "student49"  : 
-                        continue 
 
-                    # date range for this week  : 1 Oct 2025
-                    if i < 2 : 
-                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student 
-                                                                        ,date=TestDateRangeFilter.THIS_WEEK_DATES[0].date(),
-                                                                         paid_amount=i*2*100,
-                                                                         unpaid_amount=i*100
-                                                                         )
+
+                    # date range for this week  
+                    if i < 4 : 
+                        if i < 2 : 
+                            group_enrollement = GroupEnrollment.objects.create(group=group,student=student 
+                                                                            ,date=TestDateRangeFilter.THIS_WEEK_DATES[0].date(),
+                                                                            paid_amount=i*2*100,
+                                                                            unpaid_amount=i*100
+                                                                            )
+                        else :
+                            group_enrollement = GroupEnrollment.objects.create(group=group,student=student,
+                                                                             date=TestDateRangeFilter.THIS_WEEK_DATES[1].date(),
+                                                                             paid_amount=i*2*100,
+                                                                             unpaid_amount=i*100)
                         # create classes for this enrollment in different statuses and date ranges 
                         #self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
 
 
-                    # date range for this month : 1 Oct 2025
-                    elif i < 4 :
-                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_MONTH_DATES[0].date(),
+                    # date range for this month 
+                    elif i < 8 :
+                        if i < 6 : 
+                            group_enrollement = GroupEnrollment.objects.create(group=group,student=student,
+                                                                               date=TestDateRangeFilter.THIS_MONTH_DATES[0].date(),
+                                                                         paid_amount=i*2*100,
+                                                                         unpaid_amount=i*100)
+                        else : 
+                            group_enrollement = GroupEnrollment.objects.create(group=group,student=student,
+                                                                               date=TestDateRangeFilter.THIS_MONTH_DATES[1].date(),
                                                                          paid_amount=i*2*100,
                                                                          unpaid_amount=i*100)
                         #self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
-                    # date range for this year : 10 and 14 aug 2025
+                    # date range for this year 
                     else:
-                        group_enrollement = GroupEnrollment.objects.create(group=group,student=student,date=TestDateRangeFilter.THIS_YEAR_DATES[0].date(),
+                        if i < 10 :
+                            group_enrollement = GroupEnrollment.objects.create(group=group,student=student,
+                                                                                date=TestDateRangeFilter.THIS_YEAR_DATES[0].date(),
                                                                          paid_amount=i*2*100,
                                                                          unpaid_amount=i*100)
-                        #self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
+                        else :
+                            group_enrollement = GroupEnrollment.objects.create(group=group,student=student,
+                                                                               date=TestDateRangeFilter.THIS_YEAR_DATES[1].date(),
+                                                                         paid_amount=i*2*100,
+                                                                         unpaid_amount=i*100)
+                            
+                    self.create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(group_enrollement)
 
     def create_classes_for_a_group_enrollment_in_different_status_and_date_ranges(self,group_enrollement):
 
@@ -147,14 +168,14 @@ class TestDateRangeFilter:
                 if j < 2 :
                     Class.objects.create(
                         group_enrollment=group_enrollement,
-                        status='attended_and_the_payment_due',
+                        status='attended_and_paid',
                         paid_at=TestDateRangeFilter.THIS_WEEK_DATES[0]  # within this week
                     )
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
                         status='attended_and_the_payment_due',
-                        attendance_date=TestDateRangeFilter.THIS_WEEK_DATES[0]  # within this week
+                        attendance_date=TestDateRangeFilter.THIS_WEEK_DATES[1]  # within this week
                     )
             elif j < 8 :
                 # create 2 paid classes and 2 unpaid classes in this month : 1 Oct 2025
@@ -167,15 +188,15 @@ class TestDateRangeFilter:
                 else : 
                     Class.objects.create(
                         group_enrollment=group_enrollement,
-                        status='attended_and_paid',
-                        attendance_date=TestDateRangeFilter.THIS_MONTH_DATES[0]  # within this month
+                        status='attended_and_the_payment_due',
+                        attendance_date=TestDateRangeFilter.THIS_MONTH_DATES[1]  # within this month
                     )
             else:
                 # create 2 paid classes and 2 unpaid classes in this year : 10 Aug and 14 Aug 2025
                 if j < 10 :
                     Class.objects.create(
                         group_enrollment=group_enrollement,
-                        status='attended_and_the_payment_not_due',
+                        status='attended_and_paid',
                         paid_at=TestDateRangeFilter.THIS_YEAR_DATES[0]  # within this year
                     )
                 else : 
@@ -190,7 +211,7 @@ class TestDateRangeFilter:
 
         # test with no filters 
         dashboard_data = teacher_client.get_dashboard_data()
-        expected_dashboard_data = {'has_levels': True, 'dashboard': {'total_paid_amount': 10080.0, 'total_unpaid_amount': 10080.0, 'total_active_students': 36, 'levels': {'Quatrième année secondaire': {'total_paid_amount': 4680.0, 'total_unpaid_amount': 4680.0, 'total_active_students': 12, 'sections': {'Technique': {'total_paid_amount': 3240.0, 'total_unpaid_amount': 3240.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6}, 'Physique': {'total_paid_amount': 1800.0, 'total_unpaid_amount': 1800.0, 'total_active_students': 6}}}, 'Informatique': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6}}}}}, 'Huitième année de base': {'total_paid_amount': 2160.0, 'total_unpaid_amount': 2160.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 1080.0, 'total_unpaid_amount': 1080.0, 'total_active_students': 6}, 'Physique': {'total_paid_amount': 1080.0, 'total_unpaid_amount': 1080.0, 'total_active_students': 6}}}, 'Septième année de base': {'total_paid_amount': 1080.0, 'total_unpaid_amount': 1080.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 1080.0, 'total_unpaid_amount': 1080.0, 'total_active_students': 6}}}, 'Sixième année primaire': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}, 'Éveil scientifique': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}}}, 'Première année primaire': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}}}}}}
+        expected_dashboard_data = {"has_levels":True,"dashboard":{"total_paid_amount":20160.0,"total_unpaid_amount":20160.0,"total_active_students":72,"levels":{"Quatrième année secondaire":{"total_paid_amount":9360.0,"total_unpaid_amount":9360.0,"total_active_students":24,"sections":{"Technique":{"total_paid_amount":6480.0,"total_unpaid_amount":6480.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":2880.0,"total_unpaid_amount":2880.0,"total_active_students":12},"Physique":{"total_paid_amount":3600.0,"total_unpaid_amount":3600.0,"total_active_students":12}}},"Informatique":{"total_paid_amount":2880.0,"total_unpaid_amount":2880.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":2880.0,"total_unpaid_amount":2880.0,"total_active_students":12}}}}},"Huitième année de base":{"total_paid_amount":4320.0,"total_unpaid_amount":4320.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":2160.0,"total_unpaid_amount":2160.0,"total_active_students":12},"Physique":{"total_paid_amount":2160.0,"total_unpaid_amount":2160.0,"total_active_students":12}}},"Septième année de base":{"total_paid_amount":2160.0,"total_unpaid_amount":2160.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":2160.0,"total_unpaid_amount":2160.0,"total_active_students":12}}},"Sixième année primaire":{"total_paid_amount":2880.0,"total_unpaid_amount":2880.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":1440.0,"total_unpaid_amount":1440.0,"total_active_students":12},"Éveil scientifique":{"total_paid_amount":1440.0,"total_unpaid_amount":1440.0,"total_active_students":12}}},"Première année primaire":{"total_paid_amount":1440.0,"total_unpaid_amount":1440.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":1440.0,"total_unpaid_amount":1440.0,"total_active_students":12}}}}}}
         if dashboard_data == expected_dashboard_data:
             print("    SUCCESSFUL TEST : LOADING DASHBOARD DATA WITH NO FILTERS")
         else : 
@@ -199,7 +220,8 @@ class TestDateRangeFilter:
          
         # test this week
         dashboard_data = teacher_client.get_dashboard_data(date_range="this_week")
-        expected_dashboard_data = {'has_levels': True, 'dashboard': {'total_paid_amount': 6720.0, 'total_unpaid_amount': 6720.0, 'total_active_students': 36, 'levels': {'Quatrième année secondaire': {'total_paid_amount': 3120.0, 'total_unpaid_amount': 3120.0, 'total_active_students': 12, 'sections': {'Technique': {'total_paid_amount': 2160.0, 'total_unpaid_amount': 2160.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 960.0, 'total_unpaid_amount': 960.0, 'total_active_students': 6}, 'Physique': {'total_paid_amount': 1200.0, 'total_unpaid_amount': 1200.0, 'total_active_students': 6}}}, 'Informatique': {'total_paid_amount': 960.0, 'total_unpaid_amount': 960.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 960.0, 'total_unpaid_amount': 960.0, 'total_active_students': 6}}}}}, 'Huitième année de base': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}, 'Physique': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}}}, 'Septième année de base': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}}}, 'Sixième année primaire': {'total_paid_amount': 960.0, 'total_unpaid_amount': 960.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 480.0, 'total_unpaid_amount': 480.0, 'total_active_students': 6}, 'Éveil scientifique': {'total_paid_amount': 480.0, 'total_unpaid_amount': 480.0, 'total_active_students': 6}}}, 'Première année primaire': {'total_paid_amount': 480.0, 'total_unpaid_amount': 480.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 480.0, 'total_unpaid_amount': 480.0, 'total_active_students': 6}}}}}}
+        expected_dashboard_data = {"has_levels":True,"dashboard":{"total_paid_amount":20160.0/3,"total_unpaid_amount":20160.0/3,"total_active_students":72/3,"levels":{"Quatrième année secondaire":{"total_paid_amount":9360.0/3,"total_unpaid_amount":9360.0/3,"total_active_students":24/3,"sections":{"Technique":{"total_paid_amount":6480.0/3,"total_unpaid_amount":6480.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":2880.0/3,"total_unpaid_amount":2880.0/3,"total_active_students":12/3},"Physique":{"total_paid_amount":3600.0/3,"total_unpaid_amount":3600.0/3,"total_active_students":12/3}}},"Informatique":{"total_paid_amount":2880.0/3,"total_unpaid_amount":2880.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":2880.0/3,"total_unpaid_amount":2880.0/3,"total_active_students":12/3}}}}},"Huitième année de base":{"total_paid_amount":4320.0/3,"total_unpaid_amount":4320.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":2160.0/3,"total_unpaid_amount":2160.0/3,"total_active_students":12/3},"Physique":{"total_paid_amount":2160.0/3,"total_unpaid_amount":2160.0/3,"total_active_students":12/3}}},"Septième année de base":{"total_paid_amount":2160.0/3,"total_unpaid_amount":2160.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":2160.0/3,"total_unpaid_amount":2160.0/3,"total_active_students":12/3}}},"Sixième année primaire":{"total_paid_amount":2880.0/3,"total_unpaid_amount":2880.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":1440.0/3,"total_unpaid_amount":1440.0/3,"total_active_students":12/3},"Éveil scientifique":{"total_paid_amount":1440.0/3,"total_unpaid_amount":1440.0/3,"total_active_students":12/3}}},"Première année primaire":{"total_paid_amount":1440.0/3,"total_unpaid_amount":1440.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":1440.0/3,"total_unpaid_amount":1440.0/3,"total_active_students":12/3}}}}}}
+        
         if dashboard_data == expected_dashboard_data :
             print("    SUCCESSFUL TEST : LOADING DASHBOARD DATA WITH date_range=this_week")
         else : 
@@ -208,7 +230,8 @@ class TestDateRangeFilter:
 
         # test this month
         dashboard_data = teacher_client.get_dashboard_data(date_range="this_month")
-        expected_dashboard_data = {'has_levels': True, 'dashboard': {'total_paid_amount': 6720.0, 'total_unpaid_amount': 6720.0, 'total_active_students': 36, 'levels': {'Quatrième année secondaire': {'total_paid_amount': 3120.0, 'total_unpaid_amount': 3120.0, 'total_active_students': 12, 'sections': {'Technique': {'total_paid_amount': 2160.0, 'total_unpaid_amount': 2160.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 960.0, 'total_unpaid_amount': 960.0, 'total_active_students': 6}, 'Physique': {'total_paid_amount': 1200.0, 'total_unpaid_amount': 1200.0, 'total_active_students': 6}}}, 'Informatique': {'total_paid_amount': 960.0, 'total_unpaid_amount': 960.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 960.0, 'total_unpaid_amount': 960.0, 'total_active_students': 6}}}}}, 'Huitième année de base': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}, 'Physique': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}}}, 'Septième année de base': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}}}, 'Sixième année primaire': {'total_paid_amount': 960.0, 'total_unpaid_amount': 960.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 480.0, 'total_unpaid_amount': 480.0, 'total_active_students': 6}, 'Éveil scientifique': {'total_paid_amount': 480.0, 'total_unpaid_amount': 480.0, 'total_active_students': 6}}}, 'Première année primaire': {'total_paid_amount': 480.0, 'total_unpaid_amount': 480.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 480.0, 'total_unpaid_amount': 480.0, 'total_active_students': 6}}}}}}
+        expected_dashboard_data = {"has_levels":True,"dashboard":{"total_paid_amount":20160.0/3*2,"total_unpaid_amount":20160.0/3*2,"total_active_students":72/3*2,"levels":{"Quatrième année secondaire":{"total_paid_amount":9360.0/3*2,"total_unpaid_amount":9360.0/3*2,"total_active_students":24/3*2,"sections":{"Technique":{"total_paid_amount":6480.0/3*2,"total_unpaid_amount":6480.0/3*2,"total_active_students":12/3*2,"subjects":{"Mathématiques":{"total_paid_amount":2880.0/3*2,"total_unpaid_amount":2880.0/3*2,"total_active_students":12/3*2},"Physique":{"total_paid_amount":3600.0/3*2,"total_unpaid_amount":3600.0/3*2,"total_active_students":12/3*2}}},"Informatique":{"total_paid_amount":2880.0/3*2,"total_unpaid_amount":2880.0/3*2,"total_active_students":12/3*2,"subjects":{"Mathématiques":{"total_paid_amount":2880.0/3*2,"total_unpaid_amount":2880.0/3*2,"total_active_students":12/3*2}}}}},"Huitième année de base":{"total_paid_amount":4320.0/3*2,"total_unpaid_amount":4320.0/3*2,"total_active_students":12/3*2,"subjects":{"Mathématiques":{"total_paid_amount":2160.0/3*2,"total_unpaid_amount":2160.0/3*2,"total_active_students":12/3*2},"Physique":{"total_paid_amount":2160.0/3*2,"total_unpaid_amount":2160.0/3*2,"total_active_students":12/3*2}}},"Septième année de base":{"total_paid_amount":2160.0/3*2,"total_unpaid_amount":2160.0/3*2,"total_active_students":12/3*2,"subjects":{"Mathématiques":{"total_paid_amount":2160.0/3*2,"total_unpaid_amount":2160.0/3*2,"total_active_students":12/3*2}}},"Sixième année primaire":{"total_paid_amount":2880.0/3*2,"total_unpaid_amount":2880.0/3*2,"total_active_students":12/3*2,"subjects":{"Mathématiques":{"total_paid_amount":1440.0/3*2,"total_unpaid_amount":1440.0/3*2,"total_active_students":12/3*2},"Éveil scientifique":{"total_paid_amount":1440.0/3*2,"total_unpaid_amount":1440.0/3*2,"total_active_students":12/3*2}}},"Première année primaire":{"total_paid_amount":1440.0/3*2,"total_unpaid_amount":1440.0/3*2,"total_active_students":12/3*2,"subjects":{"Mathématiques":{"total_paid_amount":1440.0/3*2,"total_unpaid_amount":1440.0/3*2,"total_active_students":12/3*2}}}}}}
+
         if dashboard_data == expected_dashboard_data :
             print("    SUCCESSFUL TEST : LOADING DASHBOARD DATA WITH date_range=this_month")
         else : 
@@ -217,7 +240,8 @@ class TestDateRangeFilter:
 
         # test this year
         dashboard_data = teacher_client.get_dashboard_data(date_range="this_year")
-        expected_dashboard_data = {'has_levels': True, 'dashboard': {'total_paid_amount': 10080.0, 'total_unpaid_amount': 10080.0, 'total_active_students': 36, 'levels': {'Quatrième année secondaire': {'total_paid_amount': 4680.0, 'total_unpaid_amount': 4680.0, 'total_active_students': 12, 'sections': {'Technique': {'total_paid_amount': 3240.0, 'total_unpaid_amount': 3240.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6}, 'Physique': {'total_paid_amount': 1800.0, 'total_unpaid_amount': 1800.0, 'total_active_students': 6}}}, 'Informatique': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6}}}}}, 'Huitième année de base': {'total_paid_amount': 2160.0, 'total_unpaid_amount': 2160.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 1080.0, 'total_unpaid_amount': 1080.0, 'total_active_students': 6}, 'Physique': {'total_paid_amount': 1080.0, 'total_unpaid_amount': 1080.0, 'total_active_students': 6}}}, 'Septième année de base': {'total_paid_amount': 1080.0, 'total_unpaid_amount': 1080.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 1080.0, 'total_unpaid_amount': 1080.0, 'total_active_students': 6}}}, 'Sixième année primaire': {'total_paid_amount': 1440.0, 'total_unpaid_amount': 1440.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}, 'Éveil scientifique': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}}}, 'Première année primaire': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6, 'subjects': {'Mathématiques': {'total_paid_amount': 720.0, 'total_unpaid_amount': 720.0, 'total_active_students': 6}}}}}}
+        expected_dashboard_data = {"has_levels":True,"dashboard":{"total_paid_amount":20160.0,"total_unpaid_amount":20160.0,"total_active_students":72,"levels":{"Quatrième année secondaire":{"total_paid_amount":9360.0,"total_unpaid_amount":9360.0,"total_active_students":24,"sections":{"Technique":{"total_paid_amount":6480.0,"total_unpaid_amount":6480.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":2880.0,"total_unpaid_amount":2880.0,"total_active_students":12},"Physique":{"total_paid_amount":3600.0,"total_unpaid_amount":3600.0,"total_active_students":12}}},"Informatique":{"total_paid_amount":2880.0,"total_unpaid_amount":2880.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":2880.0,"total_unpaid_amount":2880.0,"total_active_students":12}}}}},"Huitième année de base":{"total_paid_amount":4320.0,"total_unpaid_amount":4320.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":2160.0,"total_unpaid_amount":2160.0,"total_active_students":12},"Physique":{"total_paid_amount":2160.0,"total_unpaid_amount":2160.0,"total_active_students":12}}},"Septième année de base":{"total_paid_amount":2160.0,"total_unpaid_amount":2160.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":2160.0,"total_unpaid_amount":2160.0,"total_active_students":12}}},"Sixième année primaire":{"total_paid_amount":2880.0,"total_unpaid_amount":2880.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":1440.0,"total_unpaid_amount":1440.0,"total_active_students":12},"Éveil scientifique":{"total_paid_amount":1440.0,"total_unpaid_amount":1440.0,"total_active_students":12}}},"Première année primaire":{"total_paid_amount":1440.0,"total_unpaid_amount":1440.0,"total_active_students":12,"subjects":{"Mathématiques":{"total_paid_amount":1440.0,"total_unpaid_amount":1440.0,"total_active_students":12}}}}}}
+
         if dashboard_data == expected_dashboard_data :
             print("    SUCCESSFUL TEST : LOADING DASHBOARD DATA WITH date_range=this_year")
         else : 
@@ -227,7 +251,7 @@ class TestDateRangeFilter:
         
         # test in a specific date range
         dashboard_data = teacher_client.get_dashboard_data(start_date="2025-08-10", end_date="2025-08-14")
-        expected_dashboard_data = {'has_levels': True, 'dashboard': {'total_paid_amount': 1120.0, 'total_unpaid_amount': 1120.0, 'total_active_students': 12, 'levels': {'Quatrième année secondaire': {'total_paid_amount': 520.0, 'total_unpaid_amount': 520.0, 'total_active_students': 4, 'sections': {'Technique': {'total_paid_amount': 360.0, 'total_unpaid_amount': 360.0, 'total_active_students': 2, 'subjects': {'Mathématiques': {'total_paid_amount': 160.0, 'total_unpaid_amount': 160.0, 'total_active_students': 2}, 'Physique': {'total_paid_amount': 200.0, 'total_unpaid_amount': 200.0, 'total_active_students': 2}}}, 'Informatique': {'total_paid_amount': 160.0, 'total_unpaid_amount': 160.0, 'total_active_students': 2, 'subjects': {'Mathématiques': {'total_paid_amount': 160.0, 'total_unpaid_amount': 160.0, 'total_active_students': 2}}}}}, 'Huitième année de base': {'total_paid_amount': 240.0, 'total_unpaid_amount': 240.0, 'total_active_students': 2, 'subjects': {'Mathématiques': {'total_paid_amount': 120.0, 'total_unpaid_amount': 120.0, 'total_active_students': 2}, 'Physique': {'total_paid_amount': 120.0, 'total_unpaid_amount': 120.0, 'total_active_students': 2}}}, 'Septième année de base': {'total_paid_amount': 120.0, 'total_unpaid_amount': 120.0, 'total_active_students': 2, 'subjects': {'Mathématiques': {'total_paid_amount': 120.0, 'total_unpaid_amount': 120.0, 'total_active_students': 2}}}, 'Sixième année primaire': {'total_paid_amount': 160.0, 'total_unpaid_amount': 160.0, 'total_active_students': 2, 'subjects': {'Mathématiques': {'total_paid_amount': 80.0, 'total_unpaid_amount': 80.0, 'total_active_students': 2}, 'Éveil scientifique': {'total_paid_amount': 80.0, 'total_unpaid_amount': 80.0, 'total_active_students': 2}}}, 'Première année primaire': {'total_paid_amount': 80.0, 'total_unpaid_amount': 80.0, 'total_active_students': 2, 'subjects': {'Mathématiques': {'total_paid_amount': 80.0, 'total_unpaid_amount': 80.0, 'total_active_students': 2}}}}}}
+        expected_dashboard_data = {"has_levels":True,"dashboard":{"total_paid_amount":20160.0/3,"total_unpaid_amount":20160.0/3,"total_active_students":72/3,"levels":{"Quatrième année secondaire":{"total_paid_amount":9360.0/3,"total_unpaid_amount":9360.0/3,"total_active_students":24/3,"sections":{"Technique":{"total_paid_amount":6480.0/3,"total_unpaid_amount":6480.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":2880.0/3,"total_unpaid_amount":2880.0/3,"total_active_students":12/3},"Physique":{"total_paid_amount":3600.0/3,"total_unpaid_amount":3600.0/3,"total_active_students":12/3}}},"Informatique":{"total_paid_amount":2880.0/3,"total_unpaid_amount":2880.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":2880.0/3,"total_unpaid_amount":2880.0/3,"total_active_students":12/3}}}}},"Huitième année de base":{"total_paid_amount":4320.0/3,"total_unpaid_amount":4320.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":2160.0/3,"total_unpaid_amount":2160.0/3,"total_active_students":12/3},"Physique":{"total_paid_amount":2160.0/3,"total_unpaid_amount":2160.0/3,"total_active_students":12/3}}},"Septième année de base":{"total_paid_amount":2160.0/3,"total_unpaid_amount":2160.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":2160.0/3,"total_unpaid_amount":2160.0/3,"total_active_students":12/3}}},"Sixième année primaire":{"total_paid_amount":2880.0/3,"total_unpaid_amount":2880.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":1440.0/3,"total_unpaid_amount":1440.0/3,"total_active_students":12/3},"Éveil scientifique":{"total_paid_amount":1440.0/3,"total_unpaid_amount":1440.0/3,"total_active_students":12/3}}},"Première année primaire":{"total_paid_amount":1440.0/3,"total_unpaid_amount":1440.0/3,"total_active_students":12/3,"subjects":{"Mathématiques":{"total_paid_amount":1440.0/3,"total_unpaid_amount":1440.0/3,"total_active_students":12/3}}}}}}
         if dashboard_data == expected_dashboard_data:
             print("    SUCCESSFUL TEST : LOADING DASHBOARD DATA WITH A SPECIFIC DATE RANGE")
         else:
@@ -235,3 +259,4 @@ class TestDateRangeFilter:
             print("    RETURNED DASHBOARD DATA:", dashboard_data)
 
         
+

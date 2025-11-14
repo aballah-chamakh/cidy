@@ -67,6 +67,10 @@ def get_dashboard_data(request):
         'total_active_students': 0,
         'levels' : {}
     }
+    # kpis description : 
+    # - total paid amount : total paid amount  of classes paid in the date range (the classes paid in the date range can be of students enrolled before the start date)
+    # - total unpaid amount : total unpaid amount of classes attended in the date range and their paymen is due 
+    # - total active students : total distinct students enrolled in the groups of the teacher in the date range
 
     # get the enrollments of the students in the groups of the teacher in the date range
     teacher_group_enrollments = GroupEnrollment.objects.filter(group__teacher=teacher)
@@ -81,22 +85,23 @@ def get_dashboard_data(request):
     # number of active students, paid amount, unpaid amount
     for teacher_subject in teacher_subjects:
         # Get all group enrollments of the groups of this teacher subject
-        teacher_subject_group_enrollments = teacher_group_enrollments.filter(
+        teacher_subject_group_enrollments = GroupEnrollment.objects.filter(
             group__teacher_subject=teacher_subject,
         )
 
         # if the date range is specified, filter the group enrollments only by the end date 
-        # because i want the active students till that date not the new new students in that date range
-        """
+        # because the student can be enrolled before the start date but has paid and attended classes in the date range 
+        # but for the students enrolled after the end date they can't have attended or paid for classes in the date range
+
         if end_date : 
             print("Filtering group enrollments by end date : ", end_date)
             teacher_subject_group_enrollments = teacher_subject_group_enrollments.filter(
                 date__lte=end_date
             )
-        """
+        
         
         # note: i distinct here to avoid counting same student multiple times if enrolled in multiple groups of same subject
-        active_students_count = teacher_subject_group_enrollments.distinct('student').count()
+        active_students_count = teacher_subject_group_enrollments.filter(**({"date__gte": start_date} if start_date else {} )).distinct('student').count()
         paid_amount = 0 
         unpaid_amount = 0
         class_price = teacher_subject.price_per_class
@@ -137,10 +142,12 @@ def get_dashboard_data(request):
         dashboard['levels'][teacher_subject_level] = dashboard['levels'].get(teacher_subject_level, {
             'total_paid_amount': 0,
             'total_unpaid_amount': 0,
-            'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level__name=teacher_subject.level.name,**({"date__lte": end_date} if end_date else {} )).distinct('student').count(),
+            'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level__name=teacher_subject.level.name,**({"date__gte": start_date,"date__lte": end_date} if start_date and end_date else {} )).distinct('student').count(),
         })
         dashboard['levels'][teacher_subject_level]['total_paid_amount'] += paid_amount
         dashboard['levels'][teacher_subject_level]['total_unpaid_amount'] += unpaid_amount
+        #note : i can't add active_students_count to the level total_active_students this way because 
+        #       active_students_count can be the same students for different subjects of the same level
         #dashboard['levels'][teacher_subject_level]['total_active_students'] += active_students_count
         
         if teacher_subject_section :
@@ -148,10 +155,12 @@ def get_dashboard_data(request):
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section] = dashboard['levels'][teacher_subject_level]['sections'].get(teacher_subject_section, {
                 'total_paid_amount': 0,
                 'total_unpaid_amount': 0,
-                'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level,**({"date__lte": end_date} if end_date else {} )).distinct('student').count()
+                'total_active_students': GroupEnrollment.objects.filter(group__teacher=teacher, group__teacher_subject__level=teacher_subject.level,**({"date__gte": start_date,"date__lte": end_date} if start_date and end_date else {} )).distinct('student').count()
             })
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_paid_amount'] += paid_amount
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_unpaid_amount'] += unpaid_amount
+            # note : i can't add active_students_count to the section total_active_students this way because
+            #        active_students_count can be the same students for different subjects of the same section
             #dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['total_active_students'] += active_students_count
 
             dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section]['subjects'] = dashboard['levels'][teacher_subject_level]['sections'][teacher_subject_section].get('subjects', {})
@@ -173,7 +182,7 @@ def get_dashboard_data(request):
             dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_paid_amount'] += paid_amount
             dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_unpaid_amount'] += unpaid_amount
             dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_active_students'] += active_students_count
-
+    #print(dashboard)
     return Response({
         'has_levels': True,
         'dashboard': dashboard
