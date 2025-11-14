@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-+uk$*a+phkq@moaa6++1fpjtvp5e@%t9zage$1ka^6mreh#4qh'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = True if os.environ.get("RENDER") else False
 
 ALLOWED_HOSTS = [
     "*"
@@ -97,6 +97,25 @@ DATABASES = {
         'PORT': '3300',
     }
 }
+
+
+import dj_database_url
+
+if os.environ.get("RENDER"):  # Render sets this env var automatically
+    DATABASES = {
+        'default': dj_database_url.config(default=os.environ["DATABASE_URL"])
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'cidy_db',
+            'USER': 'cidy_user',
+            'PASSWORD': 'cidy_password',
+            'HOST': 'localhost',
+            'PORT': '3300',
+        }
+    }
 
 
 # Password validation
