@@ -6,6 +6,8 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:cidy/config.dart';
+import 'package:cidy/app_tools.dart';
+
 import 'package:cidy/authentication/login.dart';
 import '../widgets/teacher_layout.dart';
 
@@ -106,7 +108,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur: ${response.reasonPhrase}'),
+            content: Text('Erreur du serveur 500'),
             backgroundColor: Colors.red,
           ),
         );
@@ -114,7 +116,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Une erreur est survenue: $e'),
+          content: Text('Erreur du serveur 500'),
           backgroundColor: Colors.red,
         ),
       );
@@ -237,20 +239,21 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   Widget _buildDashboard() {
     final primaryColor = _primaryColor;
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          color: scaffoldBackgroundColor,
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-          child: _buildDateRangePicker(),
-        ),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () => _fetchDashboardData(),
-            color: primaryColor,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
+    return RefreshIndicator(
+      onRefresh: () => _fetchDashboardData(),
+      backgroundColor: Colors.white,
+      color: primaryColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              color: scaffoldBackgroundColor,
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+              child: _buildDateRangePicker(),
+            ),
+            Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,9 +264,9 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
                 ],
               ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -451,35 +454,38 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildKpiCard(
-                "Montant Payé",
-                "${_dashboardData!['total_paid_amount']} DT",
-                paidColor,
-                Icons.check_circle_outline,
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _buildKpiCard(
+                  "Montant Payé",
+                  "${formatToK(_dashboardData!['total_paid_amount'].toString())} DT",
+                  paidColor,
+                  Icons.check_circle_outline,
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildKpiCard(
-                "Montant Impayé",
-                "${_dashboardData!['total_unpaid_amount']} DT",
-                unpaidColor,
-                Icons.hourglass_empty_outlined,
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildKpiCard(
+                  "Montant Impayé",
+                  "${formatToK(_dashboardData!['total_unpaid_amount'].toString())} DT",
+                  unpaidColor,
+                  Icons.hourglass_empty_outlined,
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildKpiCard(
-                "Étudiants Actifs",
-                _dashboardData!['total_active_students'].toString(),
-                studentsColor,
-                Icons.people_outline,
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildKpiCard(
+                  "Étudiants Actifs",
+                  _dashboardData!['total_active_students'].toString(),
+                  studentsColor,
+                  Icons.people_outline,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -520,7 +526,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: primaryColor,
               ),
             ),
             const SizedBox(height: 4),
@@ -655,10 +661,10 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           children: [
             Text(
               sectionName,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: Color(0xFF555555),
+                color: primaryColor,
               ),
             ),
             const SizedBox(height: 12),
@@ -721,8 +727,8 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
             Text(
               subjectName,
               style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF666666),
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
               ),
             ),
             const SizedBox(height: 12),
@@ -735,35 +741,38 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
 
   // Shared 3-KPI row used inside Level/Section/Subject cards
   Widget _buildMiniKpisRow(Map<String, dynamic> data) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildMiniKpi(
-            label: 'Payé',
-            value: "${data['total_paid_amount']} DT",
-            color: paidColor,
-            icon: Icons.check_circle_outline,
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _buildMiniKpi(
+              label: 'Payé',
+              value: "${formatToK(data['total_paid_amount'].toString())} DT",
+              color: paidColor,
+              icon: Icons.check_circle_outline,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildMiniKpi(
-            label: 'Impayé',
-            value: "${data['total_unpaid_amount']} DT",
-            color: unpaidColor,
-            icon: Icons.hourglass_empty_outlined,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildMiniKpi(
+              label: 'Impayé',
+              value: "${formatToK(data['total_unpaid_amount'].toString())} DT",
+              color: unpaidColor,
+              icon: Icons.hourglass_empty_outlined,
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildMiniKpi(
-            label: 'Étudiants actifs',
-            value: data['total_active_students'].toString(),
-            color: studentsColor,
-            icon: Icons.people_outline,
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildMiniKpi(
+              label: 'Étudiants actifs',
+              value: data['total_active_students'].toString(),
+              color: studentsColor,
+              icon: Icons.people_outline,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -782,6 +791,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(6),
@@ -795,7 +805,11 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: 12,
+              color: primaryColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 4),
           Text(

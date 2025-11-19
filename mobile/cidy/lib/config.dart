@@ -1,6 +1,6 @@
 class Config {
-  static const String backendUrl =
-      'https://cidy.onrender.com'; //'http://10.0.2.2:8000';
+  static const String backendUrl = 'http://10.0.2.2:8000';
+  //'https://cidy.onrender.com'; //
   static const levelsSectionsSubjects = {
     "Première année primaire": {
       "subjects": [

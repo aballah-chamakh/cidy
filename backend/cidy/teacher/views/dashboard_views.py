@@ -102,12 +102,14 @@ def get_dashboard_data(request):
         
         # note: i distinct here to avoid counting same student multiple times if enrolled in multiple groups of same subject
         active_students_count = teacher_subject_group_enrollments.filter(**({"date__gte": start_date} if start_date else {} )).distinct('student').count()
+        print(f"active students count : {active_students_count} per teacher subject id : {teacher_subject.id}")
         paid_amount = 0 
         unpaid_amount = 0
         class_price = teacher_subject.price_per_class
 
         # i didn't loop through the teacher_subject_group_enrollments distincted by student
         # because i need to calculate the paid and unpaid amounts of all of the enrollments of the students 
+        print(f"{teacher_subject_group_enrollments.count()} group enrollments for teacher subject id : {teacher_subject.id}")
         for teacher_subject_group_enrollment in teacher_subject_group_enrollments:
             
             paid_classes_of_teacher_subject = Class.objects.filter(
@@ -119,6 +121,7 @@ def get_dashboard_data(request):
                 group_enrollment=teacher_subject_group_enrollment,
                 status='attended_and_the_payment_due'
             )
+
             
             if start_date and end_date:
                 paid_classes_of_teacher_subject = paid_classes_of_teacher_subject.filter(
@@ -126,10 +129,14 @@ def get_dashboard_data(request):
                 
                 unpaid_classes_of_teacher_subject = unpaid_classes_of_teacher_subject.filter(
                     attendance_date__gte=start_date, attendance_date__lte=end_date)
+            else : 
+                print("No date filtering for paid and unpaid classes")
 
+            print(f"paid and unpaid classes sum : {paid_classes_of_teacher_subject.count() + unpaid_classes_of_teacher_subject.count()} for enrollment id : {teacher_subject_group_enrollment.id}")
 
             paid_amount += paid_classes_of_teacher_subject.count() * class_price
             unpaid_amount += unpaid_classes_of_teacher_subject.count() * class_price
+            print(f"paid amount : {paid_amount} , unpaid amount : {unpaid_amount} for teacher subject: {teacher_subject.level.name} {teacher_subject.level.section} - {teacher_subject.subject.name}")
 
         teacher_subject_level = teacher_subject.level.name
         teacher_subject_section = teacher_subject.level.section if teacher_subject.level.section else None
@@ -182,7 +189,7 @@ def get_dashboard_data(request):
             dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_paid_amount'] += paid_amount
             dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_unpaid_amount'] += unpaid_amount
             dashboard['levels'][teacher_subject_level]['subjects'][teacher_subject_subject]['total_active_students'] += active_students_count
-    #print(dashboard)
+    print(dashboard)
     return Response({
         'has_levels': True,
         'dashboard': dashboard
