@@ -26,6 +26,7 @@ def get_date_range(range_preset):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_dashboard_data(request):
+
     teacher = request.user.teacher
     
     # Check if teacher has groups

@@ -26,7 +26,8 @@ def test_runner(test_class):
     test.test()
 
 
-
+test_runner(TestListingWeekSchedule)
+quit()
 test_runner(TestDateRangeFilter)
 quit()
 test_runner(TestMarkAttendance)
@@ -42,7 +43,6 @@ quit()
 
 #test_runner(TestMarkPayment)
 
-test_runner(TestListingWeekSchedule)
 test_runner(TestDateRangeFilter)
 test_runner(TestNoClasses)
 test_runner(TestNoTeacherSubjects)

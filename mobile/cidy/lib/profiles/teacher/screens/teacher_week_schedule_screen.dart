@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cidy/app_styles.dart';
 import 'package:flutter/material.dart';
+import 'package:cidy/authentication/login.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:syncfusion_flutter_calendar/calendar.dart';
@@ -124,7 +125,7 @@ class _TeacherWeekScheduleScreenState extends State<TeacherWeekScheduleScreen> {
             endTime: endDateTime,
             subject: subject,
             id: groupData['id'].toString(),
-            color: Theme.of(context).primaryColor,
+            color: primaryColor,
           );
           appointments.add(appointment);
         }
@@ -134,24 +135,30 @@ class _TeacherWeekScheduleScreenState extends State<TeacherWeekScheduleScreen> {
             _dataSource = _AppointmentDataSource(appointments);
           });
         }
+      } else if (response.statusCode == 401) {
+        if (!mounted) return;
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                'Failed to load schedule: ${response.reasonPhrase}',
-              ),
+              content: Text('Erreur du serveur 500'),
+              backgroundColor: Colors.red,
             ),
           );
         }
       }
-    } catch (e, stacktrace) {
+    } catch (e) {
       if (mounted) {
-        print('An error occurred: $e');
-        print(stacktrace);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('An error occurred: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur du serveur 500'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -237,6 +244,14 @@ class _TeacherWeekScheduleScreenState extends State<TeacherWeekScheduleScreen> {
                               minDate: _startOfWeek,
                               maxDate: _endOfWeek,
                               firstDayOfWeek: 1, // Monday
+                              todayHighlightColor: primaryColor,
+                              selectionDecoration: BoxDecoration(
+                                color: Colors.transparent,
+                                border: Border.all(
+                                  color: primaryColor,
+                                  width: 2,
+                                ),
+                              ),
                               timeSlotViewSettings: TimeSlotViewSettings(
                                 startHour: startHour,
                                 endHour: endHour,
