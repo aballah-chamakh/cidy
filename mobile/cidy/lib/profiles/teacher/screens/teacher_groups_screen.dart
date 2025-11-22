@@ -511,6 +511,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
           topRight: Radius.circular(4.0),
         ),
       ),
+      color: Color(0xFFF5F7FA),
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
@@ -519,14 +520,14 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Rechercher par nom de groupe...',
+                  hintText: 'Rechercher ...',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30.0),
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                  fillColor: Colors.white,
                   contentPadding: EdgeInsets.zero,
                 ),
                 onChanged: (value) {
@@ -735,6 +736,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       elevation: 2,
+      color: Color(0xFFF5F7FA),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isSelected

@@ -23,6 +23,7 @@ def increment_parent_unread_notifications(parent):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_week_schedule(request):
+
     """
     Get all groups of the teacher with their schedule details for the week schedule screen
     """

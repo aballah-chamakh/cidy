@@ -103,10 +103,18 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
     }
   }
 
-  TimeOfDay? _parseTime(String time) {
-    final parts = time.split(':');
-    if (parts.length == 2) {
-      return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  TimeOfDay? _parseTime(String? timeString) {
+    if (timeString == null) return null;
+    try {
+      final parts = timeString.split(':');
+      if (parts.length >= 2) {
+        return TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
+      }
+    } catch (e) {
+      // Handle parsing error
     }
     return null;
   }
@@ -168,13 +176,14 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
               'Filtre',
               style: TextStyle(
                 fontSize: headerFontSize,
-                color: Theme.of(context).primaryColor,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
               ),
             ),
             IconButton(
               icon: Icon(
                 Icons.close,
-                size: headerFontSize,
+                size: headerIconSize,
                 color: primaryColor,
               ),
               onPressed: () => Navigator.of(context).pop(),
@@ -213,9 +222,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: _applyFilters,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
+            style: primaryButtonStyle,
             child: Text(
               'Filtrer (${_countActiveFilters()})',
               style: TextStyle(fontSize: mediumFontSize),
@@ -227,17 +234,10 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
           width: double.infinity,
           child: OutlinedButton(
             onPressed: _resetFilters,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Theme.of(context).primaryColor,
-              side: BorderSide(color: Theme.of(context).primaryColor),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
-            ),
+            style: secondaryButtonStyle,
             child: const Text(
               'Réinitialiser',
-              style: TextStyle(fontSize: mediumFontSize),
+              style: TextStyle(fontSize: mediumFontSize, color: primaryColor),
             ),
           ),
         ),
@@ -247,28 +247,33 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
 
   Widget _buildLevelDropdown() {
     return DropdownButtonFormField<String>(
-      value: _selectedLevelName,
-      style:
-          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
-          TextStyle(fontSize: 16),
+      initialValue: _selectedLevelName,
+      style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Niveau',
-        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-        border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-          borderRadius: BorderRadius.circular(8.0),
+        labelStyle: TextStyle(color: primaryColor),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        errorMaxLines: 3,
+        contentPadding: inputContentPadding,
       ),
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Tous les niveaux', style: TextStyle(fontSize: 16)),
+          child: Text(
+            'Tous les niveaux',
+            style: TextStyle(fontSize: mediumFontSize),
+          ),
         ),
         ..._levels.keys.map(
           (levelName) => DropdownMenuItem<String>(
             value: levelName,
-            child: Text(levelName, style: TextStyle(fontSize: 16)),
+            child: Text(levelName, style: TextStyle(fontSize: mediumFontSize)),
           ),
         ),
       ],
@@ -292,30 +297,38 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
     final bool isEnabled = _sections.isNotEmpty;
 
     return DropdownButtonFormField<String>(
-      value: _selectedSectionName,
-      style:
-          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
-          TextStyle(fontSize: 16),
+      initialValue: _selectedSectionName,
+      style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Section',
-        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-        border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-          borderRadius: BorderRadius.circular(8.0),
+        labelStyle: TextStyle(color: primaryColor),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        errorMaxLines: 3,
+        contentPadding: inputContentPadding,
         filled: !isEnabled,
         fillColor: Colors.grey[200],
       ),
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Toutes les sections', style: TextStyle(fontSize: 16)),
+          child: Text(
+            'Toutes les sections',
+            style: TextStyle(fontSize: mediumFontSize),
+          ),
         ),
         ..._sections.keys.map(
           (sectionName) => DropdownMenuItem<String>(
             value: sectionName,
-            child: Text(sectionName, style: TextStyle(fontSize: 16)),
+            child: Text(
+              sectionName,
+              style: TextStyle(fontSize: mediumFontSize),
+            ),
           ),
         ),
       ],
@@ -362,30 +375,38 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
     }
 
     return DropdownButtonFormField<String>(
-      value: _selectedSubjectName,
-      style:
-          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
-          TextStyle(fontSize: 16),
+      initialValue: _selectedSubjectName,
+      style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Matière',
-        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-        border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-          borderRadius: BorderRadius.circular(8.0),
+        labelStyle: TextStyle(color: primaryColor),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        errorMaxLines: 3,
+        contentPadding: inputContentPadding,
         filled: !isEnabled,
         fillColor: Colors.grey[200],
       ),
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Toutes les matières', style: TextStyle(fontSize: 16)),
+          child: Text(
+            'Toutes les matières',
+            style: TextStyle(fontSize: mediumFontSize),
+          ),
         ),
         ...currentSubjects.map(
           (subjectName) => DropdownMenuItem<String>(
             value: subjectName,
-            child: Text(subjectName, style: TextStyle(fontSize: 16)),
+            child: Text(
+              subjectName,
+              style: TextStyle(fontSize: mediumFontSize),
+            ),
           ),
         ),
       ],
@@ -401,28 +422,36 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
 
   Widget _buildDayDropdown() {
     return DropdownButtonFormField<String>(
-      value: _selectedDay,
-      style:
-          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
-          TextStyle(fontSize: 16),
+      initialValue: _selectedDay,
+      style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Jour de la semaine',
-        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-        border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-          borderRadius: BorderRadius.circular(8.0),
+        labelStyle: TextStyle(color: primaryColor),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        errorMaxLines: 3,
+        contentPadding: inputContentPadding,
       ),
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Tous les jours', style: TextStyle(fontSize: 16)),
+          child: Text(
+            'Tous les jours',
+            style: TextStyle(fontSize: mediumFontSize),
+          ),
         ),
         ..._weekDays.map(
           (day) => DropdownMenuItem<String>(
             value: day['value'],
-            child: Text(day['name']!, style: TextStyle(fontSize: 16)),
+            child: Text(
+              day['name']!,
+              style: TextStyle(fontSize: mediumFontSize),
+            ),
           ),
         ),
       ],
@@ -442,17 +471,19 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
         Expanded(
           child: TextFormField(
             controller: _startTimeController,
-            style:
-                Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
-                TextStyle(fontSize: 16),
+            style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
             decoration: InputDecoration(
               labelText: 'Heure de début',
-              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              border: const OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                borderRadius: BorderRadius.circular(8.0),
+              labelStyle: TextStyle(color: primaryColor),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
               ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
+                borderSide: BorderSide(color: primaryColor, width: 2),
+              ),
+              errorMaxLines: 3,
+              contentPadding: inputContentPadding,
               filled: !isEnabled,
               fillColor: Colors.grey[200],
               hintText: 'HH:MM',
@@ -464,15 +495,23 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
               _TimeTextInputFormatter(),
             ],
             validator: (value) {
-              if (value == null || value.isEmpty) return null;
+              if (value == null || value.isEmpty) {
+                return 'Requis';
+              }
               final time = _parseTime(value);
+              final endTime = _parseTime(_endTimeController.text);
               if (time == null) return 'Format invalide';
               if (time.hour < 8) return 'Min 08:00';
-              if (_endTime != null &&
-                  (time.hour > _endTime!.hour ||
-                      (time.hour == _endTime!.hour &&
-                          time.minute > _endTime!.minute))) {
+              if (endTime != null &&
+                  (time.hour > endTime.hour ||
+                      (time.hour == endTime.hour &&
+                          time.minute > endTime.minute))) {
                 return 'Début > Fin';
+              }
+              if (endTime != null &&
+                  time.hour == endTime.hour &&
+                  time.minute == endTime.minute) {
+                return 'Début == Fin';
               }
               return null;
             },
@@ -489,17 +528,19 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
         Expanded(
           child: TextFormField(
             controller: _endTimeController,
-            style:
-                Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
-                TextStyle(fontSize: 16),
+            style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
             decoration: InputDecoration(
               labelText: 'Heure de fin',
-              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              border: const OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                borderRadius: BorderRadius.circular(8.0),
+              labelStyle: TextStyle(color: primaryColor),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
               ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
+                borderSide: BorderSide(color: primaryColor, width: 2),
+              ),
+              errorMaxLines: 3,
+              contentPadding: inputContentPadding,
               filled: !isEnabled,
               fillColor: Colors.grey[200],
               hintText: 'HH:MM',
@@ -511,15 +552,23 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
               _TimeTextInputFormatter(),
             ],
             validator: (value) {
-              if (value == null || value.isEmpty) return null;
+              if (value == null || value.isEmpty) {
+                return 'Requis';
+              }
               final time = _parseTime(value);
+              final startTime = _parseTime(_startTimeController.text);
               if (time == null) return 'Format invalide';
               if (time.hour == 0 && time.minute > 0) return 'Max 00:00';
-              if (_startTime != null &&
-                  (time.hour < _startTime!.hour ||
-                      (time.hour == _startTime!.hour &&
-                          time.minute < _startTime!.minute))) {
+              if (startTime != null &&
+                  (time.hour < startTime.hour ||
+                      (time.hour == startTime.hour &&
+                          time.minute < startTime.minute))) {
                 return 'Fin < Début';
+              }
+              if (startTime != null &&
+                  time.hour == startTime!.hour &&
+                  time.minute == startTime.minute) {
+                return 'Début == Fin';
               }
               return null;
             },
@@ -551,28 +600,33 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
 
   Widget _buildSortByDropdown() {
     return DropdownButtonFormField<String>(
-      value: _sortBy,
-      style:
-          Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 16) ??
-          TextStyle(fontSize: 16),
+      initialValue: _sortBy,
+      style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Trier par',
-        labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-        border: const OutlineInputBorder(),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Theme.of(context).primaryColor),
-          borderRadius: BorderRadius.circular(8.0),
+        labelStyle: TextStyle(color: primaryColor),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
         ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(inputBorderRadius),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        errorMaxLines: 3,
+        contentPadding: inputContentPadding,
       ),
       items: [
         const DropdownMenuItem<String>(
           value: null,
-          child: Text('Défaut', style: TextStyle(fontSize: 16)),
+          child: Text('Défaut', style: TextStyle(fontSize: mediumFontSize)),
         ),
         ..._sortOptions.entries.map(
           (entry) => DropdownMenuItem<String>(
             value: entry.key,
-            child: Text(entry.value, style: TextStyle(fontSize: 16)),
+            child: Text(
+              entry.value,
+              style: TextStyle(fontSize: mediumFontSize),
+            ),
           ),
         ),
       ],
@@ -597,6 +651,28 @@ class _TimeTextInputFormatter extends TextInputFormatter {
     }
 
     String text = newText.replaceAll(':', '');
+
+    if (text.length == 2) {
+      final hour = int.tryParse(text);
+      if (hour != null && hour > 23) {
+        if (oldValue.text.length == 1 && int.tryParse(oldValue.text) != null) {
+          final firstDigit = oldValue.text;
+          final secondDigit = text.substring(1);
+          text = '0$firstDigit:$secondDigit';
+
+          final minuteDigit = int.tryParse(secondDigit);
+          if (minuteDigit != null && minuteDigit > 5) {
+            text = '0$firstDigit:0$secondDigit';
+          }
+
+          return TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        }
+      }
+    }
+
     if (text.length > 2) {
       text = '${text.substring(0, 2)}:${text.substring(2)}';
     }
@@ -605,12 +681,31 @@ class _TimeTextInputFormatter extends TextInputFormatter {
     if (text.contains(':')) {
       final parts = text.split(':');
       final hour = int.tryParse(parts[0]);
+
+      if (parts.length > 1 &&
+          parts[1].length == 1 &&
+          newValue.text.length > oldValue.text.length) {
+        final m = int.tryParse(parts[1]);
+        if (m != null && m > 5) {
+          text = '${parts[0]}:0$m';
+          return TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        }
+      }
+
       final minute = int.tryParse(parts[1]);
 
       if (hour != null && hour > 23) {
         return oldValue;
       }
       if (minute != null && minute > 59) {
+        return oldValue;
+      }
+    } else if (text.length == 2) {
+      final hour = int.tryParse(text);
+      if (hour != null && hour > 23) {
         return oldValue;
       }
     }
