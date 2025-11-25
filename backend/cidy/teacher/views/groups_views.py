@@ -88,7 +88,7 @@ def get_groups(request):
     
     # Apply time range filter
     start_time = request.GET.get('start_time')
-    print(f"start_time : {start_time}")
+    
     if start_time :
         start_time = start_time.replace('_',':')
         start_time = datetime.strptime(start_time, "%H:%M").time()
@@ -144,13 +144,14 @@ def get_groups(request):
         'groups': serializer.data,
         'teacher_levels_sections_subjects_hierarchy': teacher_levels_sections_subjects_hierarchy.data
     }
-    print(response)
+    #print(response)
     return Response(response)
 
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_group(request):
+    time.sleep(3)
     #Group.objects.all().delete()
     """Create a new group"""
 
@@ -258,9 +259,10 @@ def edit_group(request, group_id):
         return Response(serializer.errors, status=400)
     
     # update the group
-    group = serializer.save()
+    serializer.save()
 
     # Check if the schedule of the group has changed
+    """
     schedule_change_type = request.data.get('schedule_change_type')
     if schedule_change_type : 
         student_teacher_pronoun = "Votre professeur" if teacher.gender == "M" else "Votre professeure"
@@ -288,6 +290,7 @@ def edit_group(request, group_id):
                     meta_data = {"son_id":son.id,'group_id':group.id}
                 )
                 increment_parent_unread_notifications(son.parent)
+    """
     
     return Response({
         'success': True,

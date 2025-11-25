@@ -150,7 +150,7 @@ class GroupDetailsSerializer(serializers.ModelSerializer):
         }
     
 class GroupCreateUpdateSerializer(serializers.ModelSerializer):
-    schedule_change_type = serializers.ChoiceField(choices=['permanent', 'temporary'], write_only=True, required=False)
+    #schedule_change_type = serializers.ChoiceField(choices=['permanent', 'temporary'], write_only=True, required=False)
     start_time = serializers.TimeField(
         format="%H:%M", 
         input_formats=["%H:%M", "%H:%M"]
@@ -173,7 +173,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
             'week_day',
             'start_time',
             'end_time',
-            'schedule_change_type'
+            #'schedule_change_type'
         ]
 
     def validate(self, data):
@@ -234,6 +234,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         data['teacher_subject'] = teacher_subject
         return data
     
+    """
     def update(self,instance,validate_data):
         schedule_change_type = validate_data.get('schedule_change_type')
         if schedule_change_type == 'temporary':
@@ -252,6 +253,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
             validate_data['clear_temporary_schedule_at'] = None 
 
         return super().update(instance,validate_data)
+    """
 
     def create(self,validated_data):
         validated_data['teacher'] = self.context['request'].user.teacher

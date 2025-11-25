@@ -191,7 +191,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
           ],
         ),
         const Divider(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 5),
 
         // Form Content
         Flexible(
@@ -200,6 +200,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 5),
                 _buildLevelDropdown(),
                 const SizedBox(height: 16),
                 _buildSectionDropdown(),
@@ -247,6 +248,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
 
   Widget _buildLevelDropdown() {
     return DropdownButtonFormField<String>(
+      dropdownColor: Colors.white,
       initialValue: _selectedLevelName,
       style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
@@ -297,6 +299,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
     final bool isEnabled = _sections.isNotEmpty;
 
     return DropdownButtonFormField<String>(
+      dropdownColor: Colors.white,
       initialValue: _selectedSectionName,
       style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
@@ -375,6 +378,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
     }
 
     return DropdownButtonFormField<String>(
+      dropdownColor: Colors.white,
       initialValue: _selectedSubjectName,
       style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
@@ -422,6 +426,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
 
   Widget _buildDayDropdown() {
     return DropdownButtonFormField<String>(
+      dropdownColor: Colors.white,
       initialValue: _selectedDay,
       style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
@@ -496,12 +501,15 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
             ],
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Requis';
+                return null;
               }
               final time = _parseTime(value);
-              final endTime = _parseTime(_endTimeController.text);
               if (time == null) return 'Format invalide';
               if (time.hour < 8) return 'Min 08:00';
+              return null;
+              //final endTime = _parseTime(_endTimeController.text);
+
+              /*
               if (endTime != null &&
                   (time.hour > endTime.hour ||
                       (time.hour == endTime.hour &&
@@ -513,7 +521,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
                   time.minute == endTime.minute) {
                 return 'Début == Fin';
               }
-              return null;
+              return null;*/
             },
             onSaved: (value) {
               if (value != null && value.isNotEmpty) {
@@ -553,20 +561,24 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
             ],
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Requis';
+                return null;
               }
               final time = _parseTime(value);
               final startTime = _parseTime(_startTimeController.text);
               if (time == null) return 'Format invalide';
               if (time.hour == 0 && time.minute > 0) return 'Max 00:00';
-              if (startTime != null &&
+              if (time.hour > 0 && time.hour < 8) return 'Max 00:00';
+              if (time.hour == 8 && time.minute == 0) return 'Max 00:00';
+
+              if (time.hour != 0 &&
+                  startTime != null &&
                   (time.hour < startTime.hour ||
                       (time.hour == startTime.hour &&
                           time.minute < startTime.minute))) {
-                return 'Fin < Début';
+                return 'Début > Fin';
               }
               if (startTime != null &&
-                  time.hour == startTime!.hour &&
+                  time.hour == startTime.hour &&
                   time.minute == startTime.minute) {
                 return 'Début == Fin';
               }
@@ -601,6 +613,7 @@ class _GroupsFilterPopupState extends State<GroupsFilterPopup> {
   Widget _buildSortByDropdown() {
     return DropdownButtonFormField<String>(
       initialValue: _sortBy,
+      dropdownColor: Colors.white,
       style: TextStyle(fontSize: mediumFontSize, color: Colors.black),
       decoration: InputDecoration(
         labelText: 'Trier par',

@@ -416,6 +416,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // Allows the sheet to be taller
+      backgroundColor: Colors.white,
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(

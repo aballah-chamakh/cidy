@@ -1,6 +1,6 @@
 import 'dart:convert';
+import 'package:cidy/app_styles.dart';
 import 'package:cidy/config.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -176,10 +176,18 @@ class _AddGroupFormState extends State<AddGroupForm> {
     return '$h:$m';
   }
 
-  TimeOfDay? _parseTime(String time) {
-    final parts = time.split(':');
-    if (parts.length == 2) {
-      return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+  TimeOfDay? _parseTime(String? timeString) {
+    if (timeString == null) return null;
+    try {
+      final parts = timeString.split(':');
+      if (parts.length >= 2) {
+        return TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
+      }
+    } catch (e) {
+      // Handle parsing error
     }
     return null;
   }
@@ -200,7 +208,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
         child: SizedBox(
           width: double.infinity,
           child: Padding(
-            padding: const EdgeInsets.all(15.0),
+            padding: const EdgeInsets.all(16.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -209,7 +217,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
                   _buildHeader(),
                   const Divider(height: 10, thickness: 1),
                   Flexible(child: _buildFormContent()),
-                  const SizedBox(height: 16),
+                  const Divider(height: 30),
                   _buildFooter(),
                 ],
               ),
@@ -227,18 +235,14 @@ class _AddGroupFormState extends State<AddGroupForm> {
         Text(
           'Ajouter un groupe',
           style: TextStyle(
-            fontSize: 20,
+            fontSize: headerFontSize,
             fontWeight: FontWeight.bold,
-            color: Theme.of(context).primaryColor,
+            color: primaryColor,
           ),
           textAlign: TextAlign.left,
         ),
         IconButton(
-          icon: Icon(
-            Icons.close,
-            size: 30,
-            color: Theme.of(context).primaryColor,
-          ),
+          icon: Icon(Icons.close, size: headerIconSize, color: primaryColor),
           padding: EdgeInsets.zero, // 👈 removes default padding
           constraints: BoxConstraints(), // 👈 removes default constraints
           onPressed: () => Navigator.of(context).pop(),
@@ -248,27 +252,46 @@ class _AddGroupFormState extends State<AddGroupForm> {
   }
 
   Widget _buildFooter() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isCreating ? null : _createGroup,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-        ),
-        child: _isCreating
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : const Text(
-                'Ajouter',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return Row(
+      children: [
+        Expanded(
+          child: TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: secondaryButtonStyle,
+            child: Text(
+              'Annuler',
+              style: TextStyle(
+                fontSize: mediumFontSize,
+                fontWeight: FontWeight.bold,
+                color: primaryColor,
               ),
-      ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isCreating ? null : _createGroup,
+            style: primaryButtonStyle,
+            child: _isCreating
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Ajouter',
+                    style: TextStyle(
+                      fontSize: mediumFontSize,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -282,11 +305,16 @@ class _AddGroupFormState extends State<AddGroupForm> {
             controller: _nameController,
             decoration: InputDecoration(
               labelText: 'Nom du groupe',
-              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                borderRadius: BorderRadius.circular(8.0),
+              labelStyle: TextStyle(color: primaryColor),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
               ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
+                borderSide: BorderSide(color: primaryColor, width: 2),
+              ),
+              errorMaxLines: 3,
+              contentPadding: inputContentPadding,
               errorText: _nameError,
             ),
             onChanged: (value) {
@@ -305,20 +333,29 @@ class _AddGroupFormState extends State<AddGroupForm> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedLevelName,
+            dropdownColor: Colors.white,
+            initialValue: _selectedLevelName,
             decoration: InputDecoration(
               labelText: 'Niveau',
-              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                borderRadius: BorderRadius.circular(8.0),
+              labelStyle: TextStyle(color: primaryColor),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
               ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
+                borderSide: BorderSide(color: primaryColor, width: 2),
+              ),
+              errorMaxLines: 3,
+              contentPadding: inputContentPadding,
             ),
             items: [
               ..._levels.keys.map(
                 (levelName) => DropdownMenuItem<String>(
                   value: levelName,
-                  child: Text(levelName, style: TextStyle(fontSize: 16)),
+                  child: Text(
+                    levelName,
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
                 ),
               ),
             ],
@@ -342,16 +379,20 @@ class _AddGroupFormState extends State<AddGroupForm> {
             builder: (context) {
               final bool hasSections = _sections.isNotEmpty;
               return DropdownButtonFormField<String>(
-                value: _selectedSectionName,
+                dropdownColor: Colors.white,
+                initialValue: _selectedSectionName,
                 decoration: InputDecoration(
                   labelText: 'Section',
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    borderRadius: BorderRadius.circular(8.0),
+                  labelStyle: TextStyle(color: primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
+                    borderSide: BorderSide(color: primaryColor, width: 2),
+                  ),
+                  errorMaxLines: 3,
+                  contentPadding: inputContentPadding,
                   filled: !hasSections,
                   fillColor: !hasSections ? Colors.grey[200] : null,
                 ),
@@ -360,7 +401,10 @@ class _AddGroupFormState extends State<AddGroupForm> {
                     ..._sections.keys.map(
                       (sectionName) => DropdownMenuItem<String>(
                         value: sectionName,
-                        child: Text(sectionName),
+                        child: Text(
+                          sectionName,
+                          style: TextStyle(fontSize: mediumFontSize),
+                        ),
                       ),
                     ),
                 ],
@@ -408,16 +452,20 @@ class _AddGroupFormState extends State<AddGroupForm> {
               }
 
               return DropdownButtonFormField<String>(
-                value: _selectedSubjectName,
+                dropdownColor: Colors.white,
+                initialValue: _selectedSubjectName,
                 decoration: InputDecoration(
                   labelText: 'Matière',
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    borderRadius: BorderRadius.circular(8.0),
+                  labelStyle: TextStyle(color: primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
+                    borderSide: BorderSide(color: primaryColor, width: 2),
+                  ),
+                  errorMaxLines: 3,
+                  contentPadding: inputContentPadding,
                   filled: !isEnabled,
                   fillColor: !isEnabled ? Colors.grey[200] : null,
                 ),
@@ -426,7 +474,10 @@ class _AddGroupFormState extends State<AddGroupForm> {
                     ...currentSubjects.map(
                       (s) => DropdownMenuItem<String>(
                         value: s.toString(),
-                        child: Text(s.toString()),
+                        child: Text(
+                          s.toString(),
+                          style: TextStyle(fontSize: mediumFontSize),
+                        ),
                       ),
                     ),
                 ],
@@ -449,20 +500,29 @@ class _AddGroupFormState extends State<AddGroupForm> {
           ),
           const SizedBox(height: 16),
           DropdownButtonFormField<String>(
-            value: _selectedDayEnglish,
+            dropdownColor: Colors.white,
+            initialValue: _selectedDayEnglish,
             decoration: InputDecoration(
               labelText: 'Jour de la semaine',
-              labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: Theme.of(context).primaryColor),
-                borderRadius: BorderRadius.circular(8.0),
+              labelStyle: TextStyle(color: primaryColor),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
               ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(inputBorderRadius),
+                borderSide: BorderSide(color: primaryColor, width: 2),
+              ),
+              errorMaxLines: 3,
+              contentPadding: inputContentPadding,
             ),
             items: [
               ...weekDays.map(
                 (d) => DropdownMenuItem<String>(
                   value: d['value']!,
-                  child: Text(d['name']!),
+                  child: Text(
+                    d['name']!,
+                    style: TextStyle(fontSize: mediumFontSize),
+                  ),
                 ),
               ),
             ],
@@ -492,14 +552,16 @@ class _AddGroupFormState extends State<AddGroupForm> {
                 controller: _startTimeController,
                 decoration: InputDecoration(
                   labelText: 'Heure de début',
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                  border: const OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    borderRadius: BorderRadius.circular(8.0),
+                  labelStyle: TextStyle(color: primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
+                    borderSide: BorderSide(color: primaryColor, width: 2),
+                  ),
+                  errorMaxLines: 3,
+                  contentPadding: inputContentPadding,
                   filled: !isEnabled,
                   fillColor: !isEnabled ? Colors.grey[200] : null,
                   hintText: 'HH:MM',
@@ -512,17 +574,11 @@ class _AddGroupFormState extends State<AddGroupForm> {
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Veuillez saisir une heure de début';
+                    return "Requis";
                   }
                   final time = _parseTime(value);
                   if (time == null) return 'Format invalide';
                   if (time.hour < 8) return 'Min 08:00';
-                  if (_endTime != null &&
-                      (time.hour > _endTime!.hour ||
-                          (time.hour == _endTime!.hour &&
-                              time.minute > _endTime!.minute))) {
-                    return 'Début > Fin';
-                  }
                   return null;
                 },
                 onChanged: (value) {
@@ -552,14 +608,16 @@ class _AddGroupFormState extends State<AddGroupForm> {
                 controller: _endTimeController,
                 decoration: InputDecoration(
                   labelText: 'Heure de fin',
-                  labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-                  border: const OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    borderRadius: BorderRadius.circular(8.0),
+                  labelStyle: TextStyle(color: primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
                   ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(inputBorderRadius),
+                    borderSide: BorderSide(color: primaryColor, width: 2),
+                  ),
+                  errorMaxLines: 3,
+                  contentPadding: inputContentPadding,
                   filled: !isEnabled,
                   fillColor: !isEnabled ? Colors.grey[200] : null,
                   hintText: 'HH:MM',
@@ -572,16 +630,26 @@ class _AddGroupFormState extends State<AddGroupForm> {
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Veuillez saisir une heure de fin';
+                    return "Requis";
                   }
                   final time = _parseTime(value);
+                  final startTime = _parseTime(_startTimeController.text);
                   if (time == null) return 'Format invalide';
                   if (time.hour == 0 && time.minute > 0) return 'Max 00:00';
-                  if (_startTime != null &&
-                      (time.hour < _startTime!.hour ||
-                          (time.hour == _startTime!.hour &&
-                              time.minute < _startTime!.minute))) {
-                    return 'Fin < Début';
+                  if (time.hour > 0 && time.hour < 8) return 'Max 00:00';
+                  if (time.hour == 8 && time.minute == 0) return 'Max 00:00';
+
+                  if (time.hour != 0 &&
+                      startTime != null &&
+                      (time.hour < startTime.hour ||
+                          (time.hour == startTime.hour &&
+                              time.minute < startTime.minute))) {
+                    return 'Début > Fin';
+                  }
+                  if (startTime != null &&
+                      time.hour == startTime.hour &&
+                      time.minute == startTime.minute) {
+                    return 'Début == Fin';
                   }
                   return null;
                 },
@@ -646,6 +714,28 @@ class _TimeTextInputFormatter extends TextInputFormatter {
     }
 
     String text = newText.replaceAll(':', '');
+
+    if (text.length == 2) {
+      final hour = int.tryParse(text);
+      if (hour != null && hour > 23) {
+        if (oldValue.text.length == 1 && int.tryParse(oldValue.text) != null) {
+          final firstDigit = oldValue.text;
+          final secondDigit = text.substring(1);
+          text = '0$firstDigit:$secondDigit';
+
+          final minuteDigit = int.tryParse(secondDigit);
+          if (minuteDigit != null && minuteDigit > 5) {
+            text = '0$firstDigit:0$secondDigit';
+          }
+
+          return TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        }
+      }
+    }
+
     if (text.length > 2) {
       text = '${text.substring(0, 2)}:${text.substring(2)}';
     }
@@ -654,12 +744,31 @@ class _TimeTextInputFormatter extends TextInputFormatter {
     if (text.contains(':')) {
       final parts = text.split(':');
       final hour = int.tryParse(parts[0]);
+
+      if (parts.length > 1 &&
+          parts[1].length == 1 &&
+          newValue.text.length > oldValue.text.length) {
+        final m = int.tryParse(parts[1]);
+        if (m != null && m > 5) {
+          text = '${parts[0]}:0$m';
+          return TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        }
+      }
+
       final minute = int.tryParse(parts[1]);
 
       if (hour != null && hour > 23) {
         return oldValue;
       }
       if (minute != null && minute > 59) {
+        return oldValue;
+      }
+    } else if (text.length == 2) {
+      final hour = int.tryParse(text);
+      if (hour != null && hour > 23) {
         return oldValue;
       }
     }
