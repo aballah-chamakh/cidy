@@ -375,39 +375,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
       context: context,
       barrierDismissible: true, // allows closing when tapping outside
       builder: (BuildContext context) {
-        return AddGroupForm(
-          onGroupCreated: (int groupId) {
-            _fetchGroups(
-              name: _searchController.text,
-              level: _currentFilters['level']?.toString(),
-              section: _currentFilters['section']?.toString(),
-              subject: _currentFilters['subject']?.toString(),
-              day: _currentFilters['day'],
-              startTime: _currentFilters['start_time'],
-              endTime: _currentFilters['end_time'],
-              sortBy: _currentFilters['sort_by'],
-            ); // refresh list
-            if (groupId != -1) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => TeacherGroupDetailScreen(
-                    groupId: groupId,
-                    refreshGroupList: () {
-                      if (!mounted) return;
-                      setState(() {
-                        _searchController.text = '';
-                        _currentFilters = {};
-                        _selectedGroupIds.clear();
-                      });
-                      _fetchGroups();
-                    },
-                  ),
-                ),
-              );
-            }
-          },
-          filterOptions: _filterOptions,
-        );
+        return AddGroupForm(filterOptions: _filterOptions);
       },
     );
   }
@@ -628,11 +596,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // try 1.1–1.3 depending on how tight you want it
-                SvgPicture.asset(
-                  'assets/group.svg',
-                  width: 100,
-                  color: primaryColor, // optional tint
-                ),
+                SvgPicture.asset('assets/group.svg', width: 100),
                 const SizedBox(height: 10),
                 Text(
                   "Aucun groupe trouvé",
@@ -750,17 +714,8 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => TeacherGroupDetailScreen(
-                groupId: group['id'],
-                refreshGroupList: () {
-                  setState(() {
-                    _searchController.text = '';
-                    _currentFilters = {};
-                    _selectedGroupIds.clear();
-                  });
-                  _fetchGroups();
-                },
-              ),
+              builder: (context) =>
+                  TeacherGroupDetailScreen(groupId: group['id']),
             ),
           );
         },

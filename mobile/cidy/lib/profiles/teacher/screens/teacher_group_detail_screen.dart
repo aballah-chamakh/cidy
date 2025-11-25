@@ -25,12 +25,7 @@ import '../widgets/teacher_group_detail_screen/unmark_absence_popup.dart';
 
 class TeacherGroupDetailScreen extends StatefulWidget {
   final int groupId;
-  final VoidCallback refreshGroupList;
-  const TeacherGroupDetailScreen({
-    super.key,
-    required this.groupId,
-    required this.refreshGroupList,
-  });
+  const TeacherGroupDetailScreen({super.key, required this.groupId});
 
   @override
   State<TeacherGroupDetailScreen> createState() =>
@@ -217,7 +212,6 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           ),
         );
         Navigator.pop(context);
-        widget.refreshGroupList();
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -226,13 +220,11 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
       } else {
         _showError("erreur du serveur (500)");
         Navigator.pop(context);
-        widget.refreshGroupList();
       }
     } catch (e) {
       if (!mounted) return;
       _showError("erreur du serveur (500)");
       Navigator.pop(context);
-      widget.refreshGroupList();
     } finally {
       if (mounted) {
         setState(() {

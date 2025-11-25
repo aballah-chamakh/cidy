@@ -151,7 +151,7 @@ def get_groups(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_group(request):
-    time.sleep(3)
+    time.sleep(5)
     #Group.objects.all().delete()
     """Create a new group"""
 

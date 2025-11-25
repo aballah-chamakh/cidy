@@ -186,12 +186,9 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
         # specified in the request
         if not self.instance : 
             level = data.pop('level')
-            section = data.pop('section')
+            section = data.pop('section')  or '' 
             subject = data.pop('subject')
-            if section : 
-                teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section=section, subject__name=subject).first()
-            else :
-                teacher_subject = TeacherSubject.objects.filter(teacher=teacher,level__name=level,level__section__isnull=True, subject__name=subject).first()
+            teacher_subject = TeacherSubject.objects.get(teacher=teacher,level__name=level,level__section=section, subject__name=subject)
         else : 
             # in the case of the edit, get the teacher_subject from the instance
             teacher_subject = self.instance.teacher_subject
@@ -232,6 +229,7 @@ class GroupCreateUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("SCHEDULE_CONFLICT_DETECTED")
         
         data['teacher_subject'] = teacher_subject
+        print("=========== validated data:", data)
         return data
     
     """

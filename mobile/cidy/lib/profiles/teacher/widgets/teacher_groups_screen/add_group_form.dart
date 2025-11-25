@@ -7,19 +7,15 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/services.dart';
 import 'package:cidy/authentication/login.dart';
 import 'package:cidy/constants.dart';
+import 'package:cidy/profiles/teacher/screens/teacher_group_detail_screen.dart';
 
 class AddGroupForm extends StatefulWidget {
   // Return the created group's id so the caller can navigate to its details
-  final void Function(int groupId) onGroupCreated;
   // Use the same options map provided by the groups listing API
   // (teacher_levels_sections_subjects_hierarchy), like GroupFilterForm does.
   final Map<String, dynamic> filterOptions;
 
-  const AddGroupForm({
-    super.key,
-    required this.onGroupCreated,
-    required this.filterOptions,
-  });
+  const AddGroupForm({super.key, required this.filterOptions});
 
   @override
   State<AddGroupForm> createState() => _AddGroupFormState();
@@ -113,16 +109,11 @@ class _AddGroupFormState extends State<AddGroupForm> {
 
       if (response.statusCode == 201) {
         final data = json.decode(utf8.decode(response.bodyBytes));
-        final int? groupId = (data is Map && data['group_id'] is int)
-            ? data['group_id'] as int
-            : null;
-        Navigator.of(context).pop();
-        if (groupId != null) {
-          widget.onGroupCreated(groupId);
-        } else {
-          // Fallback: refresh only
-          widget.onGroupCreated(-1);
-        }
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => TeacherGroupDetailScreen(groupId: data['group_id']),
+          ),
+        );
       } else if (response.statusCode == 401) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -245,7 +236,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
           icon: Icon(Icons.close, size: headerIconSize, color: primaryColor),
           padding: EdgeInsets.zero, // 👈 removes default padding
           constraints: BoxConstraints(), // 👈 removes default constraints
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _isCreating ? null : () => Navigator.of(context).pop(),
         ),
       ],
     );
@@ -256,7 +247,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
       children: [
         Expanded(
           child: TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: _isCreating ? null : () => Navigator.of(context).pop(),
             style: secondaryButtonStyle,
             child: Text(
               'Annuler',
@@ -273,22 +264,29 @@ class _AddGroupFormState extends State<AddGroupForm> {
           child: ElevatedButton(
             onPressed: _isCreating ? null : _createGroup,
             style: primaryButtonStyle,
-            child: _isCreating
-                ? const SizedBox(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Ajouter',
+                  style: TextStyle(
+                    fontSize: mediumFontSize,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_isCreating) ...[
+                  const SizedBox(width: 10),
+                  const SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
                       color: Colors.white,
                       strokeWidth: 2,
                     ),
-                  )
-                : const Text(
-                    'Ajouter',
-                    style: TextStyle(
-                      fontSize: mediumFontSize,
-                      fontWeight: FontWeight.bold,
-                    ),
                   ),
+                ],
+              ],
+            ),
           ),
         ),
       ],
@@ -303,6 +301,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
           const SizedBox(height: 10),
           TextFormField(
             controller: _nameController,
+            enabled: !_isCreating,
             decoration: InputDecoration(
               labelText: 'Nom du groupe',
               labelStyle: TextStyle(color: primaryColor),
@@ -359,18 +358,20 @@ class _AddGroupFormState extends State<AddGroupForm> {
                 ),
               ),
             ],
-            onChanged: (value) {
-              setState(() {
-                _selectedLevelName = value;
-                _selectedSectionName = null;
-                _selectedSubjectName = null;
-                if (value != null && _levels.containsKey(value)) {
-                  _sections = _levels[value]['sections'] ?? {};
-                } else {
-                  _sections = {};
-                }
-              });
-            },
+            onChanged: _isCreating
+                ? null
+                : (value) {
+                    setState(() {
+                      _selectedLevelName = value;
+                      _selectedSectionName = null;
+                      _selectedSubjectName = null;
+                      if (value != null && _levels.containsKey(value)) {
+                        _sections = _levels[value]['sections'] ?? {};
+                      } else {
+                        _sections = {};
+                      }
+                    });
+                  },
             validator: (value) =>
                 value == null ? 'Sélectionnez un niveau' : null,
           ),
@@ -408,7 +409,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
                       ),
                     ),
                 ],
-                onChanged: hasSections
+                onChanged: (hasSections && !_isCreating)
                     ? (value) {
                         setState(() {
                           _selectedSectionName = value;
@@ -481,7 +482,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
                       ),
                     ),
                 ],
-                onChanged: isEnabled
+                onChanged: (isEnabled && !_isCreating)
                     ? (value) {
                         setState(() {
                           _selectedSubjectName = value;
@@ -526,11 +527,13 @@ class _AddGroupFormState extends State<AddGroupForm> {
                 ),
               ),
             ],
-            onChanged: (value) {
-              setState(() {
-                _selectedDayEnglish = value;
-              });
-            },
+            onChanged: _isCreating
+                ? null
+                : (value) {
+                    setState(() {
+                      _selectedDayEnglish = value;
+                    });
+                  },
             validator: (value) => value == null ? 'Sélectionnez un jour' : null,
           ),
           const SizedBox(height: 16),
@@ -541,7 +544,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
   }
 
   Widget _buildTimeRangeSelector() {
-    final bool isEnabled = _selectedDayEnglish != null;
+    final bool isEnabled = _selectedDayEnglish != null && !_isCreating;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -674,8 +677,9 @@ class _AddGroupFormState extends State<AddGroupForm> {
                 },
               ),
             ),
-            if (_startTimeController.text.isNotEmpty ||
-                _endTimeController.text.isNotEmpty)
+            if ((_startTimeController.text.isNotEmpty ||
+                    _endTimeController.text.isNotEmpty) &&
+                !_isCreating)
               IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
