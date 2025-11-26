@@ -405,7 +405,7 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
     required Widget child,
   }) {
     return Card(
-      color: Colors.grey.shade100,
+      color: Color(0xFFF5F7FA),
       margin: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -581,7 +581,7 @@ class _TeacherSubjectsScreenState extends State<TeacherSubjectsScreen> {
     required VoidCallback onDelete,
   }) {
     return Card(
-      color: Colors.grey.shade100,
+      color: Color(0xFFF5F7FA),
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       elevation: 1,
       shape: RoundedRectangleBorder(

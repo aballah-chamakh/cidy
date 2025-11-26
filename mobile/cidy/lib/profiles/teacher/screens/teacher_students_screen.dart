@@ -399,6 +399,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
 
   Widget _buildToolbar() {
     return Card(
+      color: Color(0xFFF5F7FA),
       margin: EdgeInsets.zero,
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -422,7 +423,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: Colors.grey[200],
+                  fillColor: Colors.white,
                   contentPadding: EdgeInsets.zero,
                 ),
                 onChanged: (value) {
@@ -639,6 +640,7 @@ class _TeacherStudentsScreenState extends State<TeacherStudentsScreen>
   Widget _buildStudentCard(dynamic student) {
     final isSelected = _selectedStudentIds.contains(student['id']);
     return Card(
+      color: Color(0xFFF5F7FA),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       elevation: 2,
       shape: RoundedRectangleBorder(

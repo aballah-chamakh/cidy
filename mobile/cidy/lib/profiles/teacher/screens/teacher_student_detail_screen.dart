@@ -161,7 +161,7 @@ class _TeacherStudentDetailScreenState
 
   Widget _buildSquareButton(IconData icon, VoidCallback onPressed) {
     return Material(
-      color: Colors.grey.shade200,
+      color: Color(0xFFF5F7FA),
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onPressed,
@@ -405,7 +405,7 @@ class _TeacherStudentDetailScreenState
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.grey.shade200,
+      color: Color(0xFFF5F7FA),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -441,6 +441,8 @@ class _TeacherStudentDetailScreenState
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
+                filled: true,
+                fillColor: Colors.white,
               ),
             ),
             const SizedBox(height: 16),
@@ -492,7 +494,7 @@ class _TeacherStudentDetailScreenState
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: Colors.grey.shade200,
+      color: Color(0xFFF5F7FA),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 12.0),
         child: Column(

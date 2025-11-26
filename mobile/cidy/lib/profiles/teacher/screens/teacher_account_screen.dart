@@ -402,6 +402,7 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
 
   Widget _buildAccountInfoSection() {
     return Card(
+      color: Color(0xFFF5F7FA),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -503,6 +504,7 @@ class _TeacherAccountScreenState extends State<TeacherAccountScreen> {
 
   Widget _buildChangePasswordSection() {
     return Card(
+      color: Color(0xFFF5F7FA),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(

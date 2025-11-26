@@ -50,9 +50,10 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
   @override
   void initState() {
     super.initState();
+    /*
     setState(() {
       _notificationCount = AppState.notificationCount;
-    });
+    });*/
     _loadTeacherInfo();
   }
 
@@ -81,6 +82,7 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
     });
   }
 
+  /*
   Future<void> _updateNotificationCount() async {
     // Replace with your API call to fetch unread notification count
     const storage = FlutterSecureStorage();
@@ -105,6 +107,7 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
       );
     }
   }
+
 
   void _startNotificationCountUpdater() {
     const duration = Duration(seconds: 5); // Update every 30 seconds
@@ -147,11 +150,11 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
     // The screen above this one was popped, revealing this screen again
     _startNotificationCountUpdater();
   }
-
+*/
   @override
   void dispose() {
     routeObserver.unsubscribe(this);
-    _stopNotificationCountUpdater();
+    // _stopNotificationCountUpdater();
     super.dispose();
   }
 
@@ -255,13 +258,13 @@ class _TeacherLayoutState extends State<TeacherLayout> with RouteAware {
               );
             },
           ),
-          SidebarMenuItem(
+          /*SidebarMenuItem(
             label: "Notifications",
             icon: Icons.notifications,
             onTap: () {
               // Navigate to the notifications screen
             },
-          ),
+          ),*/
           SidebarMenuItem(
             label: "Compte",
             icon: Icons.person,
