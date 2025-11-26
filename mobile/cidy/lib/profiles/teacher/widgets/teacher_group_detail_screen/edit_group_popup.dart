@@ -124,31 +124,15 @@ class _EditGroupPopupState extends State<EditGroupPopup> {
     }
 
     // Validate time range (8h to 23h59)
-    if (_startTime!.hour < 8 ||
-        _endTime!.hour >= 24 ||
-        (_endTime!.hour == 23 && _endTime!.minute > 59)) {
-      setState(() {
-        _timeError = 'L\'horaire doit être entre 8h et 23h59';
-      });
-      return;
-    }
 
-    if (_startTime!.hour > _endTime!.hour ||
-        (_startTime!.hour == _endTime!.hour &&
-            _startTime!.minute >= _endTime!.minute)) {
-      setState(() {
-        _timeError = 'L\'heure de début doit être antérieure à l\'heure de fin';
-      });
-      return;
-    }
-
+    /*
     if (_hasScheduleChanged() && _scheduleChangeType == null) {
       setState(() {
         _timeError =
             'Veuillez spécifier si le changement d\'horaire est permanent ou temporaire';
       });
       return;
-    }
+    }*/
 
     setState(() {
       _isLoading = true;
@@ -177,12 +161,13 @@ class _EditGroupPopupState extends State<EditGroupPopup> {
         'start_time': _formatTime(_startTime!),
         'end_time': _formatTime(_endTime!),
       };
-
+      /*
       if (_hasScheduleChanged()) {
         requestBody['schedule_change_type'] = _scheduleChangeType == 'permanent'
             ? 'permanent'
             : 'temporary';
       }
+      */
 
       final response = await http.put(
         url,
@@ -463,6 +448,7 @@ class _EditGroupPopupState extends State<EditGroupPopup> {
           ),
           const SizedBox(height: 16),
           _buildTimeRangeSelector(),
+          /*
           if (_hasScheduleChanged()) ...[
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
@@ -514,7 +500,8 @@ class _EditGroupPopupState extends State<EditGroupPopup> {
                 return null;
               },
             ),
-          ],
+      
+          ],*/
         ],
       ),
     );
@@ -556,22 +543,11 @@ class _EditGroupPopupState extends State<EditGroupPopup> {
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Requis';
+                    return "Requis";
                   }
                   final time = _parseTime(value);
                   if (time == null) return 'Format invalide';
                   if (time.hour < 8) return 'Min 08:00';
-                  if (_endTime != null &&
-                      (time.hour > _endTime!.hour ||
-                          (time.hour == _endTime!.hour &&
-                              time.minute > _endTime!.minute))) {
-                    return 'Début > Fin';
-                  }
-                  if (_endTime != null &&
-                      time.hour == _endTime!.hour &&
-                      time.minute == _endTime!.minute) {
-                    return 'Début == Fin';
-                  }
                   return null;
                 },
                 onChanged: (value) {
@@ -624,20 +600,25 @@ class _EditGroupPopupState extends State<EditGroupPopup> {
                 ],
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Requis';
+                    return "Requis";
                   }
                   final time = _parseTime(value);
+                  final startTime = _parseTime(_startTimeController.text);
                   if (time == null) return 'Format invalide';
                   if (time.hour == 0 && time.minute > 0) return 'Max 00:00';
-                  if (_startTime != null &&
-                      (time.hour < _startTime!.hour ||
-                          (time.hour == _startTime!.hour &&
-                              time.minute < _startTime!.minute))) {
-                    return 'Fin < Début';
+                  if (time.hour > 0 && time.hour < 8) return 'Max 00:00';
+                  if (time.hour == 8 && time.minute == 0) return 'Max 00:00';
+
+                  if (time.hour != 0 &&
+                      startTime != null &&
+                      (time.hour < startTime.hour ||
+                          (time.hour == startTime.hour &&
+                              time.minute < startTime.minute))) {
+                    return 'Début > Fin';
                   }
-                  if (_startTime != null &&
-                      time.hour == _startTime!.hour &&
-                      time.minute == _startTime!.minute) {
+                  if (startTime != null &&
+                      time.hour == startTime.hour &&
+                      time.minute == startTime.minute) {
                     return 'Début == Fin';
                   }
                   return null;
@@ -716,6 +697,12 @@ class _TimeTextInputFormatter extends TextInputFormatter {
           final firstDigit = oldValue.text;
           final secondDigit = text.substring(1);
           text = '0$firstDigit:$secondDigit';
+
+          final minuteDigit = int.tryParse(secondDigit);
+          if (minuteDigit != null && minuteDigit > 5) {
+            text = '0$firstDigit:0$secondDigit';
+          }
+
           return TextEditingValue(
             text: text,
             selection: TextSelection.collapsed(offset: text.length),
@@ -732,6 +719,20 @@ class _TimeTextInputFormatter extends TextInputFormatter {
     if (text.contains(':')) {
       final parts = text.split(':');
       final hour = int.tryParse(parts[0]);
+
+      if (parts.length > 1 &&
+          parts[1].length == 1 &&
+          newValue.text.length > oldValue.text.length) {
+        final m = int.tryParse(parts[1]);
+        if (m != null && m > 5) {
+          text = '${parts[0]}:0$m';
+          return TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(offset: text.length),
+          );
+        }
+      }
+
       final minute = int.tryParse(parts[1]);
 
       if (hour != null && hour > 23) {

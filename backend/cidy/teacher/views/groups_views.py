@@ -152,6 +152,7 @@ def get_groups(request):
 @permission_classes([IsAuthenticated])
 def create_group(request):
     time.sleep(5)
+
     #Group.objects.all().delete()
     """Create a new group"""
 
@@ -171,14 +172,14 @@ def create_group(request):
         'group_id': group.id,
         'success': True,
         'message': 'Group created successfully'
-    },status=status.HTTP_201_CREATED)
+    },status=status.HTTP_200_OK)
 
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_groups(request):
     time.sleep(3)
-
+    
     """Delete selected groups"""
     teacher = request.user.teacher
     group_ids = request.data.get('group_ids', [])

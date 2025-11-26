@@ -347,6 +347,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Color(0xFFF5F7FA),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -360,7 +361,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+                    color: primaryColor,
                   ),
                 ),
                 Row(
@@ -397,7 +398,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
 
   Widget _buildSquareButton(IconData icon, VoidCallback onPressed) {
     return Material(
-      color: Colors.grey.shade200,
+      color: Colors.white,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         onTap: onPressed,
@@ -406,7 +407,14 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
           width: 40,
           height: 40,
           alignment: Alignment.center,
-          child: Icon(icon, color: Theme.of(context).primaryColor),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.grey.shade400, // 👈 border color here
+              width: 1,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: primaryColor),
         ),
       ),
     );
@@ -465,6 +473,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
 
   Widget _buildKpiCard(String value, String label, Color color) {
     return Card(
+      color: Color(0xFFF5F7FA),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -490,6 +499,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
   Widget _buildStudentListCard() {
     final students = _groupDetail!['students']['students'] as List;
     return Card(
+      color: Color(0xFFF5F7FA),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -505,7 +515,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
                   style: TextStyle(
                     fontSize: mediumFontSize,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+                    color: primaryColor,
                   ),
                 ),
                 ElevatedButton.icon(
@@ -550,7 +560,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               borderSide: BorderSide.none,
             ),
             filled: true,
-            fillColor: Colors.grey[200],
+            fillColor: Colors.white,
             contentPadding: EdgeInsets.zero,
           ),
           onChanged: (value) => _fetchGroupDetails(showLoading: false),
@@ -567,6 +577,8 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
               horizontal: 12,
               vertical: 8,
             ),
+            filled: true,
+            fillColor: Colors.white,
           ),
           items: _sortOptions.entries
               .map(
@@ -663,6 +675,7 @@ class _TeacherGroupDetailScreenState extends State<TeacherGroupDetailScreen> {
     final imageUrl = '${Config.backendUrl}${student['image']}';
 
     return Card(
+      color: Color(0xFFF5F7FA),
       margin: EdgeInsets.symmetric(vertical: 6),
       elevation: 1,
       shape: RoundedRectangleBorder(

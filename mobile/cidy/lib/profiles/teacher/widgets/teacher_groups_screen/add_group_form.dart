@@ -107,7 +107,7 @@ class _AddGroupFormState extends State<AddGroupForm> {
       );
       if (!mounted) return;
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         Navigator.of(context).push(
           MaterialPageRoute(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cidy/config.dart';
 import 'package:cidy/app_styles.dart';
+import 'package:cidy/app_tools.dart';
 import 'package:cidy/profiles/teacher/screens/teacher_group_detail_screen.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_groups_screen/add_group_form.dart';
 import 'package:cidy/profiles/teacher/widgets/teacher_groups_screen/delete_multiple_groups_popup.dart';
@@ -89,6 +90,15 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
     _fetchGroups();
   }
 
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: TextStyle(fontSize: 16)),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -96,6 +106,28 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
         backgroundColor: Colors.red,
       ),
     );
+  }
+
+  bool _areAllGroupsSelected(List groups) {
+    if (groups.isEmpty) {
+      return false;
+    }
+    return groups.every(
+      (group) => _selectedGroupIds.contains(group['id'] as int),
+    );
+  }
+
+  void _toggleSelectAllGroups(List groups) {
+    final allSelected = _areAllGroupsSelected(groups);
+    setState(() {
+      if (allSelected) {
+        _selectedGroupIds.clear();
+      } else {
+        _selectedGroupIds
+          ..clear()
+          ..addAll(groups.map<int>((group) => group['id'] as int));
+      }
+    });
   }
 
   Future<void> _fetchGroups({
@@ -200,79 +232,6 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
     }
   }
 
-  Future<void> _deleteGroups(List<int> groupIds) async {
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      const storage = FlutterSecureStorage();
-      final token = await storage.read(key: 'access_token');
-      if (token == null) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-        return;
-      }
-
-      final url = Uri.parse('${Config.backendUrl}/api/teacher/groups/delete/');
-      final response = await http.delete(
-        url,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({'group_ids': groupIds}),
-      );
-
-      if (response.statusCode == 401) {
-        if (mounted) {
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-        return;
-      }
-
-      if (response.statusCode == 200) {
-        if (mounted) {
-          setState(() {
-            _selectedGroupIds.clear();
-          });
-          await _fetchGroups(
-            name: _searchController.text,
-            level: _currentFilters['level']?.toString(),
-            section: _currentFilters['section']?.toString(),
-            subject: _currentFilters['subject']?.toString(),
-            day: _currentFilters['day'],
-            startTime: _currentFilters['start_time'],
-            endTime: _currentFilters['end_time'],
-            sortBy: _currentFilters['sort_by'],
-          ); // Refresh the list
-        }
-      } else {
-        _showError("Erreur du serveur (500)");
-      }
-    } catch (e, stackTrace) {
-      if (mounted) {
-        print("Error: $e");
-        print("StackTrace: $stackTrace");
-        _showError("Erreur du serveur (500)");
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
   int _countActiveFilters() {
     int count = 0;
     if (_currentFilters['level'] != null) count++;
@@ -320,7 +279,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
                     Text(
                       'Information',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: headerFontSize,
                         fontWeight: FontWeight.bold,
                         color: primaryColor,
                       ),
@@ -342,17 +301,13 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
                   textAlign: TextAlign.center,
                   style: const TextStyle(fontSize: 18),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 10),
+                const Divider(height: 30, thickness: 1),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
+                    style: primaryButtonStyle,
                     child: const Text(
                       'OK',
                       style: TextStyle(
@@ -556,7 +511,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
               onPressed: () {
                 if (_filterOptions.isEmpty) {
                   _showInfoModal(
-                    'Vous devez ajouter au moins un niveau pour pouvoir créer un groupe.',
+                    'Vous devez ajouter au moins une matière pour pouvoir créer un groupe.',
                   );
                 } else {
                   _showAddGroupDialog();
@@ -596,7 +551,11 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // try 1.1–1.3 depending on how tight you want it
-                SvgPicture.asset('assets/group.svg', width: 100),
+                SvgPicture.asset(
+                  'assets/group.svg',
+                  width: 100,
+                  colorFilter: ColorFilter.mode(primaryColor, BlendMode.srcIn),
+                ),
                 const SizedBox(height: 10),
                 Text(
                   "Aucun groupe trouvé",
@@ -639,6 +598,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
   }
 
   Widget _buildGroupsListUI(List<dynamic> groups) {
+    final bool allSelected = _areAllGroupsSelected(groups);
     return Stack(
       children: [
         Column(
@@ -646,17 +606,33 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
-                vertical: 8.0,
+                vertical: 0.0,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     '${groups.length} Groupe(s)',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    style: TextStyle(fontSize: 16),
                   ),
-                  if (_selectedGroupIds.isNotEmpty)
-                    Text('${_selectedGroupIds.length} sélectionné(s)'),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: allSelected,
+                        activeColor: primaryColor, // color when checked
+                        checkColor: Colors.white,
+                        onChanged: (bool? value) {
+                          if (value != null) {
+                            _toggleSelectAllGroups(groups);
+                          }
+                        },
+                      ),
+                      const Text(
+                        'Sélectionner tout',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -794,12 +770,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
                           style: TextStyle(color: Colors.green),
                         ),
                         Text(
-                          _formatAmount(
-                            double.tryParse(
-                                  group['total_paid']?.toString() ?? '0',
-                                ) ??
-                                0,
-                          ),
+                          formatToK(group['total_paid'].toString()),
                           style: const TextStyle(
                             color: Colors.green,
                             fontWeight: FontWeight.bold,
@@ -818,12 +789,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
                           style: TextStyle(color: Colors.red),
                         ),
                         Text(
-                          _formatAmount(
-                            double.tryParse(
-                                  group['total_unpaid']?.toString() ?? '0',
-                                ) ??
-                                0,
-                          ),
+                          formatToK(group['total_unpaid'].toString()),
                           style: const TextStyle(
                             color: Colors.red,
                             fontWeight: FontWeight.bold,
@@ -863,7 +829,7 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: Colors.white,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(10),
           topRight: Radius.circular(10),
@@ -924,15 +890,47 @@ class _TeacherGroupsScreenState extends State<TeacherGroupsScreen>
   }
 
   Future<void> _showDeleteConfirmationDialog() async {
-    final bool? confirmed = await showDialog<bool>(
+    showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
-        return DeleteMultipleGroupsPopup(groupCount: _selectedGroupIds.length);
+        return DeleteMultipleGroupsPopup(
+          groupCount: _selectedGroupIds.length,
+          groupIds: _selectedGroupIds,
+          onSuccess: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showSuccess('Groupe(s) supprimé(s) avec succès');
+            setState(() {
+              _selectedGroupIds.clear();
+            });
+            _fetchGroups(
+              name: _searchController.text,
+              level: _currentFilters['level']?.toString(),
+              section: _currentFilters['section']?.toString(),
+              subject: _currentFilters['subject']?.toString(),
+              day: _currentFilters['day'],
+              startTime: _currentFilters['start_time'],
+              endTime: _currentFilters['end_time'],
+              sortBy: _currentFilters['sort_by'],
+            );
+          },
+          onError: () {
+            if (!mounted) return;
+            Navigator.of(context).pop();
+            _showError('Erreur du serveur (500)');
+            _fetchGroups(
+              name: _searchController.text,
+              level: _currentFilters['level']?.toString(),
+              section: _currentFilters['section']?.toString(),
+              subject: _currentFilters['subject']?.toString(),
+              day: _currentFilters['day'],
+              startTime: _currentFilters['start_time'],
+              endTime: _currentFilters['end_time'],
+              sortBy: _currentFilters['sort_by'],
+            );
+          },
+        );
       },
     );
-
-    if (confirmed == true) {
-      await _deleteGroups(_selectedGroupIds.toList());
-    }
   }
 }
