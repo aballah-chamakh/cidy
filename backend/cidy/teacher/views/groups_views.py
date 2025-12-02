@@ -43,7 +43,7 @@ def can_create_group(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_groups(request):
-    time.sleep(1)
+    #time.sleep(1)
     #return HttpResponseServerError("An unexpected error occurred.")
     """Get a filtered list of groups for the teacher"""
     teacher = request.user.teacher
@@ -151,7 +151,7 @@ def get_groups(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_group(request):
-    time.sleep(5)
+    #time.sleep(5)
 
     #Group.objects.all().delete()
     """Create a new group"""
@@ -178,7 +178,7 @@ def create_group(request):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_groups(request):
-    time.sleep(3)
+    #time.sleep(3)
     
     """Delete selected groups"""
     teacher = request.user.teacher
@@ -227,7 +227,7 @@ def delete_groups(request):
 @permission_classes([IsAuthenticated])
 def get_group_details(request, group_id):
     """Get detailed information about a specific group"""
-    time.sleep(1)
+    #time.sleep(1)
     teacher = request.user.teacher
 
     try:
@@ -244,7 +244,7 @@ def get_group_details(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_group(request, group_id):
-    time.sleep(3)
+    #time.sleep(3)
     """Edit an existing group"""
     teacher = request.user.teacher
     try:
@@ -344,7 +344,7 @@ def get_group_students(request,group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def create_group_student(request, group_id):
-    time.sleep(3)
+    #time.sleep(3)
     """Create a new student then add them to the specified group"""
     teacher = request.user.teacher
 
@@ -420,7 +420,7 @@ def get_the_possible_students_for_a_group(request,group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def add_students_to_group(request,group_id):
-    time.sleep(3)
+    #time.sleep(3)
     student_ids = request.data.get('student_ids',[])
     teacher = request.user.teacher
     try:
@@ -467,7 +467,7 @@ def add_students_to_group(request,group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def remove_students_from_group(request, group_id):
-    time.sleep(3)
+    #time.sleep(3)
     """Remove students from a specific group"""
     teacher = request.user.teacher
 
@@ -521,7 +521,7 @@ def remove_students_from_group(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def mark_attendance(request, group_id):
-    time.sleep(3)
+    #time.sleep(3)
     """Mark attendance for selected students in a group"""
     # validate the request data
     student_ids = request.data.get('student_ids', [])
@@ -686,7 +686,7 @@ def mark_attendance(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def unmark_attendance(request, group_id):
-    time.sleep(3)
+    #time.sleep(3)
 
     """Unmark attendance for selected students in a group"""
     teacher = request.user.teacher
@@ -1354,7 +1354,7 @@ def unmark_payment(request, group_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def mark_attendance_and_payment(request,group_id):
-    time.sleep(3)
+    #time.sleep(3)
     """Mark attendance for selected students in a group"""
     # validate the request data
     student_ids = request.data.get('student_ids', [])

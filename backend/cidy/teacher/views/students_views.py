@@ -52,7 +52,7 @@ def can_create_student(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_students(request):
-    time.sleep(5)
+    #time.sleep(5)
     """Get a filtered list of students for the teacher"""
     teacher = request.user.teacher
     students = Student.objects.filter(teacherenrollment__teacher=teacher)
@@ -138,7 +138,7 @@ def create_student(request):
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def delete_students(request):
-    time.sleep(5)
+    #time.sleep(5)
     """Delete selected students"""
     teacher = request.user.teacher
     student_ids = request.data.get('student_ids', [])
@@ -214,7 +214,7 @@ def delete_students(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_student_details(request, student_id):
-    time.sleep(5)
+    #time.sleep(5)
     """Get details of a specific student"""
     teacher = request.user.teacher
 
@@ -238,7 +238,7 @@ def get_student_details(request, student_id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def edit_student(request, student_id):
-    time.sleep(5)
+    #time.sleep(5)
     """Update a student's core information"""
     teacher = request.user.teacher
     print(request.data)

@@ -25,7 +25,7 @@ def increment_parent_unread_notifications(parent):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_levels_sections_subjects(request): 
-    time.sleep(5)
+    #time.sleep(5)
 
     """Retrieve the list of levels, sections, and subjects for the teacher."""
     
@@ -50,7 +50,7 @@ def get_levels_sections_subjects(request):
 @permission_classes([IsAuthenticated])
 def add_teacher_subject(request):
     
-    time.sleep(5)
+    #time.sleep(5)
     """Add a new subject for the teacher."""
 
     serializer = TeacherSubjectSerializer(data=request.data, context={'request': request})
@@ -64,7 +64,7 @@ def add_teacher_subject(request):
 @permission_classes([IsAuthenticated])
 def edit_teacher_subject_price(request, teacher_subject_id):
     #return HttpResponseServerError("500 server error")
-    time.sleep(5)
+    #time.sleep(5)
     """Edit the price of a subject."""
     teacher = request.user.teacher
     try:
@@ -130,7 +130,7 @@ def edit_teacher_subject_price(request, teacher_subject_id):
 @permission_classes([IsAuthenticated])
 def delete_level_section_subject(request, teacher_subject_id):
 
-    time.sleep(5)
+    #time.sleep(5)
     #return HttpResponseServerError("500 server error")
     """Delete a level, section, or subject."""
     teacher = request.user.teacher

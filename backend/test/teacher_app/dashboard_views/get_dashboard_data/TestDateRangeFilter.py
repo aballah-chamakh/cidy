@@ -18,8 +18,8 @@ class TestDateRangeFilter:
     #    - this month (1 Oct 2025)
     #    - this year (10 and 14 Aug 2025)
 
-    THIS_WEEK_DATES = [datetime.datetime(2025, 11, 17), datetime.datetime(2025, 11, 18)]
-    THIS_MONTH_DATES = [datetime.datetime(2025, 11, 5), datetime.datetime(2025, 11, 6)]
+    THIS_WEEK_DATES = [datetime.datetime(2025, 12, 1), datetime.datetime(2025, 12, 2)]
+    THIS_MONTH_DATES = [datetime.datetime(2025, 11, 1), datetime.datetime(2025, 11, 1)]
     THIS_YEAR_DATES = [datetime.datetime(2025, 8, 10), datetime.datetime(2025, 8, 14)]
 
     def set_up(self):

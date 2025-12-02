@@ -13,7 +13,7 @@ import time
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_account_info(request):
-    time.sleep(5)  # Simulate network delay
+    #time.sleep(5)  # Simulate network delay
     """Retrieve the account information of the logged-in teacher."""
     teacher = request.user.teacher
     serializer = TeacherAccountInfoSerializer(teacher, context={'request': request})
@@ -24,7 +24,7 @@ def get_account_info(request):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def update_account_info(request):
-    time.sleep(5)  # Simulate network delay
+    #time.sleep(5)  # Simulate network delay
 
     """Update the account information of the logged-in teacher."""
     teacher = request.user.teacher
@@ -42,7 +42,7 @@ def update_account_info(request):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def change_password(request):
-    time.sleep(5)
+    #time.sleep(5)
     """Change the password of the logged-in teacher."""
     teacher = request.user.teacher
     serializer = ChangeTeacherPasswordSerializer(
