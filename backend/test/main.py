@@ -26,6 +26,8 @@ def test_runner(test_class):
     test.test()
 
 
+test_runner(TestDateRangeFilter)
+quit()
 
 test_runner(TestMarkAttendance)
 test_runner(TestUnMarkAttendance)

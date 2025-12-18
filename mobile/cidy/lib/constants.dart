@@ -4,6 +4,7 @@ const List<Map<String, String>> weekDays = [
   {'value': 'Wednesday', 'name': 'Mercredi'},
   {'value': 'Thursday', 'name': 'Jeudi'},
   {'value': 'Friday', 'name': 'Vendredi'},
+
   {'value': 'Saturday', 'name': 'Samedi'},
   {'value': 'Sunday', 'name': 'Dimanche'},
 ];
