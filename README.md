@@ -24,6 +24,6 @@ Cidy aims to simplify administrative tasks for tutors and improve the overall ma
 - **Database:** PostgreSQL
 
 ## Author
-**Abdallah Ben Chamkh**  
+**Abdallah Ben Chamakh**  
 - GitHub: [https://github.com/aballah-chamakh](https://github.com/aballah-chamakh)  
 - LinkedIn: [https://www.linkedin.com/in/abdallah-ben-chamakh/](https://www.linkedin.com/in/abdallah-ben-chamakh/)  
